@@ -1,0 +1,9 @@
+﻿<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="150dip"
+    android:minHeight="50dip"
+    android:resizeMode="horizontal|vertical"
+    android:minResizeWidth="150dip"
+    android:minResizeHeight="50dip"
+    android:updatePeriodMillis="1000"
+    android:initialLayout="@layout/widget"
+    android:previewImage="@drawable/widgetThumb" />
