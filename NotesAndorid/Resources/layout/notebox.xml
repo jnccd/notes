@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="25px"
+    android:minHeight="35px"
+    android:layout_width="match_parent"
+    android:layout_height="150px"
+    android:paddingTop="7dp"
+    android:orientation="vertical"
+    android:id="@+id/noteLayout">
+    <LinearLayout
+        android:orientation="horizontal"
+        android:minWidth="25px"
+        android:minHeight="25px"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/noteTitleLayout">
+        <CheckBox
+            android:text=""
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight=".02"
+            android:id="@+id/noteDone" />
+        <EditText
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight=".90"
+            android:background="@null"
+            android:id="@+id/note" />
+    </LinearLayout>
+    <LinearLayout
+        android:orientation="vertical"
+        android:minWidth="25px"
+        android:minHeight="0px"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/noteSubsLayout" />
+</LinearLayout>
