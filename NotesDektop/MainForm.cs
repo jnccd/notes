@@ -161,24 +161,28 @@ namespace Notes.Desktop
 
             Label orderButton = new Label();
             orderButton.Name = "orderButton";
-            orderButton.Text = "#";
+            orderButton.Text = "⠿";
+            orderButton.Font = new Font(orderButton.Font.FontFamily, 10f);
             orderButton.BackColor = rootPanel.BackColor;
-            orderButton.Width = 19;
+            orderButton.ForeColor = Color.FromArgb(30, 30, 30);
+            orderButton.Width = 14;
             orderButton.Height = notePanel.Height;
             orderButton.MouseDown += OrderButton_MouseDown;
             orderButton.MouseMove += OrderButton_MouseMove;
             orderButton.MouseUp += OrderButton_MouseUp;
-            orderButton.Location = new Point(0, 5);
+            orderButton.Location = new Point(0, 3);
             notePanel.Controls.Add(orderButton);
 
             Label expandButton = new Label();
             expandButton.Name = "expandButton";
-            expandButton.Text = "+";
+            expandButton.Text = "🞂";
+            expandButton.Font = new Font(expandButton.Font.FontFamily, 10f);
             expandButton.BackColor = rootPanel.BackColor;
-            expandButton.Width = 19;
+            expandButton.ForeColor = Color.FromArgb(30, 30, 30);
+            expandButton.Width = 14;
             expandButton.Height = notePanel.Height;
             expandButton.Click += ExpandButton_Click;
-            expandButton.Location = new Point(0, 5);
+            expandButton.Location = new Point(0, 3);
             notePanel.Controls.Add(expandButton);
 
             CheckBox doneCheckBox = new CheckBox();
@@ -197,7 +201,7 @@ namespace Notes.Desktop
             noteTextBox.Height = notePanel.Height;
             noteTextBox.KeyDown += NoteTextBox_KeyDown;
             noteTextBox.Font = new Font(noteTextBox.Font.FontFamily, 10f);
-            noteTextBox.Location = new Point(0, 5);
+            noteTextBox.Location = new Point(0, 3);
             notePanel.Controls.Add(noteTextBox);
 
             if (n != null)
