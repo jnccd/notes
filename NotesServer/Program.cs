@@ -96,6 +96,9 @@ app.MapPost("/notes", async ([FromHeader(Name = "Authorization")] string? authTo
         u.NotesPayload = bodyPayload;
         File.WriteAllText(u.NotesJsonPath, u.NotesPayloadText);
     }
+    else
+        logger.WriteLine($"invalid post req recieved " +
+            $"{bodyPayload != null} {bodyPayload?.SaveTime > u.NotesPayload.SaveTime} {bodyPayload?.Checksum == bodyPayload?.GenerateChecksum()}");
 
     return Results.Ok("Pog");
 });
