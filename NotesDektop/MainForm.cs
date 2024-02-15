@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -202,6 +203,10 @@ namespace Notes.Desktop
             noteTextBox.KeyDown += NoteTextBox_KeyDown;
             noteTextBox.Font = new Font(noteTextBox.Font.FontFamily, 10f);
             noteTextBox.Location = new Point(0, 3);
+            //noteTextBox.Multiline = true;
+            //noteTextBox.ScrollBars = ScrollBars.None;
+            //noteTextBox.WordWrap = true;
+            //noteTextBox.AutoSize = true;
             notePanel.Controls.Add(noteTextBox);
 
             if (n != null)
@@ -272,17 +277,19 @@ namespace Notes.Desktop
         void LayoutNotePanels()
         {
             int scroll = rootPanel.VerticalScroll.Value;
-            rootPanel.VerticalScroll.Value = 0;
+            //rootPanel.VerticalScroll.Value = 0;
 
-            int curY = 0;
+            int curY = -scroll;
             foreach (Panel p in rootPanel.Controls.OfType<Panel>())
             {
+                // Panel layout
                 p.Location = new Point(0, curY);
                 curY += p.Height;
 
-                int curX = 0, curSubY = defaultPanelHeight + uiPadding;
+                int curX = 0, curSubY = ((TextBox)p.Controls.Find("noteTextBox", true)[0]).Height + uiPadding;
                 foreach (Control c in p.Controls)
                 {
+                    // Subpanel layout
                     if (c.Name == "subNotePanel")
                     {
                         c.Location = new Point(25, curSubY);
@@ -307,14 +314,21 @@ namespace Notes.Desktop
                 textBox.Width = p.Width - textBox.Location.X;
             }
 
-            rootPanel.VerticalScroll.Value = scroll;
+            //rootPanel.VerticalScroll.Value = scroll;
         }
         private void UpdatePanelHeight(Control Panel, int lenOffset = 0)
         {
             try
             {
-                int len = Panel.Controls.Find("subNotePanel", true).Count();
-                Panel.Height = defaultPanelHeight + len * (defaultPanelHeight) + uiPadding * 2;
+                var textBox = (TextBox)Panel.Controls.Find("noteTextBox", true)[0];
+                int textboxLines = textBox.PreferredSize.Width / textBox.Width + 1;
+                if (textboxLines <= 0)
+                    textboxLines = 1;
+                textBox.Multiline = textboxLines > 1;
+                textBox.Height = textboxLines * textBox.Font.Height + 5;
+
+                int subNotesCount = Panel.Controls.Find("subNotePanel", true).Length;
+                Panel.Height = textBox.Height + subNotesCount * (defaultPanelHeight) + uiPadding * 2;
             }
             catch { }
         }
