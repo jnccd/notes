@@ -75,7 +75,7 @@ app.MapGet("/hewwo", ([FromHeader(Name = "Authorization")] string? authTokenHead
 
 app.MapGet("/notes", ([FromHeader(Name = "Authorization")] string? authTokenHeader, HttpRequest request) =>
     auth.GetUser(authTokenHeader, (User? u) => 
-        Results.Ok(u?.NotesPayloadText)));
+        Results.Text(u?.NotesPayloadText, contentType: "application/json")));
 
 app.MapPost("/notes", async ([FromHeader(Name = "Authorization")] string? authTokenHeader, HttpRequest request) =>
 {
