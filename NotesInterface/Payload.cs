@@ -69,14 +69,9 @@ namespace Notes.Interface
     }
     public class Note
     {
-        public bool Done;
+        public bool Done = false;
         public string Text = "";
-        public List<SubNote> SubNotes = new List<SubNote>();
-        public NotePriority Prio;
-    }
-    public class SubNote
-    {
-        public bool Done;
-        public string Text = "";
+        public List<Note> SubNotes = new List<Note>();
+        public NotePriority Prio = NotePriority.Meduim;
     }
 }
