@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Numerics;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
@@ -30,18 +31,18 @@ namespace Notes.Desktop
 
     public partial class MainForm : Form
     {
+        // General
+        DateTime lastSaveTime = DateTime.Now;
+        bool unsavedEdits = false;
+        Communicator comms = null;
+
+        // Drag
         bool dragging = false;
         DragType dragType = DragType.Normal;
         Point dragSauce, globalDragSauce, globalDragLocationSauce;
         Size dragSizeSauce;
-        DateTime lastSaveTime = DateTime.Now;
-        bool unsavedEdits = false;
-        Communicator? comms = null;
         Panel draggedPanel = null;
-        const int uiPadding = 6;
-        const int defaultPanelHeight = 24;
-        const int subNoteIntend = 45;
-
+        
         public MainForm()
         {
             InitializeComponent();
@@ -59,15 +60,11 @@ namespace Notes.Desktop
                 this.Location = Config.Data.Pos;
                 this.Size = Config.Data.Size;
             }
-            if (Config.Data.Notes.Count != 0)
-            {
-                LoadConfig();
-            }
-            else
-            {
-                AddNewNotePanel();
-                LayoutNotePanels();
-            }
+
+            if (Config.Data.Notes.Count == 0)
+                Config.Data.Notes.Add(new Note());
+            LoadConfig();
+
             if (Config.Data.BackColor.A != 255)
                 Config.Data.BackColor = Color.FromArgb(231, 222, 103);
             else
@@ -119,7 +116,7 @@ namespace Notes.Desktop
                     Note add = new()
                     {
                         Done = ((CheckBox)p.Controls.Find("doneCheckBox", true)[0]).Checked,
-                        Prio = NotePriority.Meduim, // TODO: Add GUI for this
+                        Prio = NotePriority.Meduim, // TODO: Add GUI for this?
                         Text = ((TextBox)p.Controls.Find("noteTextBox", true)[0]).Text,
                         SubNotes = subNotes
                     };
@@ -144,197 +141,11 @@ namespace Notes.Desktop
                 // Remove everything except the start panel
                 rootPanel.Controls.Clear();
 
-                foreach (Note n in Config.Data.Notes)
-                    AddNewNotePanel(-1, n);
-
-                LayoutNotePanels();
+                
             }
         }
 
-        Panel AddNewNotePanel(int index = -1, Note n = null)
-        {
-            Panel notePanel = new Panel();
-            notePanel.Name = "notePanel";
-            notePanel.Anchor = AnchorStyles.Left | AnchorStyles.Top | AnchorStyles.Right;
-            notePanel.BackColor = rootPanel.BackColor;
-            notePanel.Width = rootPanel.Width;
-            notePanel.Height = defaultPanelHeight;
-
-            Label orderButton = new Label();
-            orderButton.Name = "orderButton";
-            orderButton.Text = "⠿";
-            orderButton.Font = new Font(orderButton.Font.FontFamily, 10f);
-            orderButton.BackColor = rootPanel.BackColor;
-            orderButton.ForeColor = Color.FromArgb(30, 30, 30);
-            orderButton.Width = 14;
-            orderButton.Height = notePanel.Height;
-            orderButton.MouseDown += OrderButton_MouseDown;
-            orderButton.MouseMove += OrderButton_MouseMove;
-            orderButton.MouseUp += OrderButton_MouseUp;
-            orderButton.Location = new Point(0, 3);
-            notePanel.Controls.Add(orderButton);
-
-            Label expandButton = new Label();
-            expandButton.Name = "expandButton";
-            expandButton.Text = "🞂";
-            expandButton.Font = new Font(expandButton.Font.FontFamily, 10f);
-            expandButton.BackColor = rootPanel.BackColor;
-            expandButton.ForeColor = Color.FromArgb(30, 30, 30);
-            expandButton.Width = 14;
-            expandButton.Height = notePanel.Height;
-            expandButton.Click += ExpandButton_Click;
-            expandButton.Location = new Point(0, 3);
-            notePanel.Controls.Add(expandButton);
-
-            CheckBox doneCheckBox = new CheckBox();
-            doneCheckBox.Name = "doneCheckBox";
-            doneCheckBox.BackColor = rootPanel.BackColor;
-            doneCheckBox.Width = 18;
-            doneCheckBox.Height = notePanel.Height;
-            doneCheckBox.CheckedChanged += DoneCheckBox_CheckedChanged;
-            doneCheckBox.Location = new Point(0, 0);
-            notePanel.Controls.Add(doneCheckBox);
-
-            TextBox noteTextBox = new TextBox();
-            noteTextBox.Name = "noteTextBox";
-            noteTextBox.BackColor = rootPanel.BackColor;
-            noteTextBox.BorderStyle = BorderStyle.None;
-            noteTextBox.Height = notePanel.Height;
-            noteTextBox.KeyDown += NoteTextBox_KeyDown;
-            noteTextBox.Font = new Font(noteTextBox.Font.FontFamily, 10f);
-            noteTextBox.Location = new Point(0, 3);
-            //noteTextBox.Multiline = true;
-            //noteTextBox.ScrollBars = ScrollBars.None;
-            //noteTextBox.WordWrap = true;
-            //noteTextBox.AutoSize = true;
-            notePanel.Controls.Add(noteTextBox);
-
-            if (n != null)
-            {
-                doneCheckBox.Checked = n.Done;
-                noteTextBox.Text = n.Text;
-
-                if (n.SubNotes != null && n.SubNotes.Count > 0)
-                    foreach (SubNote s in n.SubNotes)
-                        AddNewSubNotePanel(notePanel, -1, s);
-                else
-                    AddNewSubNotePanel(notePanel);
-            }
-            else
-                AddNewSubNotePanel(notePanel);
-
-            rootPanel.Controls.Add(notePanel);
-            if (index >= 0)
-                rootPanel.Controls.SetChildIndex(notePanel, index);
-
-            return notePanel;
-        }
-        Panel AddNewSubNotePanel(Panel parent, int index = -1, SubNote s = null)
-        {
-            Panel subNotePanel = new Panel();
-            subNotePanel.Name = "subNotePanel";
-            subNotePanel.Anchor = AnchorStyles.Left | AnchorStyles.Top | AnchorStyles.Right;
-            subNotePanel.BackColor = rootPanel.BackColor;
-            subNotePanel.Width = rootPanel.Width;
-            subNotePanel.Height = defaultPanelHeight;
-
-            CheckBox subNoteDoneCheckBox = new CheckBox();
-            subNoteDoneCheckBox.Name = "subNoteDoneCheckBox";
-            subNoteDoneCheckBox.BackColor = rootPanel.BackColor;
-            subNoteDoneCheckBox.Width = 18;
-            subNoteDoneCheckBox.Height = subNotePanel.Height;
-            if (s != null)
-                subNoteDoneCheckBox.Checked = s.Done;
-            subNoteDoneCheckBox.CheckedChanged += SubNoteDoneCheckBox_CheckedChanged;
-            subNoteDoneCheckBox.Location = new Point(0, 0);
-            subNotePanel.Controls.Add(subNoteDoneCheckBox);
-
-            TextBox subNoteTextBox = new TextBox();
-            subNoteTextBox.Name = "subNoteTextBox";
-            subNoteTextBox.BackColor = rootPanel.BackColor;
-            subNoteTextBox.BorderStyle = BorderStyle.None;
-            subNoteTextBox.Height = defaultPanelHeight;
-            if (s != null)
-                subNoteTextBox.Text = s.Text;
-            subNoteTextBox.KeyDown += SubNoteTextBox_KeyDown;
-            subNoteTextBox.DoubleClick += SubNoteTextBox_DoubleClick;
-            subNoteTextBox.Font = new Font(subNoteTextBox.Font.FontFamily, 9f);
-            subNoteTextBox.Location = new Point(0, 4);
-            subNotePanel.Controls.Add(subNoteTextBox);
-
-            if (subNoteDoneCheckBox.Checked)
-                subNoteTextBox.Font = new Font(subNoteTextBox.Font, FontStyle.Strikeout);
-
-            parent.Controls.Add(subNotePanel);
-            if (index >= 0)
-                parent.Controls.SetChildIndex(subNotePanel, index);
-
-            LayoutNotePanels();
-
-            return subNotePanel;
-        }
-
-        void LayoutNotePanels()
-        {
-            int scroll = rootPanel.VerticalScroll.Value;
-            //rootPanel.VerticalScroll.Value = 0;
-
-            int curY = -scroll;
-            foreach (Panel p in rootPanel.Controls.OfType<Panel>())
-            {
-                // Panel layout
-                p.Location = new Point(0, curY);
-                curY += p.Height;
-
-                int curX = 0, curSubY = ((TextBox)p.Controls.Find("noteTextBox", true)[0]).Height + uiPadding;
-                foreach (Control c in p.Controls)
-                {
-                    // Subpanel layout
-                    if (c.Name == "subNotePanel")
-                    {
-                        c.Location = new Point(25, curSubY);
-                        curSubY += c.Height;
-
-                        int curSubX = subNoteIntend;
-                        foreach (Control s in c.Controls)
-                        {
-                            s.Location = new Point(curSubX, s.Location.Y);
-                            curSubX += s.Width + uiPadding;
-                        }
-                        var subTextBox = c.Controls.Find("subNoteTextBox", true).First();
-                        subTextBox.Width = c.Width - subTextBox.Location.X;
-                    }
-                    else
-                    {
-                        c.Location = new Point(curX, c.Location.Y);
-                        curX += c.Width + uiPadding;
-                    }
-                }
-                var textBox = p.Controls.Find("noteTextBox", true).First();
-                textBox.Width = p.Width - textBox.Location.X;
-            }
-
-            //rootPanel.VerticalScroll.Value = scroll;
-        }
-        private void UpdatePanelHeight(Control Panel, int lenOffset = 0)
-        {
-            try
-            {
-                var textBox = (TextBox)Panel.Controls.Find("noteTextBox", true)[0];
-                int textboxLines = textBox.PreferredSize.Width / textBox.Width + 1;
-                if (textboxLines <= 0)
-                    textboxLines = 1;
-                textBox.Multiline = textboxLines > 1;
-                textBox.Height = textboxLines * textBox.Font.Height + 5;
-
-                int subNotesCount = Panel.Controls.Find("subNotePanel", true).Length;
-                Panel.Height = textBox.Height + subNotesCount * (defaultPanelHeight) + uiPadding * 2;
-            }
-            catch { }
-        }
-
-        Payload GetNewPayload() => new Payload(Config.Data.SaveTime, Config.Data.Notes);
-
+        Payload GetNewPayload() => new(Config.Data.SaveTime, Config.Data.Notes);
         void OnPayloadRecieved(string receivedText, Payload payload)
         {
             Logger.WriteLine($"Recived {receivedText}", false);
@@ -363,19 +174,20 @@ namespace Notes.Desktop
             if (validPayload)
                 this.InvokeIfRequired(() =>
                 {
+
                     LoadConfig();
                     SaveConfig(false);
                 });
         }
 
-        private void SubNoteTextBox_DoubleClick(object sender, EventArgs e)
+        public void SubNoteTextBox_DoubleClick(object sender, EventArgs e)
         {
             var origin = (TextBox)sender;
             if (origin.Text.Contains("://"))
                 try { Process.Start(new ProcessStartInfo(origin.Text) { UseShellExecute = true }); }
                 catch (Exception ex) { Logger.Write(ex); }
         }
-        private void NoteTextBox_KeyDown(object sender, KeyEventArgs e)
+        public void NoteTextBox_KeyDown(object sender, KeyEventArgs e)
         {
             var origin = (TextBox)sender;
             if (e.KeyCode == Keys.Enter)
@@ -391,9 +203,6 @@ namespace Notes.Desktop
             {
                 if (e.KeyCode == Keys.Back && origin.Text.Length == 0 && rootPanel.Controls.Count > 1)
                 {
-                    int scroll = rootPanel.VerticalScroll.Value;
-                    rootPanel.VerticalScroll.Value = 0;
-
                     int index = rootPanel.Controls.IndexOf(origin.Parent);
                     rootPanel.Controls.RemoveAt(index);
                     if (index > 0)
@@ -401,13 +210,11 @@ namespace Notes.Desktop
                     else
                         rootPanel.Controls.Find("noteTextBox", true).First().Focus();
                     LayoutNotePanels();
-
-                    rootPanel.VerticalScroll.Value = scroll;
                 }
             }
             unsavedEdits = true;
         }
-        private void SubNoteTextBox_KeyDown(object sender, KeyEventArgs e)
+        public void SubNoteTextBox_KeyDown(object sender, KeyEventArgs e)
         {
             var origin = (TextBox)sender;
             var root = (Panel)origin.Parent.Parent;
@@ -416,7 +223,7 @@ namespace Notes.Desktop
                 int index = origin.Parent.Parent.Controls.IndexOf(origin.Parent);
                 var insertionIndex = origin.SelectionStart == 0 ? index : index + 1;
                 var p = AddNewSubNotePanel(root, insertionIndex);
-                UpdatePanelHeight(root, 1);
+                UpdatePanelHeight(root);
                 LayoutNotePanels();
 
                 p.Controls.Find("subNoteTextBox", true).First().Focus();
@@ -437,7 +244,7 @@ namespace Notes.Desktop
             }
             unsavedEdits = true;
         }
-        private void DoneCheckBox_CheckedChanged(object sender, EventArgs e)
+        public void DoneCheckBox_CheckedChanged(object sender, EventArgs e)
         {
             var origin = (CheckBox)sender;
             if (origin.Checked)
@@ -452,7 +259,7 @@ namespace Notes.Desktop
             }
             unsavedEdits = true;
         }
-        private void SubNoteDoneCheckBox_CheckedChanged(object sender, EventArgs e)
+        public void SubNoteDoneCheckBox_CheckedChanged(object sender, EventArgs e)
         {
             var origin = (CheckBox)sender;
             if (origin.Checked)
@@ -467,13 +274,13 @@ namespace Notes.Desktop
             }
             unsavedEdits = true;
         }
-        private void OrderButton_MouseDown(object sender, MouseEventArgs e)
+        public void OrderButton_MouseDown(object sender, MouseEventArgs e)
         {
             var origin = (Label)sender;
             draggedPanel = (Panel)origin.Parent;
             barThingy.Visible = true;
         }
-        private void OrderButton_MouseUp(object sender, MouseEventArgs e)
+        public void OrderButton_MouseUp(object sender, MouseEventArgs e)
         {
             if (draggedPanel != null)
             {
@@ -500,7 +307,7 @@ namespace Notes.Desktop
             }
             draggedPanel = null;
         }
-        private void OrderButton_MouseMove(object sender, MouseEventArgs e)
+        public void OrderButton_MouseMove(object sender, MouseEventArgs e)
         {
             if (draggedPanel != null)
             {
@@ -520,20 +327,41 @@ namespace Notes.Desktop
                 barThingy.Location = new Point(barThingy.Location.X, panelIndex * defaultPanelHeight + rootPanel.Location.Y);
             }
         }
-        private void ExpandButton_Click(object sender, EventArgs e)
+        public void ExpandButton_Click(object sender, EventArgs e)
         {
-            var origin = (Label)sender;
-            if (origin.Parent.Height > defaultPanelHeight)
+            var origin = (Control)sender;
+            var animTime = expandButtonsAnimTimes.GetValueOrDefault((Panel)origin.Parent);
+            bool closing = false;
+
+            if (animTime >= 15)
             {
                 // Already expanded
-                origin.Parent.Height = defaultPanelHeight;
+                UpdatePanelHeight(origin.Parent, true);
+                closing = true;
             }
-            else
+            else if (animTime <= 0)
             {
                 // Closed
-                UpdatePanelHeight(origin.Parent);
+                UpdatePanelHeight(origin.Parent, false);
             }
+            else
+                return;
+
             LayoutNotePanels();
+            Task.Factory.StartNew(async () => { // Rapid control invalidion thread to trigger redraw
+                float change = 1;
+                if (closing)
+                    change *= -1;
+                for (int i = 0; i < maxAnimTime; i++)
+                {
+                    await Task.Delay(16);
+                    this.InvokeIfRequired(() =>
+                    {
+                        expandButtonsAnimTimes[(Panel)origin.Parent] += change;
+                        origin.Refresh();
+                    });
+                }
+            });
         }
 
         protected override void OnPaint(PaintEventArgs e)
@@ -680,6 +508,11 @@ namespace Notes.Desktop
         private void MainForm_MouseUp(object sender, MouseEventArgs e)
         {
             dragging = false;
+
+            if (dragType != DragType.Normal)
+            {
+                this.Refresh();
+            }
         }
 
         private void MainForm_SizeChanged(object sender, EventArgs e)

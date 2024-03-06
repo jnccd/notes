@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -23,7 +25,6 @@ namespace Notes.Desktop
                 memoryStream.Write(buffer, 0, reader);
             return memoryStream.ToArray();
         }
-
         public static void InvokeIfRequired(this ISynchronizeInvoke obj, MethodInvoker action)
         {
             if (obj.InvokeRequired)
@@ -36,7 +37,6 @@ namespace Notes.Desktop
                 action();
             }
         }
-
         public static List<Control> GetChildrenRecursively(this Control c)
         {
             List<Control> re = new List<Control>();
@@ -48,6 +48,11 @@ namespace Notes.Desktop
 
             return re;
         }
+
+        // Idk why Im using the System Numerics stuff, its kinda weird, but mostly what I need so whatever
+        public static Point ToPoint(this Vector2 v) => new((int)v.X, (int)v.Y);
+        // This is a completely wrong implementation considering its supposed to be 3 ROWS and 2 COLUMNS but it makes sense intuitively
+        public static Vector2 Multiply(this Matrix3x2 m, Vector2 v) => new(v.X * m.M11 + v.Y * m.M21 + m.M31, v.X * m.M12 + v.Y * m.M22 + m.M32);
 
         public static async Task<T> WithCancellation<T>(this Task<T> task, CancellationToken cancellationToken)
         {
