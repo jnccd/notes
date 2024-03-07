@@ -43,7 +43,8 @@ namespace Notes.Desktop
         Point dragSauce, globalDragSauce, globalDragLocationSauce;
         Size dragSizeSauce;
         Panel draggedPanel = null;
-        
+        int minPanelCounter;
+
         public MainForm()
         {
             InitializeComponent();
@@ -249,25 +250,31 @@ namespace Notes.Desktop
             if (draggedPanel != null)
             {
                 var origin = (Label)sender;
+                var draggedNoteUi = NoteUi.UiToNote[draggedPanel];
+                var draggedNoteSubNotePanels = draggedNoteUi.GetAllChildren().Select(x => x.UiPanel).ToList();
 
                 int mousePosY = e.Y + origin.Location.Y + origin.Parent.Location.Y;
 
                 int minVal = int.MaxValue; Panel minPanel = null;
                 foreach (Panel x in rootPanel.Controls.OfType<Panel>())
-                    if (x.Height > 5 && Math.Abs(mousePosY - x.Location.Y) < minVal)
+                    if (x.Height > 5 && 
+                        !draggedNoteSubNotePanels.Contains(x) && 
+                        Math.Abs(mousePosY - x.Location.Y) < minVal)
                     {
                         minVal = Math.Abs(mousePosY - x.Location.Y);
                         minPanel = x;
                     }
+                if (minPanel == null)
+                    return;
+                int oldDraggedNoteUiPanelIndex = rootPanel.Controls.IndexOf(draggedNoteUi.UiPanel);
                 int panelIndex = rootPanel.Controls.IndexOf(minPanel);
                 var noteUiMinPanel = NoteUi.UiToNote[minPanel];
-                var draggedNoteUi = NoteUi.UiToNote[draggedPanel];
 
-                // TODO: Shorten this
-                draggedNoteUi.Parent.RemoveSubNote(draggedNoteUi); 
-                noteUiMinPanel.Parent.AddSubNoteAt(draggedNoteUi.Note, this, 
-                    noteUiMinPanel.Parent.SubNotes.IndexOf(noteUiMinPanel), 
-                    rootPanel.Controls.IndexOf(minPanel));
+                // Remove and reinsert
+                draggedNoteUi.Parent.RemoveSubNote(draggedNoteUi);
+                int minPanelNoteUiIndex = noteUiMinPanel.Parent.SubNotes.IndexOf(noteUiMinPanel);
+                int minPanelPanelIndex = rootPanel.Controls.IndexOf(minPanel);
+                noteUiMinPanel.Parent.AddSubNoteAt(draggedNoteUi.Note, this, minPanelNoteUiIndex, minPanelPanelIndex);
 
                 //rootPanel.Controls.SetChildIndex(draggedPanel, panelIndex);
                 barThingy.Visible = false;
@@ -279,13 +286,17 @@ namespace Notes.Desktop
             if (draggedPanel != null)
             {
                 var origin = (Label)sender;
+                var draggedNoteUi = NoteUi.UiToNote[draggedPanel];
+                var draggedNoteSubNotePanels = draggedNoteUi.GetAllChildren().Select(x => x.UiPanel).ToList();
 
                 int mousePosY = e.Y + origin.Location.Y + origin.Parent.Location.Y;
 
-                int minVal = int.MaxValue, counter = 0, minPanelCounter = 0; 
+                int minVal = int.MaxValue, counter = 0; 
+                minPanelCounter = 0; 
                 Panel minPanel = null;
                 foreach (Panel x in rootPanel.Controls.OfType<Panel>())
-                    if (x.Height > 5)
+                    if (x.Height > 5 && 
+                        !draggedNoteSubNotePanels.Contains(x))
                     {
                         counter++;
                         if (Math.Abs(mousePosY - x.Location.Y) < minVal)
@@ -298,7 +309,7 @@ namespace Notes.Desktop
                     
                 int panelIndex = rootPanel.Controls.IndexOf(minPanel);
 
-                barThingy.Location = new Point(barThingy.Location.X, minPanelCounter * Globals.defaultPanelHeight + rootPanel.Location.Y);
+                barThingy.Location = new Point(barThingy.Location.X, (minPanelCounter-1) * Globals.defaultPanelHeight + rootPanel.Location.Y);
             }
         }
         public void ExpandButton_Click(object sender, EventArgs e)
