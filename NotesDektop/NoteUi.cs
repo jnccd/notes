@@ -23,7 +23,8 @@ namespace Notes.Desktop
         public readonly NoteUi Parent;
         public static readonly Dictionary<Panel, NoteUi> UiToNote = new();
 
-        public bool Shown = false;
+        public bool Shown { private set; get; }
+        private bool expanded;
         float expandButtonAnimTime;
 
         const float fontSize = 10f;
@@ -43,6 +44,7 @@ namespace Notes.Desktop
             Parent = parent;
             parentForm = mainForm;
             Shown = depth <= 1;
+            expanded = depth <= 0;
 
             CreateFormsUi(mainForm, index);
 
@@ -64,6 +66,7 @@ namespace Notes.Desktop
             Parent = null;
             parentForm = mainForm;
             Shown = true;
+            expanded = true;
 
             foreach (Note subNote in Note.SubNotes)
                 SubNotes.Add(new NoteUi(subNote, mainForm, depth + 1, this));
@@ -151,12 +154,12 @@ namespace Notes.Desktop
         }
         public void UpdatePanelHeight()
         {
-            if (!Shown)
+            if (!AreAllParentsExpanded())
                 UiPanel.Height = 0;
             else
             {
                 var textBox = (TextBox)UiPanel.Controls.Find("noteTextBox", true)[0];
-                int textboxLines = textBox.PreferredSize.Width / textBox.Width + 1;
+                int textboxLines = (textBox.PreferredSize.Width - 10) / textBox.Width + 1;
                 if (textboxLines <= 0)
                     textboxLines = 1;
                 textBox.Multiline = textboxLines > 1;
@@ -164,6 +167,32 @@ namespace Notes.Desktop
 
                 UiPanel.Height = textBox.Height + Globals.uiPadding;
             }
+        }
+        public void ToggleExpand()
+        {
+            if (SubNotes.Count == 0)
+                AddSubNoteAt(new Note(), parentForm, 0);
+
+            foreach (var child in SubNotes)
+                child.Shown = !child.Shown;
+            expanded = !expanded;
+
+            parentForm.LayoutNotePanels();
+        }
+        void HideRecursive()
+        {
+            Shown = false;
+            foreach (var child in SubNotes)
+                child.HideRecursive();
+        }
+        bool AreAllParentsExpanded()
+        {
+            if (Parent == null)
+                return true;
+            else if (!Parent.expanded)
+                return false;
+            else
+                return Parent.AreAllParentsExpanded();
         }
 
         private void OnExpandButtonPaint(object sender, PaintEventArgs e)

@@ -296,12 +296,7 @@ namespace Notes.Desktop
             var origin = (Control)sender;
             var noteUiOrigin = NoteUi.UiToNote[(Panel)origin.Parent];
 
-            if (noteUiOrigin.SubNotes.Count == 0)
-                noteUiOrigin.AddSubNoteAt(new Note(), this, 0);
-            foreach (var child in noteUiOrigin.SubNotes)
-                child.Shown = !child.Shown;
-            
-            LayoutNotePanels();
+            noteUiOrigin.ToggleExpand();
         }
 
         protected override void OnPaint(PaintEventArgs e)
