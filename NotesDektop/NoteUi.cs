@@ -183,6 +183,13 @@ namespace Notes.Desktop
             else
                 return Parent.AreAllParentsExpanded();
         }
+        public List<NoteUi> GetAllChildren()
+        {
+            var re = SubNotes.ToList(); // List to List to make a shallow copy
+            foreach (var child in SubNotes)
+                re.AddRange(child.GetAllChildren());
+            return re;
+        }
 
         private void OnExpandButtonPaint(object sender, PaintEventArgs e)
         {
