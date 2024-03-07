@@ -35,6 +35,7 @@ namespace Notes.Desktop
         DateTime lastSaveTime = DateTime.Now;
         bool unsavedEdits = false;
         Communicator comms = null;
+        NoteUi rootNode = null;
 
         // Drag
         bool dragging = false;
@@ -88,7 +89,7 @@ namespace Notes.Desktop
                 Thread.CurrentThread.Name = "Autosave Thread";
                 while (true)
                 {
-                    Task.Delay(500).Wait();
+                    Task.Delay(1000).Wait();
                     if (unsavedEdits)
                     {
                         SaveConfig();
@@ -103,26 +104,6 @@ namespace Notes.Desktop
         {
             lock (Config.Data)
             {
-                Config.Data.Notes.Clear();
-
-                foreach (Panel p in rootPanel.Controls.OfType<Panel>())
-                {
-                    string tmp;
-                    var subNotes = new List<SubNote>();
-                    foreach (Panel sub in p.Controls.OfType<Panel>())
-                        if (sub.Name.StartsWith("sub") && !string.IsNullOrWhiteSpace(tmp = ((TextBox)sub.Controls.Find("subNoteTextBox", true)[0]).Text))
-                            subNotes.Add(new SubNote() { Done = ((CheckBox)sub.Controls.Find("subNoteDoneCheckBox", true)[0]).Checked, Text = tmp });
-
-                    Note add = new()
-                    {
-                        Done = ((CheckBox)p.Controls.Find("doneCheckBox", true)[0]).Checked,
-                        Prio = NotePriority.Meduim, // TODO: Add GUI for this?
-                        Text = ((TextBox)p.Controls.Find("noteTextBox", true)[0]).Text,
-                        SubNotes = subNotes
-                    };
-                    Config.Data.Notes.Add(add);
-                }
-
                 Config.Data.Pos = this.Location;
                 Config.Data.Size = this.Size;
                 if (updateSaveTime)
@@ -138,10 +119,11 @@ namespace Notes.Desktop
         {
             lock (Config.Data)
             {
-                // Remove everything except the start panel
                 rootPanel.Controls.Clear();
+                NoteUi.UiToNote.Clear();
 
-                
+                rootNode = new NoteUi(Config.Data.Notes, this);
+                LayoutNotePanels();
             }
         }
 
@@ -164,6 +146,7 @@ namespace Notes.Desktop
                         Logger.WriteLine("I think theres something missing...");
                         Logger.WriteLine($"Config has {Config.Data.Notes.Count} Notes and Paylaod {payload.Notes.Count}");
                         Logger.WriteLine($"Recived {receivedText}");
+                        validPayload = false;
                         return;
                     }
 
@@ -174,13 +157,37 @@ namespace Notes.Desktop
             if (validPayload)
                 this.InvokeIfRequired(() =>
                 {
-
                     LoadConfig();
                     SaveConfig(false);
                 });
         }
 
-        public void SubNoteTextBox_DoubleClick(object sender, EventArgs e)
+        public void LayoutNotePanels()
+        {
+            int scroll = rootPanel.VerticalScroll.Value;
+            //rootPanel.VerticalScroll.Value = 0;
+
+            int curY = -scroll;
+            foreach (Panel p in rootPanel.Controls.OfType<Panel>())
+            {
+                // Panel layout
+                p.Location = new Point(p.Location.X, curY);
+                p.Width = rootPanel.Width - p.Location.X - 12;
+                NoteUi.UiToNote[p].UpdatePanelHeight();
+                curY += p.Height;
+
+                int curX = 0;
+                foreach (Control c in p.Controls)
+                {
+                    c.Location = new Point(curX, c.Location.Y);
+                    curX += c.Width + Globals.uiPadding;
+                }
+                var textBox = p.Controls.Find("noteTextBox", true).First();
+                textBox.Width = p.Width - textBox.Location.X;
+            }
+        }
+
+        public void NoteTextBox_DoubleClick(object sender, EventArgs e) // TODO: Hook this
         {
             var origin = (TextBox)sender;
             if (origin.Text.Contains("://"))
@@ -190,57 +197,28 @@ namespace Notes.Desktop
         public void NoteTextBox_KeyDown(object sender, KeyEventArgs e)
         {
             var origin = (TextBox)sender;
+            var noteUiOrigin = NoteUi.UiToNote[(Panel)origin.Parent];
             if (e.KeyCode == Keys.Enter)
             {
                 int index = rootPanel.Controls.IndexOf(origin.Parent);
                 var insertionIndex = origin.SelectionStart == 0 ? index : index + 1;
-                var p = AddNewNotePanel(insertionIndex);
+                var p = noteUiOrigin.Parent.AddSubNoteAt(new Note(), this, insertionIndex);
                 LayoutNotePanels();
 
-                p.Controls.Find("noteTextBox", true).First().Focus();
+                p.UiPanel.Controls.Find("noteTextBox", true).First().Focus();
             }
+            else if (e.KeyCode == Keys.Back && origin.Text.Length == 0 && rootPanel.Controls.Count > 1)
+            {
+                int index = rootPanel.Controls.IndexOf(origin.Parent);
+                rootPanel.Controls.RemoveAt(index);
+                if (index > 0)
+                    rootPanel.Controls[index - 1].Controls.Find("noteTextBox", true).First().Focus();
+                else
+                    rootPanel.Controls.Find("noteTextBox", true).First().Focus();
+            } 
             else
             {
-                if (e.KeyCode == Keys.Back && origin.Text.Length == 0 && rootPanel.Controls.Count > 1)
-                {
-                    int index = rootPanel.Controls.IndexOf(origin.Parent);
-                    rootPanel.Controls.RemoveAt(index);
-                    if (index > 0)
-                        rootPanel.Controls[index - 1].Controls.Find("noteTextBox", true).First().Focus();
-                    else
-                        rootPanel.Controls.Find("noteTextBox", true).First().Focus();
-                    LayoutNotePanels();
-                }
-            }
-            unsavedEdits = true;
-        }
-        public void SubNoteTextBox_KeyDown(object sender, KeyEventArgs e)
-        {
-            var origin = (TextBox)sender;
-            var root = (Panel)origin.Parent.Parent;
-            if (e.KeyCode == Keys.Enter)
-            {
-                int index = origin.Parent.Parent.Controls.IndexOf(origin.Parent);
-                var insertionIndex = origin.SelectionStart == 0 ? index : index + 1;
-                var p = AddNewSubNotePanel(root, insertionIndex);
-                UpdatePanelHeight(root);
-                LayoutNotePanels();
 
-                p.Controls.Find("subNoteTextBox", true).First().Focus();
-            }
-            else
-            {
-                if (e.KeyCode == Keys.Back && origin.Text.Length == 0 && root.Controls.Find("subNotePanel", true).Count() > 1)
-                {
-                    int index = root.Controls.IndexOf(origin.Parent);
-                    root.Controls.RemoveAt(index);
-                    if (index > 4)
-                        root.Controls[index - 1].Controls.Find("subNoteTextBox", true).First().Focus();
-                    else
-                        root.Controls.Find("subNoteTextBox", true).First().Focus();
-                    UpdatePanelHeight(root);
-                    LayoutNotePanels();
-                }
             }
             unsavedEdits = true;
         }
@@ -255,21 +233,6 @@ namespace Notes.Desktop
             else
             {
                 var textBox = origin.Parent.Controls.Find("noteTextBox", true).First();
-                textBox.Font = new Font(textBox.Font, FontStyle.Regular);
-            }
-            unsavedEdits = true;
-        }
-        public void SubNoteDoneCheckBox_CheckedChanged(object sender, EventArgs e)
-        {
-            var origin = (CheckBox)sender;
-            if (origin.Checked)
-            {
-                var textBox = origin.Parent.Controls.Find("subNoteTextBox", true).First();
-                textBox.Font = new Font(textBox.Font, FontStyle.Strikeout);
-            }
-            else
-            {
-                var textBox = origin.Parent.Controls.Find("subNoteTextBox", true).First();
                 textBox.Font = new Font(textBox.Font, FontStyle.Regular);
             }
             unsavedEdits = true;
@@ -296,13 +259,14 @@ namespace Notes.Desktop
                         minPanel = x;
                     }
                 int panelIndex = rootPanel.Controls.IndexOf(minPanel);
+                var noteUiMinPanel = NoteUi.UiToNote[minPanel];
+                var draggedNoteUi = NoteUi.UiToNote[draggedPanel];
 
-                if (panelIndex > rootPanel.Controls.IndexOf(origin.Parent))
-                    panelIndex--;
+                // TODO: Shorten this
+                draggedNoteUi.Parent.RemoveSubNoteAt(draggedNoteUi.Parent.SubNotes.IndexOf(draggedNoteUi)); 
+                noteUiMinPanel.Parent.AddSubNoteAt(draggedNoteUi.Note, this, noteUiMinPanel.Parent.SubNotes.IndexOf(noteUiMinPanel));
 
                 rootPanel.Controls.SetChildIndex(draggedPanel, panelIndex);
-                LayoutNotePanels();
-                unsavedEdits = true;
                 barThingy.Visible = false;
             }
             draggedPanel = null;
@@ -324,44 +288,20 @@ namespace Notes.Desktop
                     }
                 int panelIndex = rootPanel.Controls.IndexOf(minPanel);
 
-                barThingy.Location = new Point(barThingy.Location.X, panelIndex * defaultPanelHeight + rootPanel.Location.Y);
+                barThingy.Location = new Point(barThingy.Location.X, panelIndex * Globals.defaultPanelHeight + rootPanel.Location.Y);
             }
         }
         public void ExpandButton_Click(object sender, EventArgs e)
         {
             var origin = (Control)sender;
-            var animTime = expandButtonsAnimTimes.GetValueOrDefault((Panel)origin.Parent);
-            bool closing = false;
+            var noteUiOrigin = NoteUi.UiToNote[(Panel)origin.Parent];
 
-            if (animTime >= 15)
-            {
-                // Already expanded
-                UpdatePanelHeight(origin.Parent, true);
-                closing = true;
-            }
-            else if (animTime <= 0)
-            {
-                // Closed
-                UpdatePanelHeight(origin.Parent, false);
-            }
-            else
-                return;
-
+            if (noteUiOrigin.SubNotes.Count == 0)
+                noteUiOrigin.AddSubNoteAt(new Note(), this, 0);
+            foreach (var child in noteUiOrigin.SubNotes)
+                child.Shown = !child.Shown;
+            
             LayoutNotePanels();
-            Task.Factory.StartNew(async () => { // Rapid control invalidion thread to trigger redraw
-                float change = 1;
-                if (closing)
-                    change *= -1;
-                for (int i = 0; i < maxAnimTime; i++)
-                {
-                    await Task.Delay(16);
-                    this.InvokeIfRequired(() =>
-                    {
-                        expandButtonsAnimTimes[(Panel)origin.Parent] += change;
-                        origin.Refresh();
-                    });
-                }
-            });
         }
 
         protected override void OnPaint(PaintEventArgs e)
@@ -512,13 +452,10 @@ namespace Notes.Desktop
             if (dragType != DragType.Normal)
             {
                 this.Refresh();
+                LayoutNotePanels();
             }
         }
 
-        private void MainForm_SizeChanged(object sender, EventArgs e)
-        {
-            LayoutNotePanels();
-        }
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
             SaveConfig();
