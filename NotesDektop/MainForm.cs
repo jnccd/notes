@@ -202,7 +202,8 @@ namespace Notes.Desktop
             {
                 int index = noteUiOrigin.Parent.SubNotes.IndexOf(noteUiOrigin);
                 var insertionIndex = origin.SelectionStart == 0 ? index : index + 1;
-                var p = noteUiOrigin.Parent.AddSubNoteAt(new Note(), this, insertionIndex);
+                int rootPanelIndex = rootPanel.Controls.IndexOf(origin.Parent);
+                var p = noteUiOrigin.Parent.AddSubNoteAt(new Note(), this, insertionIndex, rootPanelIndex + 1);
                 LayoutNotePanels();
 
                 p.UiPanel.Controls.Find("noteTextBox", true).First().Focus();
@@ -253,7 +254,7 @@ namespace Notes.Desktop
 
                 int minVal = int.MaxValue; Panel minPanel = null;
                 foreach (Panel x in rootPanel.Controls.OfType<Panel>())
-                    if (Math.Abs(mousePosY - x.Location.Y) < minVal)
+                    if (x.Height > 5 && Math.Abs(mousePosY - x.Location.Y) < minVal)
                     {
                         minVal = Math.Abs(mousePosY - x.Location.Y);
                         minPanel = x;
@@ -263,10 +264,12 @@ namespace Notes.Desktop
                 var draggedNoteUi = NoteUi.UiToNote[draggedPanel];
 
                 // TODO: Shorten this
-                draggedNoteUi.Parent.RemoveSubNoteAt(draggedNoteUi.Parent.SubNotes.IndexOf(draggedNoteUi)); 
-                noteUiMinPanel.Parent.AddSubNoteAt(draggedNoteUi.Note, this, noteUiMinPanel.Parent.SubNotes.IndexOf(noteUiMinPanel));
+                draggedNoteUi.Parent.RemoveSubNote(draggedNoteUi); 
+                noteUiMinPanel.Parent.AddSubNoteAt(draggedNoteUi.Note, this, 
+                    noteUiMinPanel.Parent.SubNotes.IndexOf(noteUiMinPanel), 
+                    rootPanel.Controls.IndexOf(minPanel));
 
-                rootPanel.Controls.SetChildIndex(draggedPanel, panelIndex);
+                //rootPanel.Controls.SetChildIndex(draggedPanel, panelIndex);
                 barThingy.Visible = false;
             }
             draggedPanel = null;
@@ -279,16 +282,23 @@ namespace Notes.Desktop
 
                 int mousePosY = e.Y + origin.Location.Y + origin.Parent.Location.Y;
 
-                int minVal = int.MaxValue; Panel minPanel = null;
+                int minVal = int.MaxValue, counter = 0, minPanelCounter = 0; 
+                Panel minPanel = null;
                 foreach (Panel x in rootPanel.Controls.OfType<Panel>())
-                    if (Math.Abs(mousePosY - x.Location.Y) < minVal)
+                    if (x.Height > 5)
                     {
-                        minVal = Math.Abs(mousePosY - x.Location.Y);
-                        minPanel = x;
+                        counter++;
+                        if (Math.Abs(mousePosY - x.Location.Y) < minVal)
+                        {
+                            minVal = Math.Abs(mousePosY - x.Location.Y);
+                            minPanel = x;
+                            minPanelCounter = counter;
+                        }
                     }
+                    
                 int panelIndex = rootPanel.Controls.IndexOf(minPanel);
 
-                barThingy.Location = new Point(barThingy.Location.X, panelIndex * Globals.defaultPanelHeight + rootPanel.Location.Y);
+                barThingy.Location = new Point(barThingy.Location.X, minPanelCounter * Globals.defaultPanelHeight + rootPanel.Location.Y);
             }
         }
         public void ExpandButton_Click(object sender, EventArgs e)

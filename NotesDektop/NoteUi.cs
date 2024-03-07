@@ -23,7 +23,6 @@ namespace Notes.Desktop
         public readonly NoteUi Parent;
         public static readonly Dictionary<Panel, NoteUi> UiToNote = new();
 
-        public bool Shown { private set; get; }
         private bool expanded;
         float expandButtonAnimTime;
 
@@ -31,7 +30,7 @@ namespace Notes.Desktop
         const int treeDepthPadding = 20;
 
         /// <summary>
-        /// Creates new NodeUi instance
+        /// Creates new NoteUi instance
         /// </summary>
         /// <param name="note"></param>
         /// <param name="rootPanel"></param>
@@ -43,13 +42,12 @@ namespace Notes.Desktop
             this.depth = depth;
             Parent = parent;
             parentForm = mainForm;
-            Shown = depth <= 1;
             expanded = depth <= 0;
 
             CreateFormsUi(mainForm, index);
 
             foreach (Note subNote in note.SubNotes)
-                SubNotes.Add(new NoteUi(subNote, mainForm, depth + 1, this));
+                SubNotes.Add(new NoteUi(subNote, mainForm, depth + 1, this, index >= 0 ? index + 1 : index));
         }
         /// <summary>
         /// Constructor for empty root NoteUi Node
@@ -65,7 +63,6 @@ namespace Notes.Desktop
             this.depth = 0;
             Parent = null;
             parentForm = mainForm;
-            Shown = true;
             expanded = true;
 
             foreach (Note subNote in Note.SubNotes)
@@ -173,17 +170,9 @@ namespace Notes.Desktop
             if (SubNotes.Count == 0)
                 AddSubNoteAt(new Note(), parentForm, 0);
 
-            foreach (var child in SubNotes)
-                child.Shown = !child.Shown;
             expanded = !expanded;
 
             parentForm.LayoutNotePanels();
-        }
-        void HideRecursive()
-        {
-            Shown = false;
-            foreach (var child in SubNotes)
-                child.HideRecursive();
         }
         bool AreAllParentsExpanded()
         {
@@ -215,9 +204,11 @@ namespace Notes.Desktop
                     ToArray());
         }
 
-        public NoteUi AddSubNoteAt(Note note, MainForm mainForm, int index)
+        public NoteUi AddSubNoteAt(Note note, MainForm mainForm, int index, int rootPanelIndex = -1)
         {
-            var newNoteUi = new NoteUi(note, mainForm, depth + 1, this, (UiPanel == null ? 0 : rootPanel.Controls.IndexOf(UiPanel)) + 1 + index);
+            if (rootPanelIndex == -1)
+                rootPanelIndex = (UiPanel == null ? 0 : rootPanel.Controls.IndexOf(UiPanel)) + 1 + index;
+            var newNoteUi = new NoteUi(note, mainForm, depth + 1, this, rootPanelIndex);
             Note.SubNotes.Insert(index, note);
             SubNotes.Insert(index, newNoteUi);
 
@@ -236,12 +227,20 @@ namespace Notes.Desktop
         }
         public void RemoveSubNote(NoteUi subNote)
         {
-            subNote.UiPanel.Parent.Controls.Remove(subNote.UiPanel);
+            RemoveSubNoteUi(subNote);
+
             Note.SubNotes.Remove(subNote.Note);
             UiToNote.Remove(subNote.UiPanel);
             SubNotes.Remove(subNote);
 
             parentForm.LayoutNotePanels();
+        }
+        private void RemoveSubNoteUi(NoteUi subNote, int depth = 0)
+        {
+            foreach (var subSubNote in subNote.SubNotes)
+                subNote.RemoveSubNoteUi(subSubNote, depth + 1);
+
+            subNote.UiPanel.Parent.Controls.Remove(subNote.UiPanel);
         }
     }
 }
