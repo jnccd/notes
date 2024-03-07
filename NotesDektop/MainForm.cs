@@ -177,6 +177,7 @@ namespace Notes.Desktop
                 NoteUi.UiToNote[p].UpdatePanelHeight();
                 curY += p.Height;
 
+                // Layout of controls inside panel
                 int curX = 0;
                 foreach (Control c in p.Controls)
                 {
