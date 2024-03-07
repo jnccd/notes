@@ -217,7 +217,7 @@ namespace Notes.Desktop
 
         public NoteUi AddSubNoteAt(Note note, MainForm mainForm, int index)
         {
-            var newNoteUi = new NoteUi(note, mainForm, depth + 1, this, rootPanel.Controls.IndexOf(UiPanel) + 1 + index);
+            var newNoteUi = new NoteUi(note, mainForm, depth + 1, this, (UiPanel == null ? 0 : rootPanel.Controls.IndexOf(UiPanel)) + 1 + index);
             Note.SubNotes.Insert(index, note);
             SubNotes.Insert(index, newNoteUi);
 
@@ -227,10 +227,19 @@ namespace Notes.Desktop
         }
         public void RemoveSubNoteAt(int index)
         {
-            SubNotes[index].UiPanel.Parent.Controls.RemoveAt(index);
+            SubNotes[index].UiPanel.Parent.Controls.RemoveAt((rootPanel == null ? 0 : rootPanel.Controls.IndexOf(UiPanel)) + 1 + index);
             Note.SubNotes.RemoveAt(index);
-            SubNotes.RemoveAt(index);
             UiToNote.Remove(SubNotes[index].UiPanel);
+            SubNotes.RemoveAt(index);
+            
+            parentForm.LayoutNotePanels();
+        }
+        public void RemoveSubNote(NoteUi subNote)
+        {
+            subNote.UiPanel.Parent.Controls.Remove(subNote.UiPanel);
+            Note.SubNotes.Remove(subNote.Note);
+            UiToNote.Remove(subNote.UiPanel);
+            SubNotes.Remove(subNote);
 
             parentForm.LayoutNotePanels();
         }

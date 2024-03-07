@@ -89,7 +89,7 @@ namespace Notes.Desktop
                 Thread.CurrentThread.Name = "Autosave Thread";
                 while (true)
                 {
-                    Task.Delay(1000).Wait();
+                    Task.Delay(200).Wait();
                     if (unsavedEdits)
                     {
                         SaveConfig();
@@ -200,7 +200,7 @@ namespace Notes.Desktop
             var noteUiOrigin = NoteUi.UiToNote[(Panel)origin.Parent];
             if (e.KeyCode == Keys.Enter)
             {
-                int index = rootPanel.Controls.IndexOf(origin.Parent);
+                int index = noteUiOrigin.Parent.SubNotes.IndexOf(noteUiOrigin);
                 var insertionIndex = origin.SelectionStart == 0 ? index : index + 1;
                 var p = noteUiOrigin.Parent.AddSubNoteAt(new Note(), this, insertionIndex);
                 LayoutNotePanels();
@@ -210,7 +210,7 @@ namespace Notes.Desktop
             else if (e.KeyCode == Keys.Back && origin.Text.Length == 0 && rootPanel.Controls.Count > 1)
             {
                 int index = rootPanel.Controls.IndexOf(origin.Parent);
-                rootPanel.Controls.RemoveAt(index);
+                noteUiOrigin.Parent.RemoveSubNote(noteUiOrigin);
                 if (index > 0)
                     rootPanel.Controls[index - 1].Controls.Find("noteTextBox", true).First().Focus();
                 else
