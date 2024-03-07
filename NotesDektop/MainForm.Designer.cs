@@ -29,7 +29,7 @@ namespace Notes.Desktop
         /// </summary>
         private void InitializeComponent()
         {
-            rootPanel = new System.Windows.Forms.FlowLayoutPanel();
+            rootPanel = new System.Windows.Forms.Panel();
             barThingy = new System.Windows.Forms.PictureBox();
             ((System.ComponentModel.ISupportInitialize)barThingy).BeginInit();
             SuspendLayout();
@@ -38,13 +38,13 @@ namespace Notes.Desktop
             // 
             rootPanel.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             rootPanel.AutoScroll = true;
-            rootPanel.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
+            //rootPanel.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
             rootPanel.Location = new System.Drawing.Point(10, 9);
             rootPanel.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             rootPanel.Name = "rootPanel";
             rootPanel.Size = new System.Drawing.Size(416, 329);
             rootPanel.TabIndex = 1;
-            rootPanel.WrapContents = false;
+            //rootPanel.WrapContents = false;
             // 
             // barThingy
             // 
@@ -73,7 +73,6 @@ namespace Notes.Desktop
             Text = "Notes";
             FormClosing += MainForm_FormClosing;
             Load += MainForm_Load;
-            SizeChanged += MainForm_SizeChanged;
             MouseDown += MainForm_MouseDown;
             MouseMove += MainForm_MouseMove;
             MouseUp += MainForm_MouseUp;
@@ -83,7 +82,7 @@ namespace Notes.Desktop
 
         #endregion
         private System.Windows.Forms.PictureBox barThingy;
-        private System.Windows.Forms.FlowLayoutPanel rootPanel;
+        private System.Windows.Forms.Panel rootPanel;
     }
 }
 
