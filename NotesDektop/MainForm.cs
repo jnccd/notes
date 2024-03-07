@@ -218,7 +218,7 @@ namespace Notes.Desktop
             } 
             else
             {
-
+                noteUiOrigin.Note.Text = origin.Text;
             }
             unsavedEdits = true;
         }
