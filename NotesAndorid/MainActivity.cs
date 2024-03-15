@@ -18,10 +18,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Diagnostics;
 using Notes.Interface;
-using AlertDialog = Android.App.AlertDialog;
-using Debug = System.Diagnostics.Debug;
-using Configuration;
-using static Android.Provider.Telephony;
+using Android.Util;
+using Config = Configuration.Config;
 
 namespace NotesAndroid
 {
@@ -29,23 +27,21 @@ namespace NotesAndroid
     public class MainActivity : AppCompatActivity
     {
         bool unsavedChanges = false;
+        NoteUi rootNode = null;
 
         // Update Data
         public void UpdateGUItoNotes(List<Note> notes)
         {
-            var parent = FindViewById<LinearLayout>(Resource.Id.noteLinearLayout);
-            var newNote = FindViewById<EditText>(Resource.Id.newNote);
+            var rootLayout = FindViewById<LinearLayout>(Resource.Id.noteLinearLayout);
 
-            if (parent.ChildCount > 1)
-                parent.RemoveViews(0, parent.ChildCount - 1);
+            rootLayout.RemoveViews(0, rootLayout.ChildCount);
+            NoteUi.UiToNote.Clear();
 
-            foreach (Note n in notes)
-                AddNewNoteBox(n, false, false, false);
-            newNote.Text = "";
+            rootNode = new NoteUi(Config.Data.Payload.Notes, this);
 
             UpdateWidget();
 
-            parent.GetChildrenR().ForEach(x => x.Enabled = true);
+            //parent.GetChildrenR().ForEach(x => x.Enabled = true);
         }
         public void UpdateWidget()
         {
@@ -85,63 +81,6 @@ namespace NotesAndroid
         }
         Payload GetNewPayload() => Config.Data.Payload;
 
-        // Create GUI
-        public void AddNewNoteBox(Note n, bool focus, bool extendPayload, bool enabled, int index = -1)
-        {
-            var parent = FindViewById<LinearLayout>(Resource.Id.noteLinearLayout);
-            var newNoteLayout = LayoutInflater.Inflate(Resource.Layout.notebox, null);
-            if (index < 0)
-                index = parent.ChildCount - 1;
-            parent.AddView(newNoteLayout, index);
-
-            var note = newNoteLayout.FindViewById<EditText>(Resource.Id.note);
-            note.Enabled = enabled;
-            note.Text = n == null ? "" : n.Text;
-            note.TextChanged += OnNoteChange;
-
-            var checkBox = newNoteLayout.FindViewById<CheckBox>(Resource.Id.noteDone);
-            checkBox.Enabled = enabled;
-            checkBox.Checked = n != null && n.Done;
-            checkBox.CheckedChange += OnNoteDone;
-
-            var subBox = newNoteLayout.FindViewById<LinearLayout>(Resource.Id.noteSubsLayout);
-            foreach (var sub in (n ?? new Note()).SubNotes ?? new List<SubNote>())
-                AddNewSubNoteBox(sub, subBox, subBox.ChildCount, enabled);
-
-            if (focus)
-                note.RequestFocus();
-            //InputMethodManager imm = (InputMethodManager)GetSystemService(Context.InputMethodService);
-            //imm.HideSoftInputFromWindow(newNote.WindowToken, 0);
-
-            if (extendPayload)
-            {
-                Config.Data.Payload.Notes.Insert(index, new Note() { Text = note.Text });
-            }
-        }
-        public void AddNewSubNoteBox(SubNote sub, LinearLayout subBox, int index, bool enabled, bool focus = false, bool extendPayload = false, Note n = null)
-        {
-            var newSubNoteLayout = LayoutInflater.Inflate(Resource.Layout.sub_notebox, null);
-            subBox.AddView(newSubNoteLayout, index);
-
-            var noteSub = newSubNoteLayout.FindViewById<EditText>(Resource.Id.noteSub);
-            noteSub.Enabled = enabled;
-            noteSub.Text = sub.Text;
-            noteSub.TextChanged += OnSubNoteChange;
-
-            var noteSubDone = newSubNoteLayout.FindViewById<CheckBox>(Resource.Id.noteSubDone);
-            noteSubDone.Enabled = enabled;
-            noteSubDone.Checked = sub.Done;
-            noteSubDone.CheckedChange += OnSubNoteDone;
-
-            if (focus)
-                noteSub.RequestFocus();
-
-            if (extendPayload)
-            {
-                n.SubNotes.Insert(index, sub);
-            }
-        }
-
         // Events
         protected override void OnCreate(Bundle savedInstanceState)
         {
@@ -151,7 +90,7 @@ namespace NotesAndroid
 
             // Setup gui events
             var newNote = FindViewById<EditText>(Resource.Id.newNote);
-            newNote.TextChanged += OnNewNote;
+            //newNote.TextChanged += OnNewNote;
 
             var syncButton = FindViewById<Button>(Resource.Id.syncButton);
             syncButton.Click += (s, e) => Task.Run(() => {
@@ -273,34 +212,41 @@ namespace NotesAndroid
         }
 
         // GUI Events
-        public void OnNewNote(object o, TextChangedEventArgs e)
-        {
-            if (e.Text.Count() == 0)
-                return;
+        //public void OnNewNote(object o, TextChangedEventArgs e)
+        //{
+        //    if (e.Text.Count() == 0)
+        //        return;
 
-            var newNote = FindViewById<EditText>(Resource.Id.newNote);
+        //    var newNote = FindViewById<EditText>(Resource.Id.newNote);
 
-            AddNewNoteBox(new Note() { Text = newNote.Text }, true, true, true);
+        //    AddNewNoteBox(new Note() { Text = newNote.Text }, true, true, true);
 
-            newNote.Text = "";
+        //    newNote.Text = "";
 
-            Config.Data.Payload.Update();
-            unsavedChanges = true;
-        }
+        //    Config.Data.Payload.Update();
+        //    unsavedChanges = true;
+        //}
         public void OnNoteChange(object o, TextChangedEventArgs e)
         {
             EditText ed = (EditText)o;
             ViewGroup note = (ViewGroup)ed.Parent.Parent;
             ViewGroup notes = (ViewGroup)note.Parent;
+            var noteUi = NoteUi.UiToNote[note];
 
             int i = notes.IndexOfChild(note);
 
             if (e.Text.Contains('\n'))
             {
                 ed.Text = ed.Text.Replace("\n", "");
-                AddNewNoteBox(null, true, true, true, i + 1);
+
+                int index = noteUi.Parent.SubNotes.IndexOf(noteUi);
+                var insertionIndex = e.Start == 0 ? index : index + 1;
+
+                noteUi.Parent.AddSubNoteAt(new Note(), this, insertionIndex);
             }
-            else if (e.AfterCount < e.BeforeCount && ed.Text.Length < 1)
+            else if (e.AfterCount < e.BeforeCount && 
+                     ed.Text.Length < 1 && 
+                     e.BeforeCount < 3)
             {
                 notes.RemoveView(note);
 
@@ -326,55 +272,6 @@ namespace NotesAndroid
             int i = notes.IndexOfChild(note);
 
             Config.Data.Payload.Notes[i].Done = ch.Checked;
-
-            Config.Data.Payload.Update();
-            unsavedChanges = true;
-        }
-        public void OnSubNoteChange(object o, TextChangedEventArgs e)
-        {
-            EditText ed = (EditText)o;
-            ViewGroup subnote = (ViewGroup)ed.Parent;
-            ViewGroup subnotes = (ViewGroup)subnote.Parent;
-            ViewGroup note = (ViewGroup)subnotes.Parent;
-            ViewGroup notes = (ViewGroup)note.Parent;
-
-            int ni = notes.IndexOfChild(note);
-            int si = subnotes.IndexOfChild(subnote);
-
-            if (e.Text.Contains('\n'))
-            {
-                ed.Text = ed.Text.Replace("\n", "");
-                AddNewSubNoteBox(new SubNote(), (LinearLayout)subnotes, si + 1, true, true, true, Config.Data.Payload.Notes[ni]);
-            }
-            else if (e.AfterCount < e.BeforeCount && ed.Text.Length < 1)
-            {
-                subnotes.RemoveView(subnote);
-
-                Config.Data.Payload.Notes[ni].SubNotes.RemoveAt(si);
-
-                Config.Data.Payload.Update();
-                unsavedChanges = true;
-            }
-            else
-            {
-                Config.Data.Payload.Notes[ni].SubNotes[si].Text = ed.Text;
-
-                Config.Data.Payload.Update();
-                unsavedChanges = true;
-            }
-        }
-        private void OnSubNoteDone(object o, CompoundButton.CheckedChangeEventArgs e)
-        {
-            CheckBox ch = (CheckBox)o;
-            ViewGroup subnote = (ViewGroup)ch.Parent;
-            ViewGroup subnotes = (ViewGroup)subnote.Parent;
-            ViewGroup note = (ViewGroup)subnotes.Parent;
-            ViewGroup notes = (ViewGroup)note.Parent;
-
-            int ni = notes.IndexOfChild(note);
-            int si = subnotes.IndexOfChild(subnote);
-
-            Config.Data.Payload.Notes[ni].SubNotes[si].Done = ch.Checked;
 
             Config.Data.Payload.Update();
             unsavedChanges = true;

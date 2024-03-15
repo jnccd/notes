@@ -1,7 +1,9 @@
 ﻿using Android.App;
 using Android.Content;
+using Android.Content.Res;
 using Android.OS;
 using Android.Runtime;
+using Android.Util;
 using Android.Views;
 using Android.Widget;
 using AndroidX.AppCompat.App;
@@ -67,6 +69,18 @@ namespace NotesAndroid
                     re.Add(layout.GetChildAt(i));
 
             return re;
+        }
+
+        public static int Dip2px(this Context context, float dpValue)
+        {
+            float scale = context.Resources.DisplayMetrics.Density;
+            return (int)(dpValue * scale + 0.5f);
+        }
+
+        public static int Px2dip(this Context context, float pxValue)
+        {
+            float scale = context.Resources.DisplayMetrics.Density;
+            return (int)(pxValue / scale + 0.5f);
         }
     }
 }
