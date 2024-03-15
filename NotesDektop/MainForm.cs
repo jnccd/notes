@@ -93,6 +93,7 @@ namespace Notes.Desktop
                     Task.Delay(200).Wait();
                     if (unsavedEdits)
                     {
+                        unsavedEdits = false;
                         SaveConfig();
                         comms?.SendString(GetNewPayload().ToString());
                         this.InvokeIfRequired(() => this.Refresh());
@@ -112,7 +113,6 @@ namespace Notes.Desktop
 
                 Config.Save();
 
-                unsavedEdits = false;
                 lastSaveTime = DateTime.Now;
             }
         }
