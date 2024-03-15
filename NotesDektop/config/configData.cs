@@ -7,17 +7,19 @@ namespace Configuration
 {
     public class ConfigData
     {
-        public DateTime SaveTime;
-
-        public string ServerUri;
-        public string ServerUsername;
-        public string ServerPassword;
-
+        // Local Gui Settings
         public Point Pos;
         public Size Size;
         public Color BackColor;
 
+        // Notes payload
+        public DateTime SaveTime;
         public List<Note> Notes;
+
+        // Server
+        public string ServerUri;
+        public string ServerUsername;
+        public string ServerPassword;
 
         public ConfigData()
         {
