@@ -26,7 +26,7 @@ namespace NotesAndroid
                 string.Format("Last update: {0:H:mm:ss}", DateTime.Now));
 
             widgetView.SetTextViewText(Resource.Id.widgetNoteView,
-                    Config.Data.Payload.Notes.Select(x => x.Text).Combine("\n"));
+                    Config.Data.Notes.Select(x => x.Text).Combine("\n"));
 
             widgetView.SetTextColor(Resource.Id.widgetNoteView, Android.Graphics.Color.Black);
         }
