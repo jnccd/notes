@@ -136,11 +136,11 @@ namespace NotesAndroid
                 }
             };
 
+            // Update GUI to config
+            LoadConfig();
+
             Task.Run(() =>
             {
-                // Update GUI to config
-                RunOnUiThread(() => LoadConfig());
-
                 // Setup communicator
                 if (Config.Data.ServerUri != null)
                     Manager.comms = new Communicator(
@@ -151,21 +151,7 @@ namespace NotesAndroid
                         Logger.logger);
 
                 // Autosave Thread
-                Task.Run(async () =>
-                {
-                    ReqServerNotes();
-                    while (true)
-                    {
-                        await Task.Delay(500);
-                        if (unsavedChanges)
-                        {
-                            unsavedChanges = false;
-                            SaveConfig();
-                            Manager.comms?.SendString(GetNewPayload().ToString());
-                            UpdateWidget();
-                        }
-                    }
-                });
+                Task.Run(AutosaveThread);
                 
                 // Hide the loading circle
                 RunOnUiThread(() => {
@@ -173,6 +159,21 @@ namespace NotesAndroid
                     circle.Visibility = ViewStates.Invisible;
                 });
             });
+        }
+        async void AutosaveThread()
+        {
+            ReqServerNotes();
+            while (true)
+            {
+                await Task.Delay(500);
+                if (unsavedChanges)
+                {
+                    unsavedChanges = false;
+                    SaveConfig();
+                    Manager.comms?.SendString(GetNewPayload().ToString());
+                    UpdateWidget();
+                }
+            }
         }
         public override bool OnCreateOptionsMenu(IMenu menu)
         {
