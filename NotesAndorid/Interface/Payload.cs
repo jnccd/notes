@@ -41,12 +41,23 @@ namespace Notes.Interface
             sb.Replace("\\n", "");
             sb.Replace("\\\"", "\"");
             sb.Replace("\\\"", "\"");
-            sb.Replace("\r", "");
-            sb.Replace("\n", "");
+            //sb.Replace("\r", "");
+            //sb.Replace("\n", "");
             //sb.Replace("\\", "");
             return sb.ToString();
         }
-        public static Payload? Parse(string json) => JsonConvert.DeserializeObject<Payload>(json);
+        public static Payload? Parse(string json, Logger? logger = null)
+        {
+            try
+            {
+                return JsonConvert.DeserializeObject<Payload>(json);
+            }
+            catch 
+            {
+                logger?.WriteLine($"Error parsing payload {json}");
+                return null; 
+            }
+        }
     }
     public enum NotePriority
     {
@@ -58,14 +69,9 @@ namespace Notes.Interface
     }
     public class Note
     {
-        public bool Done;
+        public bool Done = false;
         public string Text = "";
-        public List<SubNote> SubNotes = new List<SubNote>();
-        public NotePriority Prio;
-    }
-    public class SubNote
-    {
-        public bool Done;
-        public string Text = "";
+        public List<Note> SubNotes = new List<Note>();
+        public NotePriority Prio = NotePriority.Meduim;
     }
 }

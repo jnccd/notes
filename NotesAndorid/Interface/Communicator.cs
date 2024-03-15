@@ -132,7 +132,7 @@ namespace Notes.Interface
                     lock (lockject)
                     {
                         Payload? receivedPayload = null;
-                        try { receivedPayload = Payload.Parse(receivedText); } 
+                        try { receivedPayload = Payload.Parse(receivedText); }
                         catch (Exception e) { logger.WriteLine($"Error parsing payload: {e}"); }
                         return receivedPayload;
                     }
@@ -143,7 +143,7 @@ namespace Notes.Interface
                 receivedText = "";
                 logger.WriteLine(e);
             }
-            
+
             return null;
         }
 
