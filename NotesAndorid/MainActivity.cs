@@ -27,21 +27,73 @@ namespace NotesAndroid
     public class MainActivity : AppCompatActivity
     {
         bool unsavedChanges = false;
+        DateTime lastSaveTime = DateTime.Now;
         NoteUi rootNode = null;
 
-        // Update Data
-        public void UpdateGUItoNotes(List<Note> notes)
+        // Load data to GUI or save config to disk
+        // config is updated in real time in GUI events
+        /// <summary>
+        /// Save config to disk
+        /// </summary>
+        /// <param name="updateSaveTime"></param>
+        void SaveConfig(bool updateSaveTime = true)
         {
-            var rootLayout = FindViewById<LinearLayout>(Resource.Id.noteLinearLayout);
+            lock (Config.Data)
+            {
+                if (updateSaveTime)
+                    Config.Data.SaveTime = DateTime.Now;
 
-            rootLayout.RemoveViews(0, rootLayout.ChildCount);
-            NoteUi.UiToNote.Clear();
+                Config.Save();
 
-            rootNode = new NoteUi(Config.Data.Payload.Notes, this);
+                lastSaveTime = DateTime.Now;
+            }
+        }
+        /// <summary>
+        /// Load config into GUI
+        /// </summary>
+        public void LoadConfig()
+        {
+            lock (Config.Data)
+            {
+                var rootLayout = FindViewById<LinearLayout>(Resource.Id.noteLinearLayout);
 
-            UpdateWidget();
+                rootLayout.RemoveViews(0, rootLayout.ChildCount);
+                NoteUi.UiToNote.Clear();
 
-            //parent.GetChildrenR().ForEach(x => x.Enabled = true);
+                rootNode = new NoteUi(Config.Data.Notes, this, OnNoteChange, OnNoteDone);
+
+                UpdateWidget();
+            }
+        }
+        public void ReqServerNotes()
+        {
+            Logger.WriteLine($"UpdatePayload");
+            if (Manager.comms == null)
+            {
+                Logger.WriteLine($"No comms");
+                return;
+            }
+
+            Payload payload = null;
+            try { payload = Manager.comms.ReqPayload(); }
+            catch (System.Exception ex) { return; }
+
+            Logger.WriteLine($"Got json");
+
+            if (payload == null ||
+                payload.Checksum != payload.GenerateChecksum() ||
+                Config.Data.SaveTime > payload.SaveTime)
+            {
+                Logger.WriteLine($"Got invalid json");
+                return;
+            }
+
+            Config.Data.Notes = payload.Notes;
+
+            RunOnUiThread(() => {
+                LoadConfig();
+                SaveConfig(false);
+            });
         }
         public void UpdateWidget()
         {
@@ -53,33 +105,7 @@ namespace NotesAndroid
                 AppWidgetManager.GetInstance(Manager.widgetContext).UpdateAppWidget(thisWidget, remoteViews);
             }
         }
-        public void UpdateNotes()
-        {
-            Logger.WriteLine($"UpdatePayload");
-            if (Manager.comms != null)
-            {
-                Payload payload = null;
-                try { payload = Manager.comms.ReqPayload(); }
-                catch (System.Exception ex) { return; }
-
-                Logger.WriteLine($"Got json");
-
-                if (payload != null &&
-                    payload.Checksum == payload.GenerateChecksum() &&
-                    Config.Data.Payload.SaveTime < payload.SaveTime)
-                {
-                    Config.Data.Payload.Notes = payload.Notes;
-                    Config.Data.Payload.SaveTime = payload.SaveTime;
-                    Config.Save();
-                    RunOnUiThread(() => UpdateGUItoNotes(Config.Data.Payload.Notes));
-                }
-                else
-                    Logger.WriteLine($"Got invalid json");
-            }
-            else
-                Logger.WriteLine($"No comms");
-        }
-        Payload GetNewPayload() => Config.Data.Payload;
+        Payload GetNewPayload() => new Payload(Config.Data.SaveTime, Config.Data.Notes);
 
         // Events
         protected override void OnCreate(Bundle savedInstanceState)
@@ -94,7 +120,7 @@ namespace NotesAndroid
 
             var syncButton = FindViewById<Button>(Resource.Id.syncButton);
             syncButton.Click += (s, e) => Task.Run(() => {
-                UpdateNotes();
+                ReqServerNotes();
                 Manager.comms.SendString(GetNewPayload().ToString());
             });
 
@@ -113,7 +139,7 @@ namespace NotesAndroid
             Task.Run(() =>
             {
                 // Update GUI to config
-                RunOnUiThread(() => UpdateGUItoNotes(Config.Data.Payload.Notes));
+                RunOnUiThread(() => LoadConfig());
 
                 // Setup communicator
                 if (Config.Data.ServerUri != null)
@@ -127,17 +153,16 @@ namespace NotesAndroid
                 // Autosave Thread
                 Task.Run(async () =>
                 {
-                    UpdateNotes();
+                    ReqServerNotes();
                     while (true)
                     {
                         await Task.Delay(500);
                         if (unsavedChanges)
                         {
-                            Config.Save();
-                            Config.Data.Payload.SaveTime = DateTime.Now;
+                            unsavedChanges = false;
+                            SaveConfig();
                             Manager.comms?.SendString(GetNewPayload().ToString());
                             UpdateWidget();
-                            unsavedChanges = false;
                         }
                     }
                 });
@@ -158,7 +183,7 @@ namespace NotesAndroid
         {
             if (item.ItemId == Resource.Id.menu_refresh_button)
             {
-                UpdateNotes();
+                ReqServerNotes();
                 Manager.comms.SendString(GetNewPayload().ToString());
 
                 if (Manager.widgetContext != null)
@@ -184,7 +209,7 @@ namespace NotesAndroid
                             Config.Data.ServerPassword = newServerPassword;
                             Manager.comms = new Communicator(Config.Data.ServerUri, Config.Data.ServerUsername, Config.Data.ServerPassword, GetNewPayload, Logger.logger);
                             //Manager.comms.StartRequestLoop(OnPayloadRecieved);
-                            UpdateNotes();
+                            ReqServerNotes();
                         });
                     });
                 });
@@ -201,79 +226,51 @@ namespace NotesAndroid
         protected override void OnResume()
         {
             base.OnResume();
-            UpdateNotes();
+            ReqServerNotes();
         }
         protected override void OnDestroy()
         {
-            Config.Save();
+            SaveConfig(false);
 
             Manager.comms.Dispose();
             base.OnDestroy();
         }
-
-        // GUI Events
-        //public void OnNewNote(object o, TextChangedEventArgs e)
-        //{
-        //    if (e.Text.Count() == 0)
-        //        return;
-
-        //    var newNote = FindViewById<EditText>(Resource.Id.newNote);
-
-        //    AddNewNoteBox(new Note() { Text = newNote.Text }, true, true, true);
-
-        //    newNote.Text = "";
-
-        //    Config.Data.Payload.Update();
-        //    unsavedChanges = true;
-        //}
+        // Note Events
         public void OnNoteChange(object o, TextChangedEventArgs e)
         {
             EditText ed = (EditText)o;
             ViewGroup note = (ViewGroup)ed.Parent.Parent;
-            ViewGroup notes = (ViewGroup)note.Parent;
-            var noteUi = NoteUi.UiToNote[note];
-
-            int i = notes.IndexOfChild(note);
+            var noteUiOrigin = NoteUi.UiToNote[note];
 
             if (e.Text.Contains('\n'))
             {
                 ed.Text = ed.Text.Replace("\n", "");
 
-                int index = noteUi.Parent.SubNotes.IndexOf(noteUi);
+                int index = noteUiOrigin.Parent.SubNotes.IndexOf(noteUiOrigin);
                 var insertionIndex = e.Start == 0 ? index : index + 1;
 
-                noteUi.Parent.AddSubNoteAt(new Note(), this, insertionIndex);
+                noteUiOrigin.Parent.AddSubNoteAt(new Note(), this, OnNoteChange, OnNoteDone, insertionIndex);
             }
             else if (e.AfterCount < e.BeforeCount && 
                      ed.Text.Length < 1 && 
                      e.BeforeCount < 3)
             {
-                notes.RemoveView(note);
-
-                Config.Data.Payload.Notes.RemoveAt(i);
-
-                Config.Data.Payload.Update();
-                unsavedChanges = true;
+                noteUiOrigin.Parent.RemoveSubNote(noteUiOrigin);
             }
             else
             {
-                Config.Data.Payload.Notes[i].Text = ed.Text;
-
-                Config.Data.Payload.Update();
-                unsavedChanges = true;
+                noteUiOrigin.Note.Text = ed.Text;
             }
+            unsavedChanges = true;
         }
-        private void OnNoteDone(object o, CompoundButton.CheckedChangeEventArgs e)
+        public void OnNoteDone(object o, CompoundButton.CheckedChangeEventArgs e)
         {
             CheckBox ch = (CheckBox)o;
-            ViewGroup note = (ViewGroup)ch.Parent.Parent;
-            ViewGroup notes = (ViewGroup)note.Parent;
+            ViewGroup note = (ViewGroup)ch.Parent;
+            var noteUiOrigin = NoteUi.UiToNote[note];
 
-            int i = notes.IndexOfChild(note);
+            noteUiOrigin.Note.Done = ch.Checked;
 
-            Config.Data.Payload.Notes[i].Done = ch.Checked;
-
-            Config.Data.Payload.Update();
             unsavedChanges = true;
         }
     }

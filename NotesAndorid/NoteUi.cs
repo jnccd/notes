@@ -2,6 +2,7 @@
 using Android.Content;
 using Android.OS;
 using Android.Runtime;
+using Android.Text;
 using Android.Views;
 using Android.Widget;
 using AndroidX.AppCompat.App;
@@ -42,7 +43,14 @@ namespace NotesAndroid
         /// <param name="rootPanel"></param>
         /// <param name="depth"></param>
         /// <param name="parent"></param>
-        public NoteUi(Note note, Activity parentActivity, int depth = 0, NoteUi parent = null, int index = -1)
+        public NoteUi(
+            Note note, 
+            Activity parentActivity,
+            Action<object, TextChangedEventArgs> OnNoteChange,
+            Action<object, CompoundButton.CheckedChangeEventArgs> OnNoteDone, 
+            int depth = 0, 
+            NoteUi parent = null, 
+            int index = -1)
         {
             Note = note;
             this.depth = depth;
@@ -50,17 +58,21 @@ namespace NotesAndroid
             this.parentActivity = parentActivity;
             expanded = depth <= 0;
 
-            CreateUi(parentActivity, depth, index);
+            CreateUi(parentActivity, OnNoteChange, OnNoteDone, depth, index);
 
             foreach (Note subNote in note.SubNotes)
-                SubNotes.Add(new NoteUi(subNote, parentActivity, depth + 1, this, index >= 0 ? index + 1 : index));
+                SubNotes.Add(new NoteUi(subNote, parentActivity, OnNoteChange, OnNoteDone, depth + 1, this, index >= 0 ? index + 1 : index));
         }
         /// <summary>
         /// Constructor for empty root NoteUi Node
         /// </summary>
         /// <param name="subNotes"></param>
         /// <param name="subNotesPanel"></param>
-        public NoteUi(List<Note> subNotes, Activity parentActivity)
+        public NoteUi(
+            List<Note> subNotes, 
+            Activity parentActivity,
+            Action<object, TextChangedEventArgs> OnNoteChange,
+            Action<object, CompoundButton.CheckedChangeEventArgs> OnNoteDone)
         {
             Note = new Note
             {
@@ -72,45 +84,43 @@ namespace NotesAndroid
             expanded = true;
 
             foreach (Note subNote in Note.SubNotes)
-                SubNotes.Add(new NoteUi(subNote, parentActivity, depth + 1, this));
+                SubNotes.Add(new NoteUi(subNote, parentActivity, OnNoteChange, OnNoteDone, depth + 1, this));
         }
 
-        void CreateUi(Activity parentActivity, int depth = 0, int index = -1)
+        void CreateUi(
+            Activity parentActivity, 
+            Action<object, TextChangedEventArgs> OnNoteChange, 
+            Action<object, CompoundButton.CheckedChangeEventArgs> OnNoteDone,
+            int depth = 0, 
+            int index = -1)
         {
             bool enabled = true;
 
             var parent = parentActivity.FindViewById<LinearLayout>(Resource.Id.noteLinearLayout);
-            var newNoteLayout = parentActivity.LayoutInflater.Inflate(Resource.Layout.notebox, null);
+            var newNoteLayout = (LinearLayout)parentActivity.LayoutInflater.Inflate(Resource.Layout.notebox, null);
             newNoteLayout.SetPadding(parentActivity.Dip2px(30) * depth, parentActivity.Dip2px(7), 0, 0);
             if (index < 0)
                 index = parent.ChildCount;
             parent.AddView(newNoteLayout, index);
+            UiToNote.Add(newNoteLayout, this);
 
             var note = newNoteLayout.FindViewById<EditText>(Resource.Id.note);
             note.Enabled = enabled;
             note.Text = Note.Text;
-            note.TextChanged += Note_TextChanged;
+            note.TextChanged += (obj, args) => OnNoteChange(obj, args);
 
             var checkBox = newNoteLayout.FindViewById<CheckBox>(Resource.Id.noteDone);
             checkBox.Enabled = enabled;
             checkBox.Checked = Note.Done;
-            checkBox.CheckedChange += OnNoteDone;
+            checkBox.CheckedChange += (obj, args) => OnNoteDone(obj, args);
         }
 
-        private void OnNoteDone(object sender, CompoundButton.CheckedChangeEventArgs e)
-        {
-            
-        }
-
-        private void Note_TextChanged(object sender, Android.Text.TextChangedEventArgs e)
-        {
-            
-        }
-
-        public void ToggleExpand()
+        public void ToggleExpand(
+            Action<object, TextChangedEventArgs> OnNoteChange,
+            Action<object, CompoundButton.CheckedChangeEventArgs> OnNoteDone)
         {
             if (SubNotes.Count == 0)
-                AddSubNoteAt(new Note(), parentActivity, 0);
+                AddSubNoteAt(new Note(), parentActivity, OnNoteChange, OnNoteDone, 0);
 
             expanded = !expanded;
         }
@@ -131,11 +141,17 @@ namespace NotesAndroid
             return re;
         }
 
-        public NoteUi AddSubNoteAt(Note note, Activity parentActivity, int index, int rootPanelIndex = -1)
+        public NoteUi AddSubNoteAt(
+            Note note, 
+            Activity parentActivity,
+            Action<object, TextChangedEventArgs> OnNoteChange,
+            Action<object, CompoundButton.CheckedChangeEventArgs> OnNoteDone, 
+            int index, 
+            int rootPanelIndex = -1)
         {
             if (rootPanelIndex == -1)
                 rootPanelIndex = (UiPanel == null ? 0 : rootPanel.IndexOfChild(UiPanel)) + 1 + index;
-            var newNoteUi = new NoteUi(note, parentActivity, depth + 1, this, rootPanelIndex);
+            var newNoteUi = new NoteUi(note, parentActivity, OnNoteChange, OnNoteDone, depth + 1, this, rootPanelIndex);
             Note.SubNotes.Insert(index, note);
             SubNotes.Insert(index, newNoteUi);
 

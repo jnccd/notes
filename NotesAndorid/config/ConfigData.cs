@@ -11,11 +11,12 @@ namespace Configuration
         public string ServerUsername;
         public string ServerPassword;
 
-        public Payload Payload;
+        public DateTime SaveTime;
+        public List<Note> Notes;
 
         public ConfigData()
         {
-            Payload = new Payload(new DateTime(2000, 1, 1), new List<Note>());
+            Notes = new List<Note>();
         }
     }
 }
