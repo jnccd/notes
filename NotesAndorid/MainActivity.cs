@@ -240,7 +240,7 @@ namespace NotesAndroid
         public void OnNoteChange(object o, TextChangedEventArgs e)
         {
             EditText ed = (EditText)o;
-            ViewGroup note = (ViewGroup)ed.Parent.Parent;
+            ViewGroup note = (ViewGroup)ed.Parent;
             var noteUiOrigin = NoteUi.UiToNote[note];
 
             if (e.Text.Contains('\n'))

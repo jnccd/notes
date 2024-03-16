@@ -53,12 +53,13 @@ namespace NotesAndroid
             int index = -1)
         {
             Note = note;
+            rootPanel = parentActivity.FindViewById<LinearLayout>(Resource.Id.noteLinearLayout);
+            this.parentActivity = parentActivity;
             this.depth = depth;
             Parent = parent;
-            this.parentActivity = parentActivity;
             expanded = depth <= 0;
 
-            CreateUi(parentActivity, OnNoteChange, OnNoteDone, depth, index);
+            UiPanel = CreateUi(parentActivity, OnNoteChange, OnNoteDone, depth, index);
 
             foreach (Note subNote in note.SubNotes)
                 SubNotes.Add(new NoteUi(subNote, parentActivity, OnNoteChange, OnNoteDone, depth + 1, this, index >= 0 ? index + 1 : index));
@@ -87,7 +88,7 @@ namespace NotesAndroid
                 SubNotes.Add(new NoteUi(subNote, parentActivity, OnNoteChange, OnNoteDone, depth + 1, this));
         }
 
-        void CreateUi(
+        ViewGroup CreateUi(
             Activity parentActivity, 
             Action<object, TextChangedEventArgs> OnNoteChange, 
             Action<object, CompoundButton.CheckedChangeEventArgs> OnNoteDone,
@@ -96,12 +97,11 @@ namespace NotesAndroid
         {
             bool enabled = true;
 
-            var parent = parentActivity.FindViewById<LinearLayout>(Resource.Id.noteLinearLayout);
             var newNoteLayout = (LinearLayout)parentActivity.LayoutInflater.Inflate(Resource.Layout.notebox, null);
-            newNoteLayout.SetPadding(parentActivity.Dip2px(30) * depth, parentActivity.Dip2px(7), 0, 0);
+            newNoteLayout.SetPadding((int)(parentActivity.Dip2px(treeDepthPadding) * (depth - 0.5)), parentActivity.Dip2px(7), 0, 0);
             if (index < 0)
-                index = parent.ChildCount;
-            parent.AddView(newNoteLayout, index);
+                index = rootPanel.ChildCount;
+            rootPanel.AddView(newNoteLayout, index);
             UiToNote.Add(newNoteLayout, this);
 
             var note = newNoteLayout.FindViewById<EditText>(Resource.Id.note);
@@ -113,6 +113,8 @@ namespace NotesAndroid
             checkBox.Enabled = enabled;
             checkBox.Checked = Note.Done;
             checkBox.CheckedChange += (obj, args) => OnNoteDone(obj, args);
+
+            return newNoteLayout;
         }
 
         public void ToggleExpand(
