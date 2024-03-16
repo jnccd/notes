@@ -228,6 +228,7 @@ namespace Notes.Desktop
         public void DoneCheckBox_CheckedChanged(object sender, EventArgs e)
         {
             var origin = (CheckBox)sender;
+            var noteUiOrigin = NoteUi.UiToNote[(Panel)origin.Parent];
             if (origin.Checked)
             {
                 var textBox = origin.Parent.Controls.Find("noteTextBox", true).First();
@@ -238,6 +239,7 @@ namespace Notes.Desktop
                 var textBox = origin.Parent.Controls.Find("noteTextBox", true).First();
                 textBox.Font = new Font(textBox.Font, FontStyle.Regular);
             }
+            noteUiOrigin.Note.Done = origin.Checked;
             unsavedEdits = true;
         }
         public void OrderButton_MouseDown(object sender, MouseEventArgs e)
