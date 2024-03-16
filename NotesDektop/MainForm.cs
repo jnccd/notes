@@ -189,7 +189,7 @@ namespace Notes.Desktop
             }
         }
 
-        public void NoteTextBox_DoubleClick(object sender, EventArgs e) // TODO: Hook this
+        public void NoteTextBox_DoubleClick(object sender, EventArgs e)
         {
             var origin = (TextBox)sender;
             if (origin.Text.Contains("://"))
