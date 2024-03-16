@@ -142,6 +142,7 @@ namespace Notes.Desktop
                 Text = Note.Text,
             };
             noteTextBox.KeyDown += mainForm.NoteTextBox_KeyDown;
+            noteTextBox.DoubleClick += mainForm.NoteTextBox_DoubleClick;
             noteTextBox.Font = new Font(noteTextBox.Font.FontFamily, fontSize);
             mainNotePanel.Controls.Add(noteTextBox);
 
