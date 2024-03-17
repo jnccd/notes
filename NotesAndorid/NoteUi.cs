@@ -108,6 +108,7 @@ namespace NotesAndroid
             note.Enabled = enabled;
             note.Text = Note.Text;
             note.TextChanged += (obj, args) => OnNoteChange(obj, args);
+            // TODO: Use note.OnKeyUp by overriding in EditText subclass
 
             var checkBox = newNoteLayout.FindViewById<CheckBox>(Resource.Id.noteDone);
             checkBox.Enabled = enabled;
