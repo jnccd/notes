@@ -11,6 +11,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NotesInterface", "NotesInte
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NotesServer", "NotesServer\NotesServer.csproj", "{1894B18E-BB2C-4234-B1CE-76C7ADE518E5}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NotesAndroid2", "NotesAndroid2\NotesAndroid2.csproj", "{45299AA6-FEA5-4394-B1E9-69F0264C5AAB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -35,6 +37,12 @@ Global
 		{1894B18E-BB2C-4234-B1CE-76C7ADE518E5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1894B18E-BB2C-4234-B1CE-76C7ADE518E5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1894B18E-BB2C-4234-B1CE-76C7ADE518E5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{45299AA6-FEA5-4394-B1E9-69F0264C5AAB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{45299AA6-FEA5-4394-B1E9-69F0264C5AAB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{45299AA6-FEA5-4394-B1E9-69F0264C5AAB}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{45299AA6-FEA5-4394-B1E9-69F0264C5AAB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{45299AA6-FEA5-4394-B1E9-69F0264C5AAB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{45299AA6-FEA5-4394-B1E9-69F0264C5AAB}.Release|Any CPU.Deploy.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
