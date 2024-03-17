@@ -149,11 +149,9 @@ namespace NotesAndroid
             Activity parentActivity,
             Action<object, TextChangedEventArgs> OnNoteChange,
             Action<object, CompoundButton.CheckedChangeEventArgs> OnNoteDone, 
-            int index, 
-            int rootPanelIndex = -1)
+            int index)
         {
-            if (rootPanelIndex == -1)
-                rootPanelIndex = (UiPanel == null ? 0 : rootPanel.IndexOfChild(UiPanel)) + 1 + index;
+            var rootPanelIndex = rootPanel.IndexOfChild(SubNotes[index].UiPanel);
             var newNoteUi = new NoteUi(note, parentActivity, OnNoteChange, OnNoteDone, depth + 1, this, rootPanelIndex);
             Note.SubNotes.Insert(index, note);
             SubNotes.Insert(index, newNoteUi);

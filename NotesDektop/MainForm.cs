@@ -202,10 +202,12 @@ namespace Notes.Desktop
             var noteUiOrigin = NoteUi.UiToNote[(Panel)origin.Parent];
             if (e.KeyCode == Keys.Enter)
             {
-                int index = noteUiOrigin.Parent.SubNotes.IndexOf(noteUiOrigin);
-                var insertionIndex = origin.SelectionStart == 0 ? index : index + 1;
-                int rootPanelIndex = rootPanel.Controls.IndexOf(origin.Parent);
-                var p = noteUiOrigin.Parent.AddSubNoteAt(new Note(), this, insertionIndex, rootPanelIndex + 1);
+                int insertionIndex = noteUiOrigin.Parent.SubNotes.IndexOf(noteUiOrigin);
+
+                if (origin.SelectionStart != 0)
+                    insertionIndex++;
+
+                var p = noteUiOrigin.Parent.AddSubNoteBefore(new Note(), this, insertionIndex);
                 LayoutNotePanels();
 
                 p.UiPanel.Controls.Find("noteTextBox", true).First().Focus();
@@ -276,8 +278,7 @@ namespace Notes.Desktop
                 // Remove and reinsert
                 draggedNoteUi.Parent.RemoveSubNote(draggedNoteUi);
                 int minPanelNoteUiIndex = noteUiMinPanel.Parent.SubNotes.IndexOf(noteUiMinPanel);
-                int minPanelPanelIndex = rootPanel.Controls.IndexOf(minPanel);
-                noteUiMinPanel.Parent.AddSubNoteAt(draggedNoteUi.Note, this, minPanelNoteUiIndex, minPanelPanelIndex);
+                noteUiMinPanel.Parent.AddSubNoteBefore(draggedNoteUi.Note, this, minPanelNoteUiIndex);
 
                 //rootPanel.Controls.SetChildIndex(draggedPanel, panelIndex);
                 barThingy.Visible = false;

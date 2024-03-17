@@ -23,7 +23,12 @@ namespace Notes.Desktop
         public readonly NoteUi Parent;
         public static readonly Dictionary<Panel, NoteUi> UiToNote = new();
 
-        private bool expanded;
+        public bool Expanded { private set; get; }
+        public bool Shown { 
+            get {  
+                return Parent.Expanded; 
+            } 
+        }
         float expandButtonAnimTime;
 
         const float fontSize = 10f;
@@ -42,7 +47,9 @@ namespace Notes.Desktop
             this.depth = depth;
             Parent = parent;
             parentForm = mainForm;
-            expanded = depth <= 0;
+            Expanded = depth <= 0;
+
+            rootPanel = (Panel)mainForm.Controls.Find("rootPanel", true).First();
 
             CreateFormsUi(mainForm, index);
 
@@ -63,7 +70,9 @@ namespace Notes.Desktop
             this.depth = 0;
             Parent = null;
             parentForm = mainForm;
-            expanded = true;
+            Expanded = true;
+
+            rootPanel = (Panel)mainForm.Controls.Find("rootPanel", true).First();
 
             foreach (Note subNote in Note.SubNotes)
                 SubNotes.Add(new NoteUi(subNote, mainForm, depth + 1, this));
@@ -71,8 +80,6 @@ namespace Notes.Desktop
 
         void CreateFormsUi(MainForm mainForm, int index = -1)
         {
-            rootPanel = (Panel)mainForm.Controls.Find("rootPanel", true).First();
-
             Panel mainNotePanel = new()
             {
                 Name = "mainNotePanel",
@@ -169,9 +176,9 @@ namespace Notes.Desktop
         public void ToggleExpand()
         {
             if (SubNotes.Count == 0)
-                AddSubNoteAt(new Note(), parentForm, 0);
+                AddSubNoteBefore(new Note(), parentForm, 0);
 
-            expanded = !expanded;
+            Expanded = !Expanded;
 
             parentForm.LayoutNotePanels();
         }
@@ -179,7 +186,7 @@ namespace Notes.Desktop
         {
             if (Parent == null)
                 return true;
-            else if (!Parent.expanded)
+            else if (!Parent.Expanded)
                 return false;
             else
                 return Parent.AreAllParentsExpanded();
@@ -212,10 +219,10 @@ namespace Notes.Desktop
                     ToArray());
         }
 
-        public NoteUi AddSubNoteAt(Note note, MainForm mainForm, int index, int rootPanelIndex = -1)
+        public NoteUi AddSubNoteBefore(Note note, MainForm mainForm, int index)
         {
-            if (rootPanelIndex == -1)
-                rootPanelIndex = (UiPanel == null ? 0 : rootPanel.Controls.IndexOf(UiPanel)) + 1 + index;
+            var rootPanelIndex = rootPanel.Controls.IndexOf(SubNotes[index].UiPanel);
+
             var newNoteUi = new NoteUi(note, mainForm, depth + 1, this, rootPanelIndex);
             Note.SubNotes.Insert(index, note);
             SubNotes.Insert(index, newNoteUi);
