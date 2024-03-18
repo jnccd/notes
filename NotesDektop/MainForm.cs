@@ -196,7 +196,7 @@ namespace Notes.Desktop
                 try { Process.Start(new ProcessStartInfo(origin.Text) { UseShellExecute = true }); }
                 catch (Exception ex) { Logger.Write(ex); }
         }
-        public void NoteTextBox_KeyDown(object sender, KeyEventArgs e)
+        public void NoteTextBox_KeyUp(object sender, KeyEventArgs e)
         {
             var origin = (TextBox)sender;
             var noteUiOrigin = NoteUi.UiToNote[(Panel)origin.Parent];
@@ -220,7 +220,7 @@ namespace Notes.Desktop
                     rootPanel.Controls[index - 1].Controls.Find("noteTextBox", true).First().Focus();
                 else
                     rootPanel.Controls.Find("noteTextBox", true).First().Focus();
-            } 
+            }
             else
             {
                 noteUiOrigin.Note.Text = origin.Text;
