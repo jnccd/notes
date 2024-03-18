@@ -186,7 +186,7 @@ namespace NotesAndroid
             if (item.ItemId == Resource.Id.menu_refresh_button)
             {
                 ReqServerNotes();
-                Manager.comms.SendString(GetNewPayload().ToString());
+                Manager.comms?.SendString(GetNewPayload().ToString());
 
                 if (Manager.widgetContext != null)
                 {

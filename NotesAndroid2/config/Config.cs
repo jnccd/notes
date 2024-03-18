@@ -9,7 +9,7 @@ namespace Configuration
     public static class Config
     {
         static readonly object lockject = new object();
-        static readonly string personalPath = System.Environment.GetFolderPath(System.Environment.SpecialFolder.Personal) + Path.DirectorySeparatorChar;
+        static readonly string personalPath = Path.GetDirectoryName(Environment.GetFolderPath(Environment.SpecialFolder.Personal)) + Path.DirectorySeparatorChar;
         static readonly string configPath = personalPath + "config.json";
         static readonly string configBackupPath = personalPath + "config_backup.json";
         public static bool UnsavedChanges = false;
