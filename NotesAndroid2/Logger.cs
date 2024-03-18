@@ -13,6 +13,7 @@ namespace NotesAndroid
         public override void Write(object o, bool toFile = true)
         {
             Debug.Write(o);
+            Console.WriteLine(o);
 
             //if (toFile)
             //    File.AppendAllText("client.log", o.ToString());
