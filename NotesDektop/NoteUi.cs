@@ -148,7 +148,7 @@ namespace Notes.Desktop
                 Height = mainNotePanel.Height,
                 Text = Note.Text,
             };
-            noteTextBox.KeyDown += mainForm.NoteTextBox_KeyDown;
+            noteTextBox.KeyUp += mainForm.NoteTextBox_KeyUp;
             noteTextBox.DoubleClick += mainForm.NoteTextBox_DoubleClick;
             noteTextBox.Font = new Font(noteTextBox.Font.FontFamily, fontSize);
             mainNotePanel.Controls.Add(noteTextBox);
@@ -157,6 +157,7 @@ namespace Notes.Desktop
             if (index >= 0)
                 rootPanel.Controls.SetChildIndex(mainNotePanel, index);
         }
+
         public void UpdatePanelHeight()
         {
             if (!AreAllParentsExpanded())
