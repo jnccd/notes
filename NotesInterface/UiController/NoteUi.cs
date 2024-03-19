@@ -8,7 +8,7 @@ using System.Reflection.Emit;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace NotesInterface.UiController
+namespace Notes.Interface.UiController
 {
     /// <summary>
     /// Acts as a connector between the Note object and its UI elements
