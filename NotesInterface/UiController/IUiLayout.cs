@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace NotesInterface.UiController
+namespace Notes.Interface.UiController
 {
     public interface IUiLayout
     {
