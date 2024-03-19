@@ -176,10 +176,12 @@ namespace Notes.Desktop
         }
         public void ToggleExpand()
         {
-            if (SubNotes.Count == 0)
-                AddSubNoteBefore(new Note(), parentForm, 0);
-
             Expanded = !Expanded;
+
+            if (Expanded && SubNotes.Count == 0)
+                AddSubNoteBefore(new Note(), parentForm, 0);
+            else if (!Expanded && SubNotes.Count == 1 && string.IsNullOrWhiteSpace(SubNotes[0].Note.Text))
+                RemoveSubNoteAt(0);
 
             parentForm.LayoutNotePanels();
         }
@@ -222,7 +224,9 @@ namespace Notes.Desktop
 
         public NoteUi AddSubNoteBefore(Note note, MainForm mainForm, int index)
         {
-            var rootPanelIndex = rootPanel.Controls.IndexOf(SubNotes[index].UiPanel);
+            var rootPanelIndex = SubNotes.Count == 0 ? 
+                rootPanel.Controls.IndexOf(UiPanel) + 1 : 
+                rootPanel.Controls.IndexOf(SubNotes[index].UiPanel);
 
             var newNoteUi = new NoteUi(note, mainForm, depth + 1, this, rootPanelIndex);
             Note.SubNotes.Insert(index, note);
@@ -232,15 +236,7 @@ namespace Notes.Desktop
 
             return newNoteUi;
         }
-        public void RemoveSubNoteAt(int index)
-        {
-            SubNotes[index].UiPanel.Parent.Controls.RemoveAt((rootPanel == null ? 0 : rootPanel.Controls.IndexOf(UiPanel)) + 1 + index);
-            Note.SubNotes.RemoveAt(index);
-            UiToNote.Remove(SubNotes[index].UiPanel);
-            SubNotes.RemoveAt(index);
-            
-            parentForm.LayoutNotePanels();
-        }
+        public void RemoveSubNoteAt(int index) => RemoveSubNote(SubNotes[index]);
         public void RemoveSubNote(NoteUi subNote)
         {
             RemoveSubNoteUi(subNote);
