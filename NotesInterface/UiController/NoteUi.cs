@@ -10,6 +10,9 @@ using System.Threading.Tasks;
 
 namespace NotesInterface.UiController
 {
+    /// <summary>
+    /// Acts as a connector between the Note object and its UI elements
+    /// </summary>
     public class NoteUi
     {
         // Represented Note object
@@ -42,10 +45,6 @@ namespace NotesInterface.UiController
         /// <summary>
         /// Creates new NoteUi instance
         /// </summary>
-        /// <param name="note"></param>
-        /// <param name="rootPanel"></param>
-        /// <param name="depth"></param>
-        /// <param name="parent"></param>
         public NoteUi(
             Note note,
             IUiWindow parentWindow,
@@ -72,8 +71,6 @@ namespace NotesInterface.UiController
         /// <summary>
         /// Constructor for empty root NoteUi Node
         /// </summary>
-        /// <param name="subNotes"></param>
-        /// <param name="subNotesPanel"></param>
         public NoteUi(
             List<Note> subNotes,
             IUiWindow parentWindow,
