@@ -10,6 +10,9 @@ using System.Threading.Tasks;
 
 namespace Notes.Interface.UiController
 {
+    // Args: Window, Note, InsertionIndex, Depth -> Layout
+    using CreateNoteUiElementFunc = Func<IUiWindow, Note, int, int, IUiLayout>;
+
     /// <summary>
     /// Acts as a connector between the Note object and its UI elements
     /// </summary>
@@ -30,7 +33,7 @@ namespace Notes.Interface.UiController
         public static readonly Dictionary<IUiLayout, NoteUi> UiToNote = new();
 
         // Events
-        private readonly Func<IUiWindow, int, IUiLayout> createUiNoteElement;
+        private readonly CreateNoteUiElementFunc createNoteUiElement;
 
         // Expansion
         public bool Expanded { private set; get; }
@@ -49,7 +52,7 @@ namespace Notes.Interface.UiController
             Note note,
             IUiWindow parentWindow,
             IUiLayout rootLayout,
-            Func<IUiWindow, int, IUiLayout> CreateUiNoteElement,
+            CreateNoteUiElementFunc CreateNoteUiElement,
             int depth = 0,
             NoteUi? parent = null,
             int index = -1)
@@ -61,12 +64,13 @@ namespace Notes.Interface.UiController
             this.rootLayout = rootLayout;
             Expanded = depth <= 0;
 
-            createUiNoteElement = CreateUiNoteElement;
+            createNoteUiElement = CreateNoteUiElement;
 
-            UiLayout = CreateUiNoteElement(parentWindow, index);
+            UiLayout = CreateNoteUiElement(parentWindow, note, index, depth);
+            UiToNote.Add(UiLayout, this);
 
             foreach (Note subNote in note.SubNotes)
-                SubNotes.Add(new NoteUi(subNote, parentWindow, rootLayout, CreateUiNoteElement, depth + 1, this, index >= 0 ? index + 1 : index));
+                SubNotes.Add(new NoteUi(subNote, parentWindow, rootLayout, CreateNoteUiElement, depth + 1, this, index >= 0 ? index + 1 : index));
         }
         /// <summary>
         /// Constructor for empty root NoteUi Node
@@ -75,7 +79,7 @@ namespace Notes.Interface.UiController
             List<Note> subNotes,
             IUiWindow parentWindow,
             IUiLayout rootLayout,
-            Func<IUiWindow, int, IUiLayout> CreateUiNoteElement)
+            CreateNoteUiElementFunc CreateNoteUiElement)
         {
             Note = new Note
             {
@@ -88,10 +92,10 @@ namespace Notes.Interface.UiController
             this.UiLayout = rootLayout;
             Expanded = true;
 
-            createUiNoteElement = CreateUiNoteElement;
+            createNoteUiElement = CreateNoteUiElement;
 
             foreach (Note subNote in Note.SubNotes)
-                SubNotes.Add(new NoteUi(subNote, parentWindow, rootLayout, CreateUiNoteElement, depth + 1, this));
+                SubNotes.Add(new NoteUi(subNote, parentWindow, rootLayout, CreateNoteUiElement, depth + 1, this));
         }
 
         public void ToggleExpand()
@@ -99,13 +103,13 @@ namespace Notes.Interface.UiController
             Expanded = !Expanded;
 
             if (Expanded && SubNotes.Count == 0)
-                AddSubNoteBefore(new Note(), parentWindow, rootLayout, createUiNoteElement, 0);
+                AddSubNoteBefore(new Note(), parentWindow, rootLayout, createNoteUiElement, 0);
             else if (!Expanded && SubNotes.Count == 1 && string.IsNullOrWhiteSpace(SubNotes[0].Note.Text))
                 RemoveSubNoteAt(0);
 
             parentWindow.Relayout();
         }
-        bool AreAllParentsExpanded()
+        public bool AreAllParentsExpanded()
         {
             if (Parent == null)
                 return true;
@@ -126,12 +130,14 @@ namespace Notes.Interface.UiController
             Note note,
             IUiWindow parentWindow,
             IUiLayout rootLayout,
-            Func<IUiWindow, int, IUiLayout> CreateUiNoteElement,
+            CreateNoteUiElementFunc CreateUiNoteElement,
             int index)
         {
             var rootPanelIndex = SubNotes.Count == 0 ?
                 rootLayout.IndexOfChild(UiLayout) + 1 :
-                rootLayout.IndexOfChild(SubNotes[index].UiLayout);
+                (index < SubNotes.Count ? 
+                    rootLayout.IndexOfChild(SubNotes[index].UiLayout) :
+                    rootLayout.IndexOfChild(SubNotes[index - 1].UiLayout) + 1); // AddSubNoteAfter in the last note edge case
 
             var newNoteUi = new NoteUi(note, parentWindow, rootLayout, CreateUiNoteElement, depth + 1, this, rootPanelIndex);
             Note.SubNotes.Insert(index, note);

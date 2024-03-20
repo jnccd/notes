@@ -8,6 +8,7 @@ namespace Notes.Interface.UiController
 {
     public interface IUiLayout
     {
+        int ChildCount();
         int IndexOfChild(IUiLayout child);
 
         void RemoveSelf();
