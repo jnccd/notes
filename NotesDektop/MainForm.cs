@@ -216,14 +216,13 @@ namespace Notes.Desktop
         IUiLayout CreateNoteUi(IUiWindow mainWindow, Note note, int index = -1, int depth = 0)
         {
             var mainForm = ((FormWrapper)mainWindow).Form;
-            var mybeTheRealRootpanelisTheFriendsWeMadeAlongTheWay = (Panel)mainForm.Controls.Find("rootPanel", true).First();
 
             Panel mainNotePanel = new()
             {
                 Name = "mainNotePanel",
                 Anchor = AnchorStyles.Left | AnchorStyles.Top | AnchorStyles.Right,
-                BackColor = mybeTheRealRootpanelisTheFriendsWeMadeAlongTheWay.BackColor,
-                Width = mybeTheRealRootpanelisTheFriendsWeMadeAlongTheWay.Width,
+                BackColor = rootPanel.BackColor,
+                Width = rootPanel.Width,
                 Height = Globals.defaultPanelHeight,
                 Location = new Point((depth - 1) * treeDepthPadding, 0),
                 //AutoSize = true,
@@ -235,7 +234,7 @@ namespace Notes.Desktop
             {
                 Name = "orderButton",
                 Text = "⠿",
-                BackColor = mybeTheRealRootpanelisTheFriendsWeMadeAlongTheWay.BackColor,
+                BackColor = rootPanel.BackColor,
                 ForeColor = Color.FromArgb(30, 30, 30),
                 Location = new Point(0, 3),
                 Width = 14,
@@ -251,7 +250,7 @@ namespace Notes.Desktop
             {
                 Name = "expandButton",
                 Text = "🞂",
-                BackColor = mybeTheRealRootpanelisTheFriendsWeMadeAlongTheWay.BackColor,
+                BackColor = rootPanel.BackColor,
                 ForeColor = Color.FromArgb(30, 30, 30),
                 Location = new Point(0, 3),
                 Width = 14,
@@ -265,7 +264,7 @@ namespace Notes.Desktop
             CheckBox doneCheckBox = new()
             {
                 Name = "doneCheckBox",
-                //BackColor = mybeTheRealRootpanelisTheFriendsWeMadeAlongTheWay.BackColor,
+                //BackColor = rootPanel.BackColor,
                 Width = 18,
                 Height = mainNotePanel.Height,
                 Checked = note.Done,
@@ -277,10 +276,10 @@ namespace Notes.Desktop
             TextBox noteTextBox = new()
             {
                 Name = "noteTextBox",
-                BackColor = mybeTheRealRootpanelisTheFriendsWeMadeAlongTheWay.BackColor,
+                BackColor = rootPanel.BackColor,
                 BorderStyle = BorderStyle.None,
                 Location = new Point(0, 3),
-                Width = mybeTheRealRootpanelisTheFriendsWeMadeAlongTheWay.Width - mainNotePanel.Padding.Left,
+                Width = rootPanel.Width - mainNotePanel.Padding.Left,
                 Height = mainNotePanel.Height,
                 Text = note.Text,
             };
@@ -289,21 +288,9 @@ namespace Notes.Desktop
             noteTextBox.Font = new Font(noteTextBox.Font.FontFamily, fontSize);
             mainNotePanel.Controls.Add(noteTextBox);
 
-            mybeTheRealRootpanelisTheFriendsWeMadeAlongTheWay.Controls.Add(mainNotePanel);
+            rootPanel.Controls.Add(mainNotePanel);
             if (index >= 0)
-            {
-                mybeTheRealRootpanelisTheFriendsWeMadeAlongTheWay.Controls.SetChildIndex(mainNotePanel, index);
-                //var debug = rootPanel.Controls.IndexOf(mainNotePanel);
-                //rootPanel.Refresh();
-                //Task.Factory.StartNew(async () =>
-                //{
-                //    for (int i = 0; i < 100; i++)
-                //    {
-                //        await Task.Delay(100);
-                //        mainForm.InvokeIfRequired(() => mybeTheRealRootpanelisTheFriendsWeMadeAlongTheWay.Controls.SetChildIndex(mainNotePanel, index));
-                //    }
-                //});
-            }
+                rootPanel.Controls.SetChildIndex(mainNotePanel, index);
 
             return new LayoutWrapper(mainNotePanel);
         }
