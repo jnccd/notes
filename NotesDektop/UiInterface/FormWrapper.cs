@@ -17,10 +17,7 @@ namespace Notes.Desktop.UiInterface
             this.Form = form;
         }
 
-        public void Relayout()
-        {
-            Form.LayoutNotePanels();
-        }
+        public void Relayout() => Form.LayoutNotePanels();
 
         // To make the dictionary work as expected
         public override int GetHashCode() => Form.GetHashCode();
