@@ -13,6 +13,6 @@ namespace NotesAndroid.UiInterface
 
         // To make the dictionary work as expected
         public override int GetHashCode() => Layout.GetHashCode();
-        public override bool Equals(object obj) => obj.GetHashCode() == Layout.GetHashCode();
+        public override bool Equals(object? obj) => obj?.GetHashCode() == Layout.GetHashCode();
     }
 }

@@ -4,21 +4,40 @@
     android:minWidth="25px"
     android:minHeight="35px"
     android:layout_width="match_parent"
-    android:layout_height="150px"
-    android:paddingTop="7dp"
+    android:layout_height="wrap_content"
+    android:paddingTop="5dp"
     android:paddingLeft="0dp"
     android:orientation="horizontal"
     android:id="@+id/noteLayout">
+    <Button
+        android:text="⠿"
+        android:textSize="25dp"
+        android:textColor="@color/colorSecondary"
+        android:layout_marginTop="4dp"
+        android:layout_width="20dp"
+        android:layout_height="35dp"
+        android:background="@null"
+        android:id="@+id/dragButton" />
+    <NotesAndroid.TriangleButton
+        android:text=""
+        android:textColor="@color/colorSecondary"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:background="@null"
+        android:id="@+id/expandButton" />
     <CheckBox
         android:text=""
         android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_weight=".02"
+        android:layout_height="35dp"
         android:id="@+id/noteDone" />
     <EditText
-        android:layout_width="0dp"
+        android:layout_marginTop="1dp"
+        android:layout_marginLeft="5dp"
+        android:layout_marginBottom="1dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight=".90"
+        android:textSize="19.5dp"
+        android:inputType="textMultiLine"
         android:background="@null"
         android:id="@+id/note" />
 </LinearLayout>
