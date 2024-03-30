@@ -1,17 +1,6 @@
-﻿using Android.App;
-using Android.Content;
-using Android.Content.Res;
-using Android.OS;
-using Android.Runtime;
-using Android.Util;
+﻿using Android.Content;
 using Android.Views;
-using Android.Widget;
 using AndroidX.AppCompat.App;
-using NotesAndroid2;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using AlertDialog = AndroidX.AppCompat.App.AlertDialog;
 
 namespace NotesAndroid

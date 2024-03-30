@@ -1,35 +1,28 @@
-﻿using Android.App;
-using Android.Appwidget;
+﻿using Android.Appwidget;
 using Android.Content;
-using Android.OS;
 using Android.Runtime;
 using Android.Text;
 using Android.Views;
-using Android.Views.InputMethods;
-using Android.Widget;
 using AndroidX.AppCompat.App;
-using Java.Lang;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Diagnostics;
 using Notes.Interface;
-using Android.Util;
 using Config = Configuration.Config;
-using NotesAndroid2;
+using Notes.Interface.UiController;
+using NotesAndroid.UiInterface;
+using Activity = Android.App.Activity;
 
 namespace NotesAndroid
 {
     [Activity(Label = "@string/app_name", Theme = "@style/AppTheme", MainLauncher = true, ConfigurationChanges = Android.Content.PM.ConfigChanges.Orientation | Android.Content.PM.ConfigChanges.ScreenSize)]
-    public class MainActivity : AppCompatActivity
+    public class MainActivity() : AppCompatActivity
     {
         bool unsavedChanges = false;
         DateTime lastSaveTime = DateTime.Now;
-        NoteUi rootNode = null;
+        NoteUi? rootNode = null;
+        LinearLayout? rootLayout;
+
+        const float fontSize = 10f;
+        const int treeDepthPadding = 20;
 
         // Load data to GUI or save config to disk
         // config is updated in real time in GUI events
@@ -56,15 +49,37 @@ namespace NotesAndroid
         {
             lock (Config.Data)
             {
-                var rootLayout = FindViewById<LinearLayout>(Resource.Id.noteLinearLayout);
-
                 rootLayout.RemoveViews(0, rootLayout.ChildCount);
                 NoteUi.UiToNote.Clear();
 
-                rootNode = new NoteUi(Config.Data.Notes, this, OnNoteChange, OnNoteDone);
+                rootNode = new NoteUi(Config.Data.Notes, new ActivityWrapper(this), new LayoutWrapper(rootLayout), CreateUi);
 
                 UpdateWidget();
             }
+        }
+        IUiLayout CreateUi(IUiWindow mainWindow, Note note, int index = -1, int depth = 0)
+        {
+            bool enabled = true;
+            var rootLayout = FindViewById<LinearLayout>(Resource.Id.noteLinearLayout);
+
+            var newNoteLayout = (LinearLayout)this.LayoutInflater.Inflate(Resource.Layout.notebox, null);
+            newNoteLayout.SetPadding((int)(this.Dip2px(treeDepthPadding) * (depth - 0.5)), this.Dip2px(7), 0, 0);
+            if (index < 0)
+                index = rootLayout.ChildCount;
+            rootLayout.AddView(newNoteLayout, index);
+
+            var noteTextbox = newNoteLayout.FindViewById<EditText>(Resource.Id.note);
+            noteTextbox.Enabled = enabled;
+            noteTextbox.Text = note.Text;
+            noteTextbox.TextChanged += (obj, args) => OnNoteChange(obj, args);
+            // TODO: Use note.OnKeyUp by overriding in EditText subclass
+
+            var checkBox = newNoteLayout.FindViewById<CheckBox>(Resource.Id.noteDone);
+            checkBox.Enabled = enabled;
+            checkBox.Checked = note.Done;
+            checkBox.CheckedChange += (obj, args) => OnNoteDone(obj, args);
+
+            return new LayoutWrapper(newNoteLayout);
         }
         public void ReqServerNotes()
         {
@@ -106,7 +121,7 @@ namespace NotesAndroid
                 AppWidgetManager.GetInstance(Manager.widgetContext).UpdateAppWidget(thisWidget, remoteViews);
             }
         }
-        Payload GetNewPayload() => new Payload(Config.Data.SaveTime, Config.Data.Notes);
+        Payload GetNewPayload() => new(Config.Data.SaveTime, Config.Data.Notes);
 
         // Events
         protected override void OnCreate(Bundle savedInstanceState)
@@ -117,7 +132,7 @@ namespace NotesAndroid
 
             // Setup gui events
             var newNote = FindViewById<EditText>(Resource.Id.newNote);
-            //newNote.TextChanged += OnNewNote;
+            rootLayout = FindViewById<LinearLayout>(Resource.Id.noteLinearLayout);
 
             var syncButton = FindViewById<Button>(Resource.Id.syncButton);
             syncButton.Click += (s, e) => Task.Run(() => {
@@ -242,7 +257,7 @@ namespace NotesAndroid
         {
             EditText ed = (EditText)o;
             ViewGroup note = (ViewGroup)ed.Parent;
-            var noteUiOrigin = NoteUi.UiToNote[note];
+            var noteUiOrigin = NoteUi.UiToNote[new LayoutWrapper(note)];
 
             if (e.Text.Contains('\n'))
             {
@@ -251,7 +266,7 @@ namespace NotesAndroid
                 int index = noteUiOrigin.Parent.SubNotes.IndexOf(noteUiOrigin);
                 var insertionIndex = e.Start == 0 ? index : index + 1;
 
-                noteUiOrigin.Parent.AddSubNoteAt(new Note(), this, OnNoteChange, OnNoteDone, insertionIndex);
+                noteUiOrigin.Parent.AddSubNoteBefore(new Note(), new ActivityWrapper(this), new LayoutWrapper(rootLayout), CreateUi, insertionIndex);
             }
             else if (e.AfterCount < e.BeforeCount && 
                      ed.Text.Length < 1 && 
@@ -269,7 +284,7 @@ namespace NotesAndroid
         {
             CheckBox ch = (CheckBox)o;
             ViewGroup note = (ViewGroup)ch.Parent;
-            var noteUiOrigin = NoteUi.UiToNote[note];
+            var noteUiOrigin = NoteUi.UiToNote[new LayoutWrapper(note)];
 
             noteUiOrigin.Note.Done = ch.Checked;
 
