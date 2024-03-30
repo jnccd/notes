@@ -1,17 +1,6 @@
-﻿using Android.App;
-using Android.Content;
-using Android.OS;
-using Android.Runtime;
-using Android.Views;
-using Android.Widget;
-using Notes;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using Android.Content;
 using Notes.Interface;
 using Configuration;
-using NotesAndroid2;
 
 namespace NotesAndroid
 {
