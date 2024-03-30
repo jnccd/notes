@@ -12,13 +12,10 @@ namespace NotesAndroid.UiInterface
     {
         public readonly MainActivity Activity = activity;
 
-        public void Relayout()
-        {
-            
-        }
+        public void Relayout() => Activity.Relayout();
 
         // To make the dictionary work as expected
         public override int GetHashCode() => Activity.GetHashCode();
-        public override bool Equals(object obj) => obj.GetHashCode() == Activity.GetHashCode();
+        public override bool Equals(object? obj) => obj?.GetHashCode() == Activity.GetHashCode();
     }
 }

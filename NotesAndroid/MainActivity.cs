@@ -10,6 +10,7 @@ using Config = Configuration.Config;
 using Notes.Interface.UiController;
 using NotesAndroid.UiInterface;
 using Activity = Android.App.Activity;
+using Android.Widget;
 
 namespace NotesAndroid
 {
@@ -57,30 +58,6 @@ namespace NotesAndroid
                 UpdateWidget();
             }
         }
-        IUiLayout CreateUi(IUiWindow mainWindow, Note note, int index = -1, int depth = 0)
-        {
-            bool enabled = true;
-            var rootLayout = FindViewById<LinearLayout>(Resource.Id.noteLinearLayout);
-
-            var newNoteLayout = (LinearLayout)this.LayoutInflater.Inflate(Resource.Layout.notebox, null);
-            newNoteLayout.SetPadding((int)(this.Dip2px(treeDepthPadding) * (depth - 0.5)), this.Dip2px(7), 0, 0);
-            if (index < 0)
-                index = rootLayout.ChildCount;
-            rootLayout.AddView(newNoteLayout, index);
-
-            var noteTextbox = newNoteLayout.FindViewById<EditText>(Resource.Id.note);
-            noteTextbox.Enabled = enabled;
-            noteTextbox.Text = note.Text;
-            noteTextbox.TextChanged += (obj, args) => OnNoteChange(obj, args);
-            // TODO: Use note.OnKeyUp by overriding in EditText subclass
-
-            var checkBox = newNoteLayout.FindViewById<CheckBox>(Resource.Id.noteDone);
-            checkBox.Enabled = enabled;
-            checkBox.Checked = note.Done;
-            checkBox.CheckedChange += (obj, args) => OnNoteDone(obj, args);
-
-            return new LayoutWrapper(newNoteLayout);
-        }
         public void ReqServerNotes()
         {
             Logger.WriteLine($"UpdatePayload");
@@ -111,6 +88,47 @@ namespace NotesAndroid
                 SaveConfig(false);
             });
         }
+        Payload GetNewPayload() => new(Config.Data.SaveTime, Config.Data.Notes);
+
+        // Manage Ui
+        IUiLayout CreateUi(IUiWindow mainWindow, Note note, int index = -1, int depth = 0)
+        {
+            bool enabled = true;
+            var rootLayout = FindViewById<LinearLayout>(Resource.Id.noteLinearLayout);
+
+            var newNoteLayout = (LinearLayout)this.LayoutInflater.Inflate(Resource.Layout.notebox, null);
+            newNoteLayout.SetPadding((int)(this.Dip2px(treeDepthPadding) * (depth - 0.5)), this.Dip2px(7), 0, 0);
+            if (index < 0)
+                index = rootLayout.ChildCount;
+            rootLayout.AddView(newNoteLayout, index);
+
+            var noteTextbox = newNoteLayout.FindViewById<EditText>(Resource.Id.note);
+            noteTextbox.Enabled = enabled;
+            noteTextbox.Text = note.Text;
+            noteTextbox.TextChanged += OnNoteChange;
+
+            var checkBox = newNoteLayout.FindViewById<CheckBox>(Resource.Id.noteDone);
+            checkBox.Enabled = enabled;
+            checkBox.Checked = note.Done;
+            checkBox.CheckedChange += OnNoteDone;
+
+            var expandButton = newNoteLayout.FindViewById<Button>(Resource.Id.expandButton);
+            expandButton.Enabled = enabled;
+            expandButton.Click += ExpandButton_Click;
+
+            return new LayoutWrapper(newNoteLayout);
+        }
+
+        public void Relayout(NoteUi? node = null, int depth = 0)
+        {
+            node ??= rootNode;
+            if (node != null)
+                foreach (var child in node.SubNotes)
+                {
+                    ((LayoutWrapper)child.UiLayout).Layout.Visibility = child.Shown ? ViewStates.Visible : ViewStates.Gone;
+                    Relayout(child, depth + 1);
+                }
+        }
         public void UpdateWidget()
         {
             if (Manager.widgetContext != null)
@@ -121,7 +139,6 @@ namespace NotesAndroid
                 AppWidgetManager.GetInstance(Manager.widgetContext).UpdateAppWidget(thisWidget, remoteViews);
             }
         }
-        Payload GetNewPayload() => new(Config.Data.SaveTime, Config.Data.Notes);
 
         // Events
         protected override void OnCreate(Bundle savedInstanceState)
@@ -253,10 +270,10 @@ namespace NotesAndroid
             base.OnDestroy();
         }
         // Note Events
-        public void OnNoteChange(object o, TextChangedEventArgs e)
+        public void OnNoteChange(object? sender, TextChangedEventArgs e)
         {
-            EditText ed = (EditText)o;
-            ViewGroup note = (ViewGroup)ed.Parent;
+            var ed = (EditText?)sender;
+            var note = (ViewGroup?)ed?.Parent;
             var noteUiOrigin = NoteUi.UiToNote[new LayoutWrapper(note)];
 
             if (e.Text.Contains('\n'))
@@ -280,15 +297,26 @@ namespace NotesAndroid
             }
             unsavedChanges = true;
         }
-        public void OnNoteDone(object o, CompoundButton.CheckedChangeEventArgs e)
+        public void OnNoteDone(object? sender, CompoundButton.CheckedChangeEventArgs e)
         {
-            CheckBox ch = (CheckBox)o;
-            ViewGroup note = (ViewGroup)ch.Parent;
-            var noteUiOrigin = NoteUi.UiToNote[new LayoutWrapper(note)];
+            var checkBox = (CheckBox?)sender;
+            var noteView = (ViewGroup?)checkBox?.Parent;
+            if (noteView == null) return;
+            var noteUiOrigin = NoteUi.UiToNote[new LayoutWrapper(noteView)];
 
-            noteUiOrigin.Note.Done = ch.Checked;
+            if (checkBox == null) return;
+            noteUiOrigin.Note.Done = checkBox.Checked;
 
             unsavedChanges = true;
+        }
+        private void ExpandButton_Click(object? sender, EventArgs e)
+        {
+            var button = (Button?)sender;
+            var noteView = (ViewGroup?)button?.Parent;
+            if (noteView == null) return;
+            var noteUiOrigin = NoteUi.UiToNote[new LayoutWrapper(noteView)];
+
+            noteUiOrigin.ToggleExpand();
         }
     }
 }
