@@ -284,6 +284,7 @@ namespace Notes.Desktop
                 Text = note.Text,
             };
             noteTextBox.KeyUp += mainForm.NoteTextBox_KeyUp;
+            noteTextBox.KeyDown += mainForm.NoteTextBox_KeyDown;
             noteTextBox.DoubleClick += mainForm.NoteTextBox_DoubleClick;
             noteTextBox.Font = new Font(noteTextBox.Font.FontFamily, fontSize);
             mainNotePanel.Controls.Add(noteTextBox);
@@ -319,7 +320,17 @@ namespace Notes.Desktop
 
                 ((LayoutWrapper)p.UiLayout).Layout.Controls.Find("noteTextBox", true).First().Focus();
             }
-            else if (e.KeyCode == Keys.Back && origin.Text.Length == 0 && rootPanel.Controls.Count > 1)
+            else
+            {
+                noteUiOrigin.Note.Text = origin.Text;
+            }
+            unsavedEdits = true;
+        }
+        private void NoteTextBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            var origin = (TextBox)sender;
+            var noteUiOrigin = NoteUi.UiToNote[new LayoutWrapper(origin.Parent)];
+            if (e.KeyCode == Keys.Back && origin.Text.Length == 0 && rootPanel.Controls.Count > 1)
             {
                 int index = rootPanel.Controls.IndexOf(origin.Parent);
                 noteUiOrigin.Parent.RemoveSubNote(noteUiOrigin);
@@ -327,10 +338,6 @@ namespace Notes.Desktop
                     rootPanel.Controls[index - 1].Controls.Find("noteTextBox", true).First().Focus();
                 else
                     rootPanel.Controls.Find("noteTextBox", true).First().Focus();
-            }
-            else
-            {
-                noteUiOrigin.Note.Text = origin.Text;
             }
             unsavedEdits = true;
         }
