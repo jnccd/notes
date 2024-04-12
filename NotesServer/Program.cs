@@ -3,6 +3,8 @@ using Notes.Interface;
 using System.Diagnostics;
 using Notes.Server;
 using System.Reflection;
+using System.Security.Cryptography.X509Certificates;
+using Microsoft.AspNetCore.Builder;
 //Console.WriteLine(Environment.GetEnvironmentVariable("NOTES_USERS"));
 
 // --- Manage Paths ---------------------------------------------------------------------------------------------------------------------------------------
@@ -20,6 +22,11 @@ var logger = new ServerLogger(notesDir);
 if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("NOTES_USERS")))
 {
     logger.WriteLine($"NOTES_USERS is empty! Closing...");
+    return;
+}
+if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("CERT_PATH")))
+{
+    logger.WriteLine($"CERT_PATH is empty! Closing...");
     return;
 }
 
@@ -52,6 +59,16 @@ var auth = new BasicAuth(users);
 // --- Build API ---------------------------------------------------------------------------------------------------------------------------------------
 
 var builder = WebApplication.CreateBuilder(args);
+// Set up cert
+var certPem = File.ReadAllText($"{Environment.GetEnvironmentVariable("CERT_PATH")}{_s}fullchain.pem");
+var keyPem = File.ReadAllText($"{Environment.GetEnvironmentVariable("CERT_PATH")}{_s}privkey.pem");
+var x509 = X509Certificate2.CreateFromPem(certPem, keyPem);
+builder.WebHost.ConfigureKestrel(s => {
+    s.ListenAnyIP(443, options => {
+        options.UseHttps(x509);
+    });
+});
+
 var app = builder.Build();
 app.UseHttpsRedirection();
 
