@@ -1,10 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Notes.Interface;
-using System.Diagnostics;
 using Notes.Server;
 using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
-using Microsoft.AspNetCore.Builder;
+using System.Net;
 //Console.WriteLine(Environment.GetEnvironmentVariable("NOTES_USERS"));
 
 // --- Manage Paths ---------------------------------------------------------------------------------------------------------------------------------------
@@ -59,13 +58,18 @@ var auth = new BasicAuth(users);
 // --- Build API ---------------------------------------------------------------------------------------------------------------------------------------
 
 var builder = WebApplication.CreateBuilder(args);
+ushort port = string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("PORT")) ? 
+    (ushort)7777 : 
+    Convert.ToUInt16(Environment.GetEnvironmentVariable("PORT"));
 // Set up cert
 var certPem = File.ReadAllText($"{Environment.GetEnvironmentVariable("CERT_PATH")}{_s}fullchain.pem");
 var keyPem = File.ReadAllText($"{Environment.GetEnvironmentVariable("CERT_PATH")}{_s}privkey.pem");
 var x509 = X509Certificate2.CreateFromPem(certPem, keyPem);
-builder.WebHost.ConfigureKestrel(s => {
-    s.ListenAnyIP(443, options => {
-        options.UseHttps(x509);
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Listen(IPAddress.Any, port, listenOptions =>
+    {
+        listenOptions.UseHttps(x509);
     });
 });
 
