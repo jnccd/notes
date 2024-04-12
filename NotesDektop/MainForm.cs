@@ -370,7 +370,7 @@ namespace Notes.Desktop
             {
                 var origin = (Label)sender;
                 var draggedNoteUi = NoteUi.UiToNote[new LayoutWrapper(draggedPanel)];
-                var draggedNoteSubNotePanels = draggedNoteUi.GetAllChildren().Select(x => (Panel)x.UiLayout).ToList();
+                var draggedNoteSubNotePanels = draggedNoteUi.GetAllChildren().Select(x => ((LayoutWrapper)x.UiLayout).Layout).ToList();
 
                 int mousePosY = e.Y + origin.Location.Y + origin.Parent.Location.Y;
 
@@ -385,7 +385,7 @@ namespace Notes.Desktop
                     }
                 if (minPanel == null)
                     return;
-                int oldDraggedNoteUiPanelIndex = rootPanel.Controls.IndexOf((Panel)draggedNoteUi.UiLayout);
+                int oldDraggedNoteUiPanelIndex = rootPanel.Controls.IndexOf(((LayoutWrapper)draggedNoteUi.UiLayout).Layout);
                 int panelIndex = rootPanel.Controls.IndexOf(minPanel);
                 var noteUiMinPanel = NoteUi.UiToNote[new LayoutWrapper(minPanel)];
 
@@ -405,7 +405,7 @@ namespace Notes.Desktop
             {
                 var origin = (Label)sender;
                 var draggedNoteUi = NoteUi.UiToNote[new LayoutWrapper(draggedPanel)];
-                var draggedNoteSubNotePanels = draggedNoteUi.GetAllChildren().Select(x => (Panel)x.UiLayout).ToList();
+                var draggedNoteSubNotePanels = draggedNoteUi.GetAllChildren().Select(x => ((LayoutWrapper)x.UiLayout).Layout).ToList();
 
                 int mousePosY = e.Y + origin.Location.Y + origin.Parent.Location.Y;
 
