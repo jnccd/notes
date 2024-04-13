@@ -78,7 +78,7 @@ app.UseHttpsRedirection();
 
 // --- Fill API  ---------------------------------------------------------------------------------------------------------------------------------------
 
-app.MapGet("/hewwo", ([FromHeader(Name = "Authorization")] string? authTokenHeader) =>
+app.MapGet("/hewwo", () =>
     Results.Extensions.Html(@$"<!doctype html>
     <html>
         <head>
