@@ -9,9 +9,11 @@ namespace Notes.Server
         readonly bool writeLogs = false;
         readonly bool give404 = false;
 
-        public BasicAuth(List<User> users, bool writeLogs = true, bool give404 = false)
+        public BasicAuth(List<User> users, bool writeLogs = false, bool give404 = false)
         {
             this.users = users;
+            this.writeLogs = writeLogs;
+            this.give404 = give404;
         }
 
         public IResult GetUser(string? authTokenHeader, Func<User?, IResult> handleRequest)
