@@ -70,7 +70,7 @@ namespace Notes.Interface.UiController
             UiToNote.Add(UiLayout, this);
 
             foreach (Note subNote in note.SubNotes)
-                SubNotes.Add(new NoteUi(subNote, parentWindow, rootLayout, CreateNoteUiElement, depth + 1, this, index >= 0 ? index + 1 : index));
+                SubNotes.Add(new NoteUi(subNote, parentWindow, rootLayout, CreateNoteUiElement, depth + 1, this, index >= 0 ? ++index : index));
         }
         /// <summary>
         /// Constructor for empty root NoteUi Node
@@ -125,6 +125,20 @@ namespace Notes.Interface.UiController
                 re.AddRange(child.GetAllChildren());
             return re;
         }
+        public List<NoteUi> FlattenNotesInUiOrder()
+        {
+            var re = new List<NoteUi> { this };
+            foreach (var child in SubNotes)
+                re.AddRange(child.FlattenNotesInUiOrder());
+            return re;
+        }
+        public NoteUi GetRootNoteUi()
+        {
+            if (Parent == null)
+                return this;
+            else
+                return Parent.GetRootNoteUi();
+        }
 
         public NoteUi AddSubNoteBefore(
             Note note,
@@ -133,11 +147,9 @@ namespace Notes.Interface.UiController
             CreateNoteUiElementFunc CreateUiNoteElement,
             int index)
         {
-            var rootPanelIndex = SubNotes.Count == 0 ?
-                rootLayout.IndexOfChild(UiLayout) + 1 :
-                (index < SubNotes.Count ? 
-                    rootLayout.IndexOfChild(SubNotes[index].UiLayout) :
-                    rootLayout.IndexOfChild(SubNotes[index - 1].UiLayout) + 1); // AddSubNoteAfter in the last note edge case
+            var rootPanelIndex = index >= SubNotes.Count ?
+                GetRootNoteUi().FlattenNotesInUiOrder().IndexOf(this) + SubNotes.Count :
+                GetRootNoteUi().FlattenNotesInUiOrder().IndexOf(SubNotes[index]) - 1;
 
             var newNoteUi = new NoteUi(note, parentWindow, rootLayout, CreateUiNoteElement, depth + 1, this, rootPanelIndex);
             Note.SubNotes.Insert(index, note);
