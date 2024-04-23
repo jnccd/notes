@@ -436,6 +436,7 @@ namespace Notes.Desktop
             var noteUiOrigin = NoteUi.UiToNote[new LayoutWrapper(origin.Parent)];
 
             noteUiOrigin.ToggleExpand();
+            unsavedEdits = true;
         }
 
         // Form Events
