@@ -317,6 +317,8 @@ namespace NotesAndroid
             var noteUiOrigin = NoteUi.UiToNote[new LayoutWrapper(noteView)];
 
             noteUiOrigin.ToggleExpand();
+
+            unsavedChanges = true;
         }
     }
 }

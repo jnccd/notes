@@ -36,12 +36,11 @@ namespace Notes.Interface.UiController
         private readonly CreateNoteUiElementFunc createNoteUiElement;
 
         // Expansion
-        public bool Expanded { private set; get; }
         public bool Shown
         {
             get
             {
-                return Parent == null || (Parent.Expanded && Parent.Shown);
+                return Parent == null || (Parent.Note.Expanded && Parent.Shown);
             }
         }
 
@@ -62,7 +61,6 @@ namespace Notes.Interface.UiController
             Parent = parent;
             this.parentWindow = parentWindow;
             this.rootLayout = rootLayout;
-            Expanded = depth <= 0;
 
             createNoteUiElement = CreateNoteUiElement;
 
@@ -90,7 +88,7 @@ namespace Notes.Interface.UiController
             this.parentWindow = parentWindow;
             this.rootLayout = rootLayout;
             this.UiLayout = rootLayout;
-            Expanded = true;
+            Note.Expanded = true;
 
             createNoteUiElement = CreateNoteUiElement;
 
@@ -100,11 +98,11 @@ namespace Notes.Interface.UiController
 
         public void ToggleExpand()
         {
-            Expanded = !Expanded;
+            Note.Expanded = !Note.Expanded;
 
-            if (Expanded && SubNotes.Count == 0)
+            if (Note.Expanded && SubNotes.Count == 0)
                 AddSubNoteBefore(new Note(), parentWindow, rootLayout, createNoteUiElement, 0);
-            else if (!Expanded && SubNotes.Count == 1 && string.IsNullOrWhiteSpace(SubNotes[0].Note.Text))
+            else if (!Note.Expanded && SubNotes.Count == 1 && string.IsNullOrWhiteSpace(SubNotes[0].Note.Text))
                 RemoveSubNoteAt(0);
 
             parentWindow.Relayout();
@@ -113,7 +111,7 @@ namespace Notes.Interface.UiController
         {
             if (Parent == null)
                 return true;
-            else if (!Parent.Expanded)
+            else if (!Parent.Note.Expanded)
                 return false;
             else
                 return Parent.AreAllParentsExpanded();

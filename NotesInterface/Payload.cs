@@ -71,7 +71,8 @@ namespace Notes.Interface
     {
         public bool Done = false;
         public string Text = "";
-        public List<Note> SubNotes = new List<Note>();
+        public bool Expanded = false;
+        public List<Note> SubNotes = new();
         public NotePriority Prio = NotePriority.Meduim;
     }
 }
