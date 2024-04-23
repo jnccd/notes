@@ -55,6 +55,7 @@ namespace NotesAndroid
 
                 rootNode = new NoteUi(Config.Data.Notes, new ActivityWrapper(this), new LayoutWrapper(rootLayout), CreateUi);
 
+                Relayout();
                 UpdateWidget();
             }
         }
