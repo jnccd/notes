@@ -35,6 +35,9 @@ namespace Notes.Interface.UiController
         // Events
         private readonly CreateNoteUiElementFunc createNoteUiElement;
 
+        // Additional Variables
+        public readonly Dictionary<string, object> UiProperties = new();
+
         // Expansion
         public bool Shown
         {
