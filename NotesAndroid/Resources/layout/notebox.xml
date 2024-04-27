@@ -11,18 +11,18 @@
     android:id="@+id/noteLayout">
     <Button
         android:text="⠿"
-        android:textSize="25dp"
+        android:textSize="30dp"
         android:textColor="@color/colorSecondary"
         android:layout_marginTop="4dp"
-        android:layout_width="20dp"
+        android:layout_width="35dp"
         android:layout_height="35dp"
         android:background="@null"
         android:id="@+id/dragButton" />
     <NotesAndroid.TriangleButton
         android:text=""
         android:textColor="@color/colorSecondary"
-        android:layout_width="20dp"
-        android:layout_height="20dp"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
         android:background="@null"
         android:id="@+id/expandButton" />
     <CheckBox

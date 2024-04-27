@@ -56,9 +56,9 @@ namespace NotesAndroid
 
             Path path = new();
             path.SetFillType(Path.FillType.EvenOdd);
-            path.MoveTo(center.X - 3, center.Y - weirdSize);
-            path.LineTo(center.X + size - 3, center.Y);
-            path.LineTo(center.X - 3, center.Y + weirdSize);
+            path.MoveTo(center.X - halfSize, center.Y - weirdSize);
+            path.LineTo(center.X + size - halfSize, center.Y);
+            path.LineTo(center.X - halfSize, center.Y + weirdSize);
             path.Close();
             canvas.DrawPath(path, paint);
         }
