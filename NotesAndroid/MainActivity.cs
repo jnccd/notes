@@ -117,7 +117,81 @@ namespace NotesAndroid
             expandButton.Enabled = enabled;
             expandButton.Click += ExpandButton_Click;
 
+            var dragButton = newNoteLayout.FindViewById<Button>(Resource.Id.dragButton);
+            dragButton.Enabled = enabled;
+            dragButton.Touch += DragButton_Touch;
+
             return new LayoutWrapper(newNoteLayout);
+        }
+
+        private void DragButton_Touch(object? sender, View.TouchEventArgs e)
+        {
+            //Debug.WriteLine($"hat das auch touch? {e.Event?.Action}"); 
+            e.Handled = true;
+
+            var but = (Button?)sender;
+            var note = (ViewGroup?)but?.Parent;
+            if (note == null)
+                return;
+            var noteUiOrigin = NoteUi.UiToNote[new LayoutWrapper(note)];
+
+            if (e.Event?.Action == MotionEventActions.Down)
+            {
+                noteUiOrigin.UiProperties["DownX"] = e.Event?.GetRawX(0) ?? 0;
+                noteUiOrigin.UiProperties["DownY"] = e.Event?.GetRawY(0) ?? 0;
+                //Debug.WriteLine($"down {noteUiOrigin.UiProperties["DownX"]} {noteUiOrigin.UiProperties["DownY"]}");
+
+                this.FindViewById<ScrollView>(Resource.Id.noteScrollView)?.RequestDisallowInterceptTouchEvent(true);
+            }
+            else if (e.Event?.Action == MotionEventActions.Move)
+            {
+                note.Animate()?.
+                    XBy(e.Event.GetRawX(0) - (float)noteUiOrigin.UiProperties["DownX"]).
+                    YBy(e.Event.GetRawY(0) - (float)noteUiOrigin.UiProperties["DownY"]).
+                    SetDuration(0).
+                    Start();
+
+                noteUiOrigin.UiProperties["DownX"] = e.Event?.GetRawX(0) ?? 0;
+                noteUiOrigin.UiProperties["DownY"] = e.Event?.GetRawY(0) ?? 0;
+            }
+            else if (e.Event?.Action == MotionEventActions.Up)
+            {
+                // Return touch consumption rights
+                var scrollView = FindViewById<ScrollView>(Resource.Id.noteScrollView);
+                scrollView?.RequestDisallowInterceptTouchEvent(false);
+                
+                ViewGroup? noteViewAfterMouseY = null;
+                foreach (var noteViews in NoteUi.UiToNote.Values.
+                    Select(x => ((LayoutWrapper)x.UiLayout).Layout).
+                    Where(x => x != note))
+                {
+                    int[]? uwu = [0,0];
+                    noteViews.GetLocationOnScreen(uwu);
+                    int[]? uwu2 = [0, 0];
+                    scrollView?.GetLocationOnScreen(uwu2);
+                    Debug.WriteLine($"hat das auch touch? {uwu[1]} {uwu2[1]}");
+                    Debug.WriteLine($"hat das auch touch? {noteViews.GetY()} {e.Event.GetY() + but.GetY() + note.GetY()}");
+                    if (noteViews.GetY() > e.Event.GetY() + but.GetY() + note.GetY() - note.Height / 2)
+                    {
+                        noteViewAfterMouseY = noteViews;
+                        break;
+                    }
+                }
+
+                //noteViewAfterMouseY?.SetBackgroundColor(Android.Graphics.Color.Red);
+
+                noteUiOrigin.Parent.RemoveSubNote(noteUiOrigin);
+                var draggedTo = NoteUi.UiToNote[new LayoutWrapper(noteViewAfterMouseY)];
+                draggedTo.Parent.AddSubNoteBefore(
+                    noteUiOrigin.Note,
+                    new ActivityWrapper(this),
+                    new LayoutWrapper(rootLayout),
+                    CreateUi,
+                    draggedTo.Parent.SubNotes.IndexOf(draggedTo));
+
+                note.Animate()?.Cancel();
+                LoadConfig();
+            }
         }
 
         public void Relayout(NoteUi? node = null, int depth = 0)
