@@ -50,7 +50,7 @@ namespace NotesAndroid
 
             int minAspect = Math.Min(Width, Height), halfMinAspect = minAspect / 2;
             Point center = new(Width / 2, Height / 2);
-            int size = (int)(halfMinAspect * 0.9);
+            int size = (int)(halfMinAspect * 0.75);
             int halfSize = size / 2;
             int weirdSize = size * 2 / 3;
 
