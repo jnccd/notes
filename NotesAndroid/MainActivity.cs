@@ -23,7 +23,6 @@ namespace NotesAndroid
         NoteUi? rootNode = null;
         LinearLayout? rootLayout;
 
-        const float fontSize = 10f;
         const int treeDepthPadding = 20;
         int dragAnimationTimer = 0;
 
