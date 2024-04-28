@@ -144,7 +144,6 @@ namespace NotesAndroid
             {
                 noteUiOrigin.UiProperties["DownX"] = e.Event?.GetRawX(0) ?? 0;
                 noteUiOrigin.UiProperties["DownY"] = e.Event?.GetRawY(0) ?? 0;
-                //Debug.WriteLine($"down {noteUiOrigin.UiProperties["DownX"]} {noteUiOrigin.UiProperties["DownY"]}");
 
                 foreach (var noteUi in NoteUi.UiToNote.Values)
                 {
@@ -153,7 +152,7 @@ namespace NotesAndroid
                     noteUi.UiProperties["origY"] = view.GetY();
                 }
 
-                this.FindViewById<ScrollView>(Resource.Id.noteScrollView)?.RequestDisallowInterceptTouchEvent(true);
+                FindViewById<ScrollView>(Resource.Id.noteScrollView)?.RequestDisallowInterceptTouchEvent(true);
                 dragAnimationTimer = 0;
             }
             else if (e.Event?.Action == MotionEventActions.Move)
@@ -204,12 +203,6 @@ namespace NotesAndroid
                 ViewGroup? noteViewAfterMouseY = null;
                 foreach (var noteViews in otherNoteViews)
                 {
-                    int[]? uwu = [0,0];
-                    noteViews.GetLocationOnScreen(uwu);
-                    int[]? uwu2 = [0, 0];
-                    scrollView?.GetLocationOnScreen(uwu2);
-                    //Debug.WriteLine($"hat das auch touch? {uwu[1]} {uwu2[1]}");
-                    //Debug.WriteLine($"hat das auch touch? {noteViews.GetY()} {e.Event.GetY() + but.GetY() + note.GetY()}");
                     if (noteViews.GetY() > e.Event.GetY() + but.GetY() + note.GetY() - note.Height / 2)
                     {
                         noteViewAfterMouseY = noteViews;
