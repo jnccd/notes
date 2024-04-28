@@ -4,8 +4,10 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:scrollbars="vertical"
+    android:isScrollContainer="true"
     android:id="@+id/widgetBackground"
-    android:background="#E7DE67" >
+    android:background="#E7DE67">
 
     <TextView
         android:text="I HATE ANDROID"
@@ -16,13 +18,12 @@
         android:layout_marginLeft="6dp"
         android:background="#D7CE56" />
     <TextView
-        android:text="Hewwo deaw usew, pwease start teh app before the widget cuz, idk\n\nYour truly,\nConfused Programmer monke"
-        android:textAppearance="?android:attr/textAppearanceMedium"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/widgetNoteView"
-        android:layout_marginLeft="6dp"
-        android:layout_marginRight="6dp"
-        android:layout_marginTop="3dp" />
-
+            android:text="Hewwo deaw usew, pwease start teh app before the widget cuz, idk\n\nYour truly,\nConfused Programmer monke"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/widgetNoteView"
+            android:layout_marginLeft="6dp"
+            android:layout_marginRight="6dp"
+            android:layout_marginTop="3dp" />
 </LinearLayout>
