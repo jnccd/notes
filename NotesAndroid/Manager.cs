@@ -31,7 +31,11 @@ namespace NotesAndroid
             re ??= new();
             foreach (Note note in Notes)
             {
-                re.AppendLine(new string(Enumerable.Repeat(' ', depth * 2).ToArray()) + note.Text);
+                re.AppendLine(
+                    new string(Enumerable.Repeat(' ', depth * 2).ToArray()) + // Add indentation
+                    (note.Done ?
+                        note.Text.Select(x => x + "" + (char)822).Combine() : // Cross through if done
+                        note.Text));
                 if (note.Expanded)
                     GetWidgetText(note.SubNotes, re, depth + 1);
             }
