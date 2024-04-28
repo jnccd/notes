@@ -12,6 +12,8 @@ using NotesAndroid.UiInterface;
 using Activity = Android.App.Activity;
 using Android.Widget;
 using System.Numerics;
+using static Android.Provider.ContactsContract.CommonDataKinds;
+using Note = Notes.Interface.Note;
 
 namespace NotesAndroid
 {
@@ -116,6 +118,10 @@ namespace NotesAndroid
 
             var expandButton = newNoteLayout.FindViewById<Button>(Resource.Id.expandButton);
             expandButton.Enabled = enabled;
+            expandButton?.Animate()?.
+                Rotation(note.Expanded ? 90 : 0).
+                SetDuration(0).
+                Start();
             expandButton.Click += ExpandButton_Click;
 
             var dragButton = newNoteLayout.FindViewById<Button>(Resource.Id.dragButton);
@@ -324,6 +330,10 @@ namespace NotesAndroid
             var noteUiOrigin = NoteUi.UiToNote[new LayoutWrapper(noteView)];
 
             noteUiOrigin.ToggleExpand();
+            button?.Animate()?.
+                Rotation(noteUiOrigin.Note.Expanded ? 90 : 0).
+                SetDuration(100).
+                Start();
 
             unsavedChanges = true;
         }
