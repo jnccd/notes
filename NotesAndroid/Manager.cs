@@ -33,6 +33,7 @@ namespace NotesAndroid
             {
                 re.AppendLine(
                     new string(Enumerable.Repeat(' ', depth * 2).ToArray()) + // Add indentation
+                    (note.Expanded ? "▼ " : "  ") +                           // Show expaded state
                     (note.Done ?
                         note.Text.Select(x => x + "" + (char)822).Combine() : // Cross through if done
                         note.Text));
