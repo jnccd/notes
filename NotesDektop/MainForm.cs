@@ -181,7 +181,8 @@ namespace Notes.Desktop
                 // Panel layout
                 p.Location = new Point(p.Location.X, curY);
                 p.Width = rootPanel.Width - p.Location.X - 12;
-                UpdatePanelHeight(NoteUi.UiToNote[new LayoutWrapper(p)]);
+                var noteUi = NoteUi.UiToNote[new LayoutWrapper(p)];
+                UpdatePanelHeight(noteUi);
                 curY += p.Height;
 
                 // Layout of controls inside panel
@@ -193,8 +194,11 @@ namespace Notes.Desktop
                 }
                 var textBox = p.Controls.Find("noteTextBox", true).First();
                 textBox.Width = p.Width - textBox.Location.X;
+                var expandButton = p.Controls.Find("expandButton", true).First();
+                expandButton.Text = GetExpandButtonSymbol(noteUi.Note);
             }
         }
+        static string GetExpandButtonSymbol(Note note) => note.Expanded ? "🞃" : "🞂";
         static void UpdatePanelHeight(NoteUi noteUi)
         {
             var UiPanel = ((LayoutWrapper)noteUi.UiLayout).Layout;
@@ -249,15 +253,15 @@ namespace Notes.Desktop
             Label expandButton = new()
             {
                 Name = "expandButton",
-                Text = "🞂",
                 BackColor = rootPanel.BackColor,
                 ForeColor = Color.FromArgb(30, 30, 30),
                 Location = new Point(0, 3),
-                Width = 14,
+                Width = 16,
                 Height = mainNotePanel.Height,
             };
             expandButton.Font = new Font(expandButton.Font.FontFamily, fontSize);
             expandButton.Click += mainForm.ExpandButton_Click;
+            expandButton.Text = GetExpandButtonSymbol(note);
             //expandButton.Paint += OnExpandButtonPaint;
             mainNotePanel.Controls.Add(expandButton);
 
