@@ -392,7 +392,7 @@ namespace NotesAndroid
                     var mag = animStrength * 20000000 / draggedToOrig.LengthSquared();
                     if (mag > 100)
                         mag = 100;
-                    var displaceVec = new Vector2((float)Math.Cos(ang) * mag, (float)Math.Sin(ang) * mag);
+                    var displaceVec = new Vector2((float)Math.Cos(ang) * mag / 5, (float)Math.Sin(ang) * mag);
 
                     //Debug.WriteLine($"{displaceVec}");
 
