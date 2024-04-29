@@ -296,7 +296,8 @@ namespace NotesAndroid
                 int index = noteUiOrigin.Parent.SubNotes.IndexOf(noteUiOrigin);
                 var insertionIndex = e.Start == 0 ? index : index + 1;
 
-                noteUiOrigin.Parent.AddSubNoteBefore(new Note(), new ActivityWrapper(this), new LayoutWrapper(rootLayout), CreateUi, insertionIndex);
+                var newNoteUi = noteUiOrigin.Parent.AddSubNoteBefore(new Note(), new ActivityWrapper(this), new LayoutWrapper(rootLayout), CreateUi, insertionIndex);
+                ((LayoutWrapper)newNoteUi.UiLayout).Layout.RequestFocus();
             }
             else if (e.AfterCount < e.BeforeCount && 
                      ed.Text.Length < 1 && 
