@@ -25,8 +25,13 @@ namespace NotesAndroid
         NoteUi? rootNode = null;
         LinearLayout? rootLayout;
 
-        const int treeDepthPadding = 20;
+        // Drag anim
         int dragAnimationTimer = 0;
+        Task? dragAnimDriver = null;
+        bool cancelDragAnim = false;
+        NoteUi? draggedNoteUi = null;
+
+        const int treeDepthPadding = 20;
 
         // Load data to GUI or save config to disk
         // config is updated in real time in GUI events
@@ -354,6 +359,9 @@ namespace NotesAndroid
 
             if (e.Event?.Action == MotionEventActions.Down)
             {
+
+                FindViewById<ScrollView>(Resource.Id.noteScrollView)?.RequestDisallowInterceptTouchEvent(true);
+
                 noteUiOrigin.UiProperties["DownX"] = e.Event?.GetRawX(0) ?? 0;
                 noteUiOrigin.UiProperties["DownY"] = e.Event?.GetRawY(0) ?? 0;
 
@@ -364,8 +372,63 @@ namespace NotesAndroid
                     noteUi.UiProperties["origY"] = view.GetY();
                 }
 
-                FindViewById<ScrollView>(Resource.Id.noteScrollView)?.RequestDisallowInterceptTouchEvent(true);
                 dragAnimationTimer = 0;
+                draggedNoteUi = noteUiOrigin;
+                dragAnimDriver = Task.Run(async () =>
+                {
+                    Vector2 origMid, draggedPos, displaceVec;
+                    var undraggedNotes = NoteUi.UiToNote.Values.Where(x => x != noteUiOrigin).ToArray();
+                    cancelDragAnim = false;
+
+                    while (true)
+                    {
+                        if (cancelDragAnim)
+                            break;
+
+                        RunOnUiThread(() =>
+                        {
+                            // Repell other notes
+                            foreach (var noteUi in undraggedNotes)
+                            {
+                                if (cancelDragAnim)
+                                    break;
+
+                                try
+                                {
+                                    var view = ((LayoutWrapper)noteUi.UiLayout).Layout;
+
+                                    origMid.X = (float)noteUi.UiProperties["origX"] + view.Width / 2f;
+                                    origMid.Y = (float)noteUi.UiProperties["origY"] + view.Height / 2f;
+                                    draggedPos.X = (float)noteUi.UiProperties["origX"] + view.Width / 3f * 2;
+                                    draggedPos.Y = note.GetY();
+                                    var draggedToOrig = origMid - draggedPos;
+                                    var ang = Math.Atan2(draggedToOrig.Y, draggedToOrig.X);
+                                    var animStrength = dragAnimationTimer / 30f;
+                                    if (animStrength > 1)
+                                        animStrength = 1;
+                                    var mag = animStrength * 20000000 / draggedToOrig.LengthSquared();
+                                    if (mag > 100)
+                                        mag = 100;
+                                    displaceVec.X = (float)Math.Cos(ang) * mag;
+                                    displaceVec.Y = (float)Math.Sin(ang) * mag;
+
+                                    view.Animate()?.
+                                        X((float)noteUi.UiProperties["origX"] + displaceVec.X).
+                                        Y((float)noteUi.UiProperties["origY"] + displaceVec.Y).
+                                        SetDuration(0).
+                                        Start();
+                                }
+                                catch { }
+                            }
+                        });
+
+                        if (cancelDragAnim)
+                            break;
+
+                        dragAnimationTimer++;
+                        await Task.Delay(32);
+                    }
+                });
             }
             else if (e.Event?.Action == MotionEventActions.Move)
             {
@@ -377,34 +440,6 @@ namespace NotesAndroid
                     Start();
                 noteUiOrigin.UiProperties["DownX"] = e.Event?.GetRawX(0) ?? 0;
                 noteUiOrigin.UiProperties["DownY"] = e.Event?.GetRawY(0) ?? 0;
-
-                // Repell other notes
-                foreach (var noteUi in NoteUi.UiToNote.Values.Where(x => x != noteUiOrigin))
-                {
-                    var view = ((LayoutWrapper)noteUi.UiLayout).Layout;
-
-                    var origMid = new Vector2((float)noteUi.UiProperties["origX"] + view.Width / 2f, (float)noteUi.UiProperties["origY"] + view.Height / 2f);
-                    var draggedPos = new Vector2(note.GetX(), note.GetY());
-                    var draggedToOrig = origMid - draggedPos;
-                    var ang = Math.Atan2(draggedToOrig.Y, draggedToOrig.X);
-                    var animStrength = dragAnimationTimer / 100f;
-                    if (animStrength > 1)
-                        animStrength = 1;
-                    var mag = animStrength * 20000000 / draggedToOrig.LengthSquared();
-                    if (mag > 100)
-                        mag = 100;
-                    var displaceVec = new Vector2((float)Math.Cos(ang) * mag / 5, (float)Math.Sin(ang) * mag);
-
-                    //Debug.WriteLine($"{displaceVec}");
-
-                    view.Animate()?.
-                        X((float)noteUi.UiProperties["origX"] + displaceVec.X).
-                        Y((float)noteUi.UiProperties["origY"] + displaceVec.Y).
-                        SetDuration(0).
-                        Start();
-                }
-
-                dragAnimationTimer++;
             }
             else if (e.Event?.Action == MotionEventActions.Up)
             {
@@ -412,6 +447,7 @@ namespace NotesAndroid
                 var scrollView = FindViewById<ScrollView>(Resource.Id.noteScrollView);
                 scrollView?.RequestDisallowInterceptTouchEvent(false);
 
+                // Find note dragged to
                 ViewGroup? noteViewAfterMouseY = null;
                 foreach (var noteViews in otherNoteViews)
                 {
@@ -421,9 +457,9 @@ namespace NotesAndroid
                         break;
                     }
                 }
-
                 //noteViewAfterMouseY?.SetBackgroundColor(Android.Graphics.Color.Red);
 
+                // Apply move operation on underlying Note datastructure
                 noteUiOrigin.Parent.RemoveSubNote(noteUiOrigin);
                 var draggedTo = NoteUi.UiToNote[new LayoutWrapper(noteViewAfterMouseY)];
                 draggedTo.Parent.AddSubNoteBefore(
@@ -433,8 +469,14 @@ namespace NotesAndroid
                     CreateUi,
                     draggedTo.Parent.SubNotes.IndexOf(draggedTo));
 
+                // Cancel anims
                 note.Animate()?.Cancel();
+                cancelDragAnim = true;
+                dragAnimDriver?.Wait();
+
+                // Reload
                 LoadConfig();
+                unsavedChanges = true;
             }
         }
     }
