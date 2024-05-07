@@ -46,7 +46,7 @@ namespace Notes.Interface
             //sb.Replace("\\", "");
             return sb.ToString();
         }
-        public static Payload? Parse(string json, Logger? logger = null)
+        public static Payload? Parse(string json)
         {
             try
             {
@@ -54,7 +54,7 @@ namespace Notes.Interface
             }
             catch 
             {
-                logger?.WriteLine($"Error parsing payload {json}");
+                Logger.WriteLine($"Error parsing payload {json}", LogLevel.Error);
                 return null; 
             }
         }

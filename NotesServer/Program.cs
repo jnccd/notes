@@ -13,19 +13,18 @@ string localDir = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
 string notesDir = $"{localDir}{_s}notes";
 Directory.CreateDirectory(notesDir);
 User.NotesDir = notesDir;
-var logger = new ServerLogger(notesDir);
 
 // --- Load Files and Env Vars ---------------------------------------------------------------------------------------------------------------------------------------
 
 // Check for valid Environment
 if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("NOTES_USERS")))
 {
-    logger.WriteLine($"NOTES_USERS is empty! Closing...");
+    Logger.WriteLine($"NOTES_USERS is empty! Closing...");
     return;
 }
 if (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("CERT_PATH")))
 {
-    logger.WriteLine($"CERT_PATH is empty! Closing...");
+    Logger.WriteLine($"CERT_PATH is empty! Closing...");
     return;
 }
 
@@ -40,11 +39,11 @@ foreach (string userDef in Environment.GetEnvironmentVariable("NOTES_USERS").Spl
         Payload? parsedPayload = null;
         try
         {
-            parsedPayload = Payload.Parse(File.ReadAllText(newUser.NotesJsonPath), logger);
+            parsedPayload = Payload.Parse(File.ReadAllText(newUser.NotesJsonPath));
         }
         catch (Exception ex)
         {
-            logger.WriteLine(ex);
+            Logger.WriteLine(ex);
         }
         if (parsedPayload != null)
             newUser.NotesPayload = parsedPayload;
@@ -112,13 +111,13 @@ app.MapPost("/notes", async ([FromHeader(Name = "Authorization")] string? authTo
         bodyPayload?.SaveTime > u.NotesPayload.SaveTime && 
         bodyPayload.Checksum == bodyPayload.GenerateChecksum())
     {
-        logger.WriteLine($"Checksum check okay, writing to {u.NotesJsonPath}");
+        Logger.WriteLine($"Checksum check okay, writing to {u.NotesJsonPath}");
 
         u.NotesPayload = bodyPayload;
         File.WriteAllText(u.NotesJsonPath, u.NotesPayloadText);
     }
     else
-        logger.WriteLine($"invalid post req recieved " +
+        Logger.WriteLine($"invalid post req recieved " +
             $"{bodyPayload != null} {bodyPayload?.SaveTime > u.NotesPayload.SaveTime} {bodyPayload?.Checksum == bodyPayload?.GenerateChecksum()}");
 
     return Results.Ok("Pog");

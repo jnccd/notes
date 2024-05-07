@@ -161,6 +161,7 @@ namespace NotesAndroid
         protected override void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
+            Logger.ConfigureLogger(logToFile: false);
             //Xamarin.Essentials.Platform.Init(this, savedInstanceState);
             SetContentView(Resource.Layout.activity_main);
 
@@ -197,8 +198,7 @@ namespace NotesAndroid
                         Config.Data.ServerUri, 
                         Config.Data.ServerUsername, 
                         Config.Data.ServerPassword,
-                        GetNewPayload, 
-                        Logger.logger);
+                        GetNewPayload);
 
                 // Autosave Thread
                 Task.Run(AutosaveThread);
@@ -258,7 +258,7 @@ namespace NotesAndroid
                             Config.Data.ServerUri = newServerUri;
                             Config.Data.ServerUsername = newServerUsername;
                             Config.Data.ServerPassword = newServerPassword;
-                            Manager.comms = new Communicator(Config.Data.ServerUri, Config.Data.ServerUsername, Config.Data.ServerPassword, GetNewPayload, Logger.logger);
+                            Manager.comms = new Communicator(Config.Data.ServerUri, Config.Data.ServerUsername, Config.Data.ServerPassword, GetNewPayload);
                             //Manager.comms.StartRequestLoop(OnPayloadRecieved);
                             ReqServerNotes();
                         });
