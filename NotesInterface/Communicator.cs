@@ -19,7 +19,6 @@ namespace Notes.Interface
         readonly string serverUsername;
         readonly string serverPassword;
         readonly Func<Payload> RequestedPayloadUpdate;
-        readonly Logger logger;
 
         readonly CancellationTokenSource serverToken = new CancellationTokenSource();
         public Task? ServerTask { get => serverTask; private set { } }
@@ -27,7 +26,7 @@ namespace Notes.Interface
         HttpClient client;
         readonly object lockject;
 
-        public Communicator(string serverUri, string serverUsername, string serverPassword, Func<Payload> RequestedPayloadUpdate, Logger logger)
+        public Communicator(string serverUri, string serverUsername, string serverPassword, Func<Payload> RequestedPayloadUpdate)
         {
             lockject = new object();
 
@@ -35,7 +34,6 @@ namespace Notes.Interface
             this.serverUsername = serverUsername;
             this.serverPassword = serverPassword;
             this.RequestedPayloadUpdate = RequestedPayloadUpdate;
-            this.logger = logger;
 
             HttpClientHandler handler = new HttpClientHandler();
             handler.ClientCertificateOptions = ClientCertificateOption.Manual;
@@ -70,7 +68,7 @@ namespace Notes.Interface
                                 continue;
                             }
 
-                            logger.WriteLine($"Recived {receivedText} from {serverUri}", false);
+                            Logger.WriteLine($"Recived {receivedText} from {serverUri}");
 
                             receivedEvent(receivedText, receivedPayload);
 
@@ -91,21 +89,21 @@ namespace Notes.Interface
 
         public void SendString(string s)
         {
-            logger.WriteLine($"Sending {s}");
+            Logger.WriteLine($"Sending {s}");
 
             try
             {
                 using var response = client.PostAsync(serverUri, new StringContent(s, Encoding.UTF8, "application/json")).Result;
 
-                logger.WriteLine(response.StatusCode);
-                logger.WriteLine(response.Content.ReadAsStringAsync().Result);
+                Logger.WriteLine(response.StatusCode);
+                Logger.WriteLine(response.Content.ReadAsStringAsync().Result);
             }
             catch (Exception e)
             {
-                logger.WriteLine(e);
+                Logger.WriteLine(e, LogLevel.Error);
             }
 
-            logger.WriteLine($"Sent");
+            Logger.WriteLine($"Sent");
         }
         public Payload? ReqPayload() => ReqPayload(out string _);
         public Payload? ReqPayload(out string receivedText)
@@ -133,7 +131,7 @@ namespace Notes.Interface
                     {
                         Payload? receivedPayload = null;
                         try { receivedPayload = Payload.Parse(receivedText); }
-                        catch (Exception e) { logger.WriteLine($"Error parsing payload: {e}"); }
+                        catch (Exception e) { Logger.WriteLine($"Error parsing payload: {e}"); }
                         return receivedPayload;
                     }
                 }
@@ -141,7 +139,7 @@ namespace Notes.Interface
             catch (Exception e)
             {
                 receivedText = "";
-                logger.WriteLine(e);
+                Logger.WriteLine(e, LogLevel.Error);
             }
 
             return null;

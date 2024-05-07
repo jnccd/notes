@@ -50,6 +50,8 @@ namespace Notes.Desktop
         // Init
         public MainForm()
         {
+            Logger.WriteLine("Startup");
+
             InitializeComponent();
             this.components = new Container();
 
@@ -87,7 +89,7 @@ namespace Notes.Desktop
 
             if (!string.IsNullOrWhiteSpace(Config.Data.ServerUri))
             {
-                comms = new Communicator(Config.Data.ServerUri, Config.Data.ServerUsername, Config.Data.ServerPassword, GetNewPayload, Logger.logger);
+                comms = new Communicator(Config.Data.ServerUri, Config.Data.ServerUsername, Config.Data.ServerPassword, GetNewPayload);
                 comms.StartRequestLoop(OnPayloadRecieved);
             }
 
@@ -137,7 +139,7 @@ namespace Notes.Desktop
         Payload GetNewPayload() => new(Config.Data.SaveTime, Config.Data.Notes);
         void OnPayloadRecieved(string receivedText, Payload payload)
         {
-            Logger.WriteLine($"Recived {receivedText}", false);
+            Logger.WriteLine($"Recived {receivedText}");
 
             bool validPayload = false;
             lock (Config.Data)
@@ -306,7 +308,7 @@ namespace Notes.Desktop
             var origin = (TextBox)sender;
             if (origin.Text.Contains("://"))
                 try { Process.Start(new ProcessStartInfo(origin.Text) { UseShellExecute = true }); }
-                catch (Exception ex) { Logger.Write(ex); }
+                catch (Exception ex) { Logger.WriteLine(ex); }
         }
         private void NoteTextBox_KeyUp(object sender, KeyEventArgs e)
         {
@@ -534,7 +536,7 @@ namespace Notes.Desktop
                     Config.Data.ServerUri = newServerUri;
                     Config.Data.ServerUsername = newServerUsername;
                     Config.Data.ServerPassword = newServerPassword;
-                    comms = new Communicator(Config.Data.ServerUri, Config.Data.ServerUsername, Config.Data.ServerPassword, GetNewPayload, Logger.logger);
+                    comms = new Communicator(Config.Data.ServerUri, Config.Data.ServerUsername, Config.Data.ServerPassword, GetNewPayload);
                     comms.StartRequestLoop(OnPayloadRecieved);
                 }));
                 //m.Items.Add(new ToolStripMenuItem("Send sync data", null, (object sender, EventArgs e) => {
