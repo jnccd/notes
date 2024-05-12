@@ -16,7 +16,7 @@ namespace Notes.Interface
     public class Communicator : IDisposable
     {
         readonly public string serverUri;
-        readonly string serverUsername;
+        public readonly string serverUsername;
         readonly string serverPassword;
         readonly Func<Payload> RequestedPayloadUpdate;
 

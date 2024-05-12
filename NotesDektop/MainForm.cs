@@ -92,6 +92,7 @@ namespace Notes.Desktop
                 comms = new Communicator(Config.Data.ServerUri, Config.Data.ServerUsername, Config.Data.ServerPassword, GetNewPayload);
                 comms.StartRequestLoop(OnPayloadRecieved);
             }
+            UpdateConnectLabel();
 
             Task.Run(() =>
             {
@@ -99,6 +100,7 @@ namespace Notes.Desktop
                 while (true)
                 {
                     Task.Delay(200).Wait();
+                    UpdateConnectLabel();
                     if (unsavedEdits)
                     {
                         unsavedEdits = false;
@@ -150,14 +152,14 @@ namespace Notes.Desktop
 
                 if (validPayload)
                 {
-                    if (payload.Notes.Count + 2 < Config.Data.Notes.Count)
-                    {
-                        Logger.WriteLine("I think theres something missing...");
-                        Logger.WriteLine($"Config has {Config.Data.Notes.Count} Notes and Paylaod {payload.Notes.Count}");
-                        Logger.WriteLine($"Recived {receivedText}");
-                        validPayload = false;
-                        return;
-                    }
+                    //if (payload.Notes.Count + 2 < Config.Data.Notes.Count)
+                    //{
+                    //    Logger.WriteLine("I think theres something missing...");
+                    //    Logger.WriteLine($"Config has {Config.Data.Notes.Count} Notes and Paylaod {payload.Notes.Count}");
+                    //    Logger.WriteLine($"Recived {receivedText}");
+                    //    validPayload = false;
+                    //    return;
+                    //}
 
                     Config.Data.Notes = payload.Notes;
                 }
@@ -300,6 +302,19 @@ namespace Notes.Desktop
                 rootPanel.Controls.SetChildIndex(mainNotePanel, index);
 
             return new LayoutWrapper(mainNotePanel);
+        }
+        void UpdateConnectLabel()
+        {
+            if (comms?.ServerTask?.Status == TaskStatus.Running)
+            {
+                labelConnectionStatus.Text = $"Connected to {comms.serverUri} as {comms.serverUsername}";
+                labelConnectionStatus.BackColor = Color.FromArgb(0, 192, 0);
+            }
+            else
+            {
+                labelConnectionStatus.Text = $"Disconnected!";
+                labelConnectionStatus.BackColor = Color.FromArgb(192, 0, 0);
+            }
         }
 
         // Note GUI Events
@@ -538,6 +553,7 @@ namespace Notes.Desktop
                     Config.Data.ServerPassword = newServerPassword;
                     comms = new Communicator(Config.Data.ServerUri, Config.Data.ServerUsername, Config.Data.ServerPassword, GetNewPayload);
                     comms.StartRequestLoop(OnPayloadRecieved);
+                    UpdateConnectLabel();
                 }));
                 //m.Items.Add(new ToolStripMenuItem("Send sync data", null, (object sender, EventArgs e) => {
                 //    Task.Run(() =>

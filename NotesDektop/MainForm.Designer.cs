@@ -31,6 +31,7 @@ namespace Notes.Desktop
         {
             rootPanel = new System.Windows.Forms.Panel();
             barThingy = new System.Windows.Forms.PictureBox();
+            labelConnectionStatus = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)barThingy).BeginInit();
             SuspendLayout();
             // 
@@ -38,13 +39,11 @@ namespace Notes.Desktop
             // 
             rootPanel.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             rootPanel.AutoScroll = true;
-            //rootPanel.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
-            rootPanel.Location = new System.Drawing.Point(10, 9);
+            rootPanel.Location = new System.Drawing.Point(10, 24);
             rootPanel.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             rootPanel.Name = "rootPanel";
-            rootPanel.Size = new System.Drawing.Size(416, 329);
+            rootPanel.Size = new System.Drawing.Size(416, 314);
             rootPanel.TabIndex = 1;
-            //rootPanel.WrapContents = false;
             // 
             // barThingy
             // 
@@ -57,12 +56,23 @@ namespace Notes.Desktop
             barThingy.TabStop = false;
             barThingy.Visible = false;
             // 
+            // labelConnectionStatus
+            // 
+            labelConnectionStatus.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            labelConnectionStatus.BackColor = System.Drawing.Color.FromArgb(192, 0, 0);
+            labelConnectionStatus.Location = new System.Drawing.Point(10, 9);
+            labelConnectionStatus.Name = "labelConnectionStatus";
+            labelConnectionStatus.Size = new System.Drawing.Size(416, 14);
+            labelConnectionStatus.TabIndex = 3;
+            labelConnectionStatus.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
             // MainForm
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             BackColor = System.Drawing.Color.FromArgb(231, 222, 103);
             ClientSize = new System.Drawing.Size(438, 347);
+            Controls.Add(labelConnectionStatus);
             Controls.Add(barThingy);
             Controls.Add(rootPanel);
             FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
@@ -83,6 +93,7 @@ namespace Notes.Desktop
         #endregion
         private System.Windows.Forms.PictureBox barThingy;
         private System.Windows.Forms.Panel rootPanel;
+        private System.Windows.Forms.Label labelConnectionStatus;
     }
 }
 
