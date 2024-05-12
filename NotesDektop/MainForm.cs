@@ -307,7 +307,7 @@ namespace Notes.Desktop
         {
             if (comms?.ServerTask?.Status == TaskStatus.Running)
             {
-                labelConnectionStatus.Text = $"Connected to {comms.serverUri} as {comms.serverUsername}";
+                labelConnectionStatus.Text = $"Connected to {new Uri(comms.serverUri).Host} as {comms.serverUsername}";
                 labelConnectionStatus.BackColor = Color.FromArgb(0, 192, 0);
             }
             else
