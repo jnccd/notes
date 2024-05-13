@@ -305,7 +305,7 @@ namespace Notes.Desktop
         }
         void UpdateConnectLabel()
         {
-            if (comms?.ServerTask?.Status == TaskStatus.Running)
+            if (comms != null && comms.IsConnected)
             {
                 labelConnectionStatus.Text = $"Connected to {new Uri(comms.serverUri).Host} as {comms.serverUsername}";
                 labelConnectionStatus.BackColor = Color.FromArgb(0, 192, 0);
