@@ -80,13 +80,14 @@ namespace NotesAndroid
             try { payload = Manager.comms.ReqPayload(); }
             catch (System.Exception ex) { return; }
 
-            Logger.WriteLine($"Got json");
+            Logger.WriteLine($"Got json from {payload?.SaveTime}");
 
             if (payload == null ||
-                payload.Checksum != payload.GenerateChecksum() ||
-                Config.Data.SaveTime > payload.SaveTime)
+                payload.Checksum != payload.GenerateChecksum() 
+                || Config.Data.SaveTime > payload.SaveTime
+                )
             {
-                Logger.WriteLine($"Got invalid json");
+                Logger.WriteLine($"Got invalid json {payload == null} {payload?.Checksum != payload?.GenerateChecksum()} {Config.Data.SaveTime > payload?.SaveTime}");
                 return;
             }
 
