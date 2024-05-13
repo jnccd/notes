@@ -23,6 +23,8 @@ namespace Notes.Interface
         readonly CancellationTokenSource serverToken = new CancellationTokenSource();
         public Task? ServerTask { get => serverTask; private set { } }
         Task? serverTask;
+        public bool IsConnected { get => isConnected; }
+        bool isConnected = false;
         HttpClient client;
         readonly object lockject;
 
@@ -61,6 +63,7 @@ namespace Notes.Interface
                         try
                         {
                             var receivedPayload = ReqPayload(out string receivedText);
+                            isConnected = receivedPayload != null;
 
                             if (receivedText == last)
                             {
@@ -94,6 +97,7 @@ namespace Notes.Interface
             try
             {
                 using var response = client.PostAsync(serverUri, new StringContent(s, Encoding.UTF8, "application/json")).Result;
+                isConnected = response.StatusCode == HttpStatusCode.OK;
 
                 Logger.WriteLine(response.StatusCode);
                 Logger.WriteLine(response.Content.ReadAsStringAsync().Result);
@@ -101,6 +105,7 @@ namespace Notes.Interface
             catch (Exception e)
             {
                 Logger.WriteLine(e, LogLevel.Error);
+                isConnected = false;
             }
 
             Logger.WriteLine($"Sent");
@@ -140,6 +145,7 @@ namespace Notes.Interface
             {
                 receivedText = "";
                 Logger.WriteLine(e, LogLevel.Error);
+                isConnected = false;
             }
 
             return null;
