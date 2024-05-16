@@ -89,7 +89,7 @@ namespace Notes.Desktop
 
             if (!string.IsNullOrWhiteSpace(Config.Data.ServerUri))
             {
-                comms = new Communicator(Config.Data.ServerUri, Config.Data.ServerUsername, Config.Data.ServerPassword, GetNewPayload, UpdateConnectLabel);
+                comms = new Communicator(Config.Data.ServerUri, Config.Data.ServerUsername, Config.Data.ServerPassword, UpdateConnectLabel);
                 comms.StartRequestLoop(OnPayloadRecieved);
             }
 
@@ -557,7 +557,7 @@ namespace Notes.Desktop
                     Config.Data.ServerUri = newServerUri;
                     Config.Data.ServerUsername = newServerUsername;
                     Config.Data.ServerPassword = newServerPassword;
-                    comms = new Communicator(Config.Data.ServerUri, Config.Data.ServerUsername, Config.Data.ServerPassword, GetNewPayload);
+                    comms = new Communicator(Config.Data.ServerUri, Config.Data.ServerUsername, Config.Data.ServerPassword);
                     comms.StartRequestLoop(OnPayloadRecieved);
                 }));
                 //m.Items.Add(new ToolStripMenuItem("Send sync data", null, (object sender, EventArgs e) => {
