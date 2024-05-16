@@ -89,10 +89,9 @@ namespace Notes.Desktop
 
             if (!string.IsNullOrWhiteSpace(Config.Data.ServerUri))
             {
-                comms = new Communicator(Config.Data.ServerUri, Config.Data.ServerUsername, Config.Data.ServerPassword, GetNewPayload);
+                comms = new Communicator(Config.Data.ServerUri, Config.Data.ServerUsername, Config.Data.ServerPassword, GetNewPayload, UpdateConnectLabel);
                 comms.StartRequestLoop(OnPayloadRecieved);
             }
-            UpdateConnectLabel();
 
             Task.Run(() =>
             {
@@ -100,7 +99,6 @@ namespace Notes.Desktop
                 while (true)
                 {
                     Task.Delay(200).Wait();
-                    UpdateConnectLabel();
                     if (unsavedEdits)
                     {
                         unsavedEdits = false;
@@ -303,18 +301,26 @@ namespace Notes.Desktop
 
             return new LayoutWrapper(mainNotePanel);
         }
-        void UpdateConnectLabel()
+        void UpdateConnectLabel(CommsState state)
         {
-            if (comms != null && comms.IsConnected)
+            this.InvokeIfRequired(() =>
             {
-                labelConnectionStatus.Text = $"Connected to {new Uri(comms.serverUri).Host} as {comms.serverUsername}";
-                labelConnectionStatus.BackColor = Color.FromArgb(0, 192, 0);
-            }
-            else
-            {
-                labelConnectionStatus.Text = $"Disconnected!";
-                labelConnectionStatus.BackColor = Color.FromArgb(192, 0, 0);
-            }
+                if (state == CommsState.Connected)
+                {
+                    labelConnectionStatus.Text = $"Connected to {new Uri(comms.serverUri).Host} as {comms.serverUsername}";
+                    labelConnectionStatus.BackColor = Color.FromArgb(0, 192, 0);
+                }
+                else if (state == CommsState.Disconnected)
+                {
+                    labelConnectionStatus.Text = $"Disconnected!";
+                    labelConnectionStatus.BackColor = Color.FromArgb(192, 0, 0);
+                }
+                else if (state == CommsState.Working)
+                {
+                    labelConnectionStatus.Text = $"Sending/Recieving...";
+                    labelConnectionStatus.BackColor = Color.FromArgb(64, 255, 64);
+                }
+            });
         }
 
         // Note GUI Events
@@ -553,7 +559,6 @@ namespace Notes.Desktop
                     Config.Data.ServerPassword = newServerPassword;
                     comms = new Communicator(Config.Data.ServerUri, Config.Data.ServerUsername, Config.Data.ServerPassword, GetNewPayload);
                     comms.StartRequestLoop(OnPayloadRecieved);
-                    UpdateConnectLabel();
                 }));
                 //m.Items.Add(new ToolStripMenuItem("Send sync data", null, (object sender, EventArgs e) => {
                 //    Task.Run(() =>
