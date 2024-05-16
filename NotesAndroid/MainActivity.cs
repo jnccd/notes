@@ -198,8 +198,7 @@ namespace NotesAndroid
                     Manager.comms = new Communicator(
                         Config.Data.ServerUri, 
                         Config.Data.ServerUsername, 
-                        Config.Data.ServerPassword,
-                        GetNewPayload);
+                        Config.Data.ServerPassword);
 
                 // Autosave Thread
                 Task.Run(AutosaveThread);
@@ -259,7 +258,7 @@ namespace NotesAndroid
                             Config.Data.ServerUri = newServerUri;
                             Config.Data.ServerUsername = newServerUsername;
                             Config.Data.ServerPassword = newServerPassword;
-                            Manager.comms = new Communicator(Config.Data.ServerUri, Config.Data.ServerUsername, Config.Data.ServerPassword, GetNewPayload);
+                            Manager.comms = new Communicator(Config.Data.ServerUri, Config.Data.ServerUsername, Config.Data.ServerPassword);
                             //Manager.comms.StartRequestLoop(OnPayloadRecieved);
                             ReqServerNotes();
                         });

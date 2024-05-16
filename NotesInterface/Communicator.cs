@@ -23,24 +23,20 @@ namespace Notes.Interface
     {
         readonly public string serverUri;
         public readonly string serverUsername;
-        readonly string serverPassword;
-        readonly Func<Payload> requestedPayloadUpdate;
         readonly Action<CommsState>? stateChanged;
 
-        readonly CancellationTokenSource serverToken = new CancellationTokenSource();
+        readonly CancellationTokenSource serverToken = new();
         public Task? ServerTask { get => serverTask; private set { } }
         Task? serverTask;
         HttpClient client;
         readonly object lockject;
 
-        public Communicator(string serverUri, string serverUsername, string serverPassword, Func<Payload> requestedPayloadUpdate, Action<CommsState>? stateChanged = null)
+        public Communicator(string serverUri, string serverUsername, string serverPassword, Action<CommsState>? stateChanged = null)
         {
             lockject = new object();
 
             this.serverUri = serverUri;
             this.serverUsername = serverUsername;
-            this.serverPassword = serverPassword;
-            this.requestedPayloadUpdate = requestedPayloadUpdate;
             this.stateChanged = stateChanged;
 
             HttpClientHandler handler = new();
