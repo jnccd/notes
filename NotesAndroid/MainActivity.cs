@@ -253,8 +253,7 @@ namespace NotesAndroid
                     {
                         this.ShowAsAlertPrompt("What Server Password should I use?", "", (string newServerPassword) =>
                         {
-                            if (Manager.comms != null)
-                                Manager.comms.Dispose();
+                            Manager.comms?.Dispose();
                             Config.Data.ServerUri = newServerUri;
                             Config.Data.ServerUsername = newServerUsername;
                             Config.Data.ServerPassword = newServerPassword;
