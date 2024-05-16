@@ -13,31 +13,37 @@ using System.Threading.Tasks;
 
 namespace Notes.Interface
 {
+    public enum CommsState
+    {
+        Disconnected,
+        Connected,
+        Working
+    }
     public class Communicator : IDisposable
     {
         readonly public string serverUri;
         public readonly string serverUsername;
         readonly string serverPassword;
-        readonly Func<Payload> RequestedPayloadUpdate;
+        readonly Func<Payload> requestedPayloadUpdate;
+        readonly Action<CommsState>? stateChanged;
 
         readonly CancellationTokenSource serverToken = new CancellationTokenSource();
         public Task? ServerTask { get => serverTask; private set { } }
         Task? serverTask;
-        public bool IsConnected { get => isConnected; }
-        bool isConnected = false;
         HttpClient client;
         readonly object lockject;
 
-        public Communicator(string serverUri, string serverUsername, string serverPassword, Func<Payload> RequestedPayloadUpdate)
+        public Communicator(string serverUri, string serverUsername, string serverPassword, Func<Payload> requestedPayloadUpdate, Action<CommsState>? stateChanged = null)
         {
             lockject = new object();
 
             this.serverUri = serverUri;
             this.serverUsername = serverUsername;
             this.serverPassword = serverPassword;
-            this.RequestedPayloadUpdate = RequestedPayloadUpdate;
+            this.requestedPayloadUpdate = requestedPayloadUpdate;
+            this.stateChanged = stateChanged;
 
-            HttpClientHandler handler = new HttpClientHandler();
+            HttpClientHandler handler = new();
             handler.ClientCertificateOptions = ClientCertificateOption.Manual;
             handler.ServerCertificateCustomValidationCallback += (sender, cert, chain, sslPolicyErrors) => true;
             client = new HttpClient(handler);
@@ -63,7 +69,6 @@ namespace Notes.Interface
                         try
                         {
                             var receivedPayload = ReqPayload(out string receivedText);
-                            isConnected = receivedPayload != null;
 
                             if (receivedText == last)
                             {
@@ -96,8 +101,9 @@ namespace Notes.Interface
 
             try
             {
+                stateChanged?.Invoke(CommsState.Working);
                 using var response = client.PostAsync(serverUri, new StringContent(s, Encoding.UTF8, "application/json")).Result;
-                isConnected = response.StatusCode == HttpStatusCode.OK;
+                stateChanged?.Invoke(response.StatusCode == HttpStatusCode.OK ? CommsState.Connected : CommsState.Disconnected);
 
                 Logger.WriteLine(response.StatusCode);
                 Logger.WriteLine(response.Content.ReadAsStringAsync().Result);
@@ -105,7 +111,7 @@ namespace Notes.Interface
             catch (Exception e)
             {
                 Logger.WriteLine(e, LogLevel.Error);
-                isConnected = false;
+                stateChanged?.Invoke(CommsState.Disconnected);
             }
 
             Logger.WriteLine($"Sent");
@@ -115,6 +121,7 @@ namespace Notes.Interface
         {
             try
             {
+                stateChanged?.Invoke(CommsState.Working);
                 receivedText = client.GetStringAsync(serverUri).Result;
 
                 StringBuilder sb = new StringBuilder(receivedText);
@@ -137,6 +144,7 @@ namespace Notes.Interface
                         Payload? receivedPayload = null;
                         try { receivedPayload = Payload.Parse(receivedText); }
                         catch (Exception e) { Logger.WriteLine($"Error parsing payload: {e}"); }
+                        stateChanged?.Invoke(CommsState.Connected);
                         return receivedPayload;
                     }
                 }
@@ -145,7 +153,7 @@ namespace Notes.Interface
             {
                 receivedText = "";
                 Logger.WriteLine(e, LogLevel.Error);
-                isConnected = false;
+                stateChanged?.Invoke(CommsState.Disconnected);
             }
 
             return null;
@@ -153,6 +161,7 @@ namespace Notes.Interface
 
         public void Dispose()
         {
+            stateChanged?.Invoke(CommsState.Disconnected);
             serverToken.Cancel();
             if (serverTask?.Status != TaskStatus.WaitingForActivation)
                 serverTask?.Wait();
