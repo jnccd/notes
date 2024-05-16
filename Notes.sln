@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.33627.172
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NotesDesktop", "NotesDektop\NotesDesktop.csproj", "{ED5C9F8A-E66E-4DB4-9D01-F44C50B208DB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NotesDesktop", "NotesDesktop\NotesDesktop.csproj", "{ED5C9F8A-E66E-4DB4-9D01-F44C50B208DB}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NotesInterface", "NotesInterface\NotesInterface.csproj", "{A6497949-D332-4FEC-9C25-6F02EBA65AD0}"
 EndProject
