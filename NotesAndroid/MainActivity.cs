@@ -171,22 +171,24 @@ namespace NotesAndroid
             rootLayout = FindViewById<LinearLayout>(Resource.Id.noteLinearLayout);
 
             var syncButton = FindViewById<Button>(Resource.Id.syncButton);
-            syncButton.Click += (s, e) => Task.Run(() => {
-                ReqServerNotes();
-                Manager.comms.SendString(GetNewPayload().ToString());
-            });
+            if (syncButton != null)
+                syncButton.Click += (s, e) => Task.Run(() => {
+                    ReqServerNotes();
+                    Manager.comms.SendString(GetNewPayload().ToString());
+                });
 
             var widgetButton = FindViewById<Button>(Resource.Id.widgetUpdateButton);
-            widgetButton.Click += (o, e) =>
-            {
-                if (Manager.widgetContext != null)
+            if (widgetButton != null) 
+                widgetButton.Click += (o, e) =>
                 {
-                    RemoteViews remoteViews = new RemoteViews(Manager.widgetContext.PackageName, Resource.Layout.widget);
-                    ComponentName thisWidget = new ComponentName(Manager.widgetContext, Java.Lang.Class.FromType(typeof(AppWidget)).Name);
-                    Manager.UpdateWidgetText(remoteViews);
-                    AppWidgetManager.GetInstance(Manager.widgetContext).UpdateAppWidget(thisWidget, remoteViews);
-                }
-            };
+                    if (Manager.widgetContext != null)
+                    {
+                        RemoteViews remoteViews = new(Manager.widgetContext.PackageName, Resource.Layout.widget);
+                        ComponentName thisWidget = new(Manager.widgetContext, Java.Lang.Class.FromType(typeof(AppWidget)).Name);
+                        Manager.UpdateWidgetText(remoteViews);
+                        AppWidgetManager.GetInstance(Manager.widgetContext)?.UpdateAppWidget(thisWidget, remoteViews);
+                    }
+                };
 
             // Update GUI to config
             LoadConfig();
