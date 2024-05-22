@@ -159,7 +159,7 @@ namespace NotesAndroid
         }
 
         // Events
-        protected override void OnCreate(Bundle savedInstanceState)
+        protected override void OnCreate(Bundle? savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
             Logger.ConfigureLogger(logToFile: false);
@@ -227,7 +227,7 @@ namespace NotesAndroid
                 }
             }
         }
-        public override bool OnCreateOptionsMenu(IMenu menu)
+        public override bool OnCreateOptionsMenu(IMenu? menu)
         {
             MenuInflater.Inflate(Resource.Menu.actionbar_menu, menu);
             return base.OnCreateOptionsMenu(menu);
@@ -244,7 +244,7 @@ namespace NotesAndroid
                     RemoteViews remoteViews = new RemoteViews(Manager.widgetContext.PackageName, Resource.Layout.widget);
                     ComponentName thisWidget = new ComponentName(Manager.widgetContext, Java.Lang.Class.FromType(typeof(AppWidget)).Name);
                     Manager.UpdateWidgetText(remoteViews);
-                    AppWidgetManager.GetInstance(Manager.widgetContext).UpdateAppWidget(thisWidget, remoteViews);
+                    AppWidgetManager.GetInstance(Manager.widgetContext)?.UpdateAppWidget(thisWidget, remoteViews);
                 }
             }
             if (item.ItemId == Resource.Id.menu_upstream_button)
