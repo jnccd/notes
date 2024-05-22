@@ -16,6 +16,11 @@ using static Android.Provider.ContactsContract.CommonDataKinds;
 using Note = Notes.Interface.Note;
 using AndroidX.AppCompat.Widget;
 using Toolbar = Android.Widget.Toolbar;
+using AndroidX.AppCompat.View.Menu;
+using Android.Graphics.Drawables;
+using AndroidX.Core.Content.Resources;
+using Android.Graphics;
+using Android.OS;
 
 namespace NotesAndroid
 {
@@ -85,7 +90,7 @@ namespace NotesAndroid
             Logger.WriteLine($"Got json from {payload?.SaveTime}");
 
             if (payload == null ||
-                payload.Checksum != payload.GenerateChecksum() 
+                payload.Checksum != payload.GenerateChecksum()
                 || Config.Data.SaveTime > payload.SaveTime
                 )
             {
@@ -95,7 +100,8 @@ namespace NotesAndroid
 
             Config.Data.Notes = payload.Notes;
 
-            RunOnUiThread(() => {
+            RunOnUiThread(() =>
+            {
                 LoadConfig();
                 SaveConfig(false);
             });
@@ -180,13 +186,14 @@ namespace NotesAndroid
 
             var syncButton = FindViewById<Button>(Resource.Id.syncButton);
             if (syncButton != null)
-                syncButton.Click += (s, e) => Task.Run(() => {
+                syncButton.Click += (s, e) => Task.Run(() =>
+                {
                     ReqServerNotes();
                     Manager.comms.SendString(GetNewPayload().ToString());
                 });
 
             var widgetButton = FindViewById<Button>(Resource.Id.widgetUpdateButton);
-            if (widgetButton != null) 
+            if (widgetButton != null)
                 widgetButton.Click += (o, e) =>
                 {
                     if (Manager.widgetContext != null)
@@ -206,18 +213,51 @@ namespace NotesAndroid
                 // Setup communicator
                 if (Config.Data.ServerUri != null)
                     Manager.comms = new Communicator(
-                        Config.Data.ServerUri, 
-                        Config.Data.ServerUsername, 
-                        Config.Data.ServerPassword);
+                            Config.Data.ServerUri,
+                            Config.Data.ServerUsername,
+                            Config.Data.ServerPassword,
+                            ShowCommsState);
 
                 // Autosave Thread
                 Task.Run(AutosaveThread);
-                
+
                 // Hide the loading circle
-                RunOnUiThread(() => {
+                RunOnUiThread(() =>
+                {
                     var circle = FindViewById<ProgressBar>(Resource.Id.loadingCircle);
                     circle.Visibility = ViewStates.Invisible;
                 });
+            });
+        }
+        void ShowCommsState(CommsState state)
+        {
+            RunOnUiThread(() =>
+            {
+                Toolbar? myToolbar = (Toolbar?)FindViewById(Resource.Id.my_toolbar);
+                IMenuItem theButton = myToolbar.Menu.FindItem(Resource.Id.menu_connection_state);
+                if (state == CommsState.Connected)
+                {
+                    var drawable = Resources.GetDrawable(Resource.Drawable.btn_radio_on_mtrl);
+                    drawable.SetColorFilter(new BlendModeColorFilter(Color.Green, BlendMode.SrcIn));
+                    theButton.SetIcon(drawable);
+                    theButton.SetChecked(true);
+                    theButton.SetVisible(true);
+                }
+                else if (state == CommsState.Working)
+                {
+                    var drawable = Resources.GetDrawable(Resource.Drawable.btn_radio_on_mtrl);
+                    drawable.SetColorFilter(new BlendModeColorFilter(Color.LightCyan, BlendMode.SrcIn));
+                    theButton.SetIcon(drawable);
+                    theButton.SetChecked(false);
+                }
+                else if (state == CommsState.Disconnected)
+                {
+                    var drawable = Resources.GetDrawable(Resource.Drawable.btn_radio_off_mtrl);
+                    drawable.SetColorFilter(new BlendModeColorFilter(Color.Red, BlendMode.SrcIn));
+                    theButton.SetIcon(drawable);
+                    theButton.SetChecked(false);
+                }
+                InvalidateOptionsMenu();
             });
         }
         async void AutosaveThread()
@@ -262,7 +302,7 @@ namespace NotesAndroid
                             Config.Data.ServerUri = newServerUri;
                             Config.Data.ServerUsername = newServerUsername;
                             Config.Data.ServerPassword = newServerPassword;
-                            Manager.comms = new Communicator(Config.Data.ServerUri, Config.Data.ServerUsername, Config.Data.ServerPassword);
+                            Manager.comms = new Communicator(Config.Data.ServerUri, Config.Data.ServerUsername, Config.Data.ServerPassword, ShowCommsState);
                             //Manager.comms.StartRequestLoop(OnPayloadRecieved);
                             ReqServerNotes();
                         });
@@ -308,8 +348,8 @@ namespace NotesAndroid
                 var newNoteUi = noteUiOrigin.Parent.AddSubNoteBefore(new Note(), new ActivityWrapper(this), new LayoutWrapper(rootLayout), CreateUi, insertionIndex);
                 ((LayoutWrapper)newNoteUi.UiLayout).Layout.RequestFocus();
             }
-            else if (e.AfterCount < e.BeforeCount && 
-                     ed.Text.Length < 1 && 
+            else if (e.AfterCount < e.BeforeCount &&
+                     ed.Text.Length < 1 &&
                      e.BeforeCount < 3)
             {
                 noteUiOrigin.Parent.RemoveSubNote(noteUiOrigin);

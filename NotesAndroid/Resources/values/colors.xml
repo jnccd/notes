@@ -6,4 +6,7 @@
     <color name="colorAccent">#3498db</color>
     <color name="colorBack">#E7DE67</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="holoRed">@android:color/holo_red_light</color>
+    <color name="holoLightGreen">@android:color/holo_green_light</color>
+    <color name="holoGreen">@android:color/holo_green_dark</color>
 </resources>
