@@ -241,8 +241,8 @@ namespace NotesAndroid
 
                 if (Manager.widgetContext != null)
                 {
-                    RemoteViews remoteViews = new RemoteViews(Manager.widgetContext.PackageName, Resource.Layout.widget);
-                    ComponentName thisWidget = new ComponentName(Manager.widgetContext, Java.Lang.Class.FromType(typeof(AppWidget)).Name);
+                    RemoteViews remoteViews = new(Manager.widgetContext.PackageName, Resource.Layout.widget);
+                    ComponentName thisWidget = new(Manager.widgetContext, Java.Lang.Class.FromType(typeof(AppWidget)).Name);
                     Manager.UpdateWidgetText(remoteViews);
                     AppWidgetManager.GetInstance(Manager.widgetContext)?.UpdateAppWidget(thisWidget, remoteViews);
                 }
