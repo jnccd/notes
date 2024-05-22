@@ -7,7 +7,7 @@
     android:id="@+id/menu_connection_state"
     android:title="State"
     android:showAsAction="always"
-    android:iconTint="@android:color/holo_red_light"
+    android:iconTint="@color/white"
     android:icon="@android:drawable/radiobutton_off_background"
     />
   

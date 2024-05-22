@@ -13,7 +13,6 @@
         android:layout_height="55dp"
         android:background="@color/colorPrimaryDark"
         android:titleTextColor="@android:color/white"
-        android:subtitleTextColor="@android:color/white"
         android:foregroundTint="@color/white"
         android:elevation="4dp"
         android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
