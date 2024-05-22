@@ -2,19 +2,29 @@
 <!--For all properties see: https://aka.ms/android-menu-resource-->
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:app="http://schemas.android.com/apk/res-auto">
+
+  <item
+    android:id="@+id/menu_connection_state"
+    android:title="State"
+    android:showAsAction="always"
+    android:iconTint="@android:color/holo_red_light"
+    android:icon="@android:drawable/radiobutton_off_background"
+    />
   
   <item
     android:id="@+id/menu_refresh_button"
     android:title="Refresh"
-    android:showAsAction="always"
-    android:icon="@android:drawable/btn_radio"
+    android:showAsAction="never"
+    android:iconTint="@android:color/white"
+    android:icon="@android:drawable/ic_menu_revert"
     />
 
   <item
     android:id="@+id/menu_upstream_button"
     android:title="Set upstream"
-    android:showAsAction="always"
-    android:icon="@android:drawable/btn_radio"
+    android:showAsAction="never"
+    android:iconTint="@android:color/white"
+    android:icon="@android:drawable/ic_menu_preferences"
     />
   
 </menu>

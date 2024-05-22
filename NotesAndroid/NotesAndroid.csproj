@@ -21,4 +21,7 @@
   <ItemGroup>
     <ProjectReference Include="..\NotesInterface\NotesInterface.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Resources\menu\" />
+  </ItemGroup>
 </Project>
