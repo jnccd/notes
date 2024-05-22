@@ -14,6 +14,8 @@ using Android.Widget;
 using System.Numerics;
 using static Android.Provider.ContactsContract.CommonDataKinds;
 using Note = Notes.Interface.Note;
+using AndroidX.AppCompat.Widget;
+using Toolbar = Android.Widget.Toolbar;
 
 namespace NotesAndroid
 {
@@ -161,10 +163,16 @@ namespace NotesAndroid
         // Events
         protected override void OnCreate(Bundle? savedInstanceState)
         {
-            base.OnCreate(savedInstanceState);
+            // Base setup
             Logger.ConfigureLogger(logToFile: false);
+            base.OnCreate(savedInstanceState);
             //Xamarin.Essentials.Platform.Init(this, savedInstanceState);
             SetContentView(Resource.Layout.activity_main);
+
+            // Setup actionBar
+            Toolbar? myToolbar = (Toolbar?)FindViewById(Resource.Id.my_toolbar);
+            myToolbar?.InflateMenu(Resource.Menu.actionbar_menu);
+            SetActionBar(myToolbar);
 
             // Setup gui events
             var newNote = FindViewById<EditText>(Resource.Id.newNote);
@@ -226,11 +234,6 @@ namespace NotesAndroid
                     UpdateWidget();
                 }
             }
-        }
-        public override bool OnCreateOptionsMenu(IMenu? menu)
-        {
-            MenuInflater.Inflate(Resource.Menu.actionbar_menu, menu);
-            return base.OnCreateOptionsMenu(menu);
         }
         public override bool OnOptionsItemSelected(IMenuItem item)
         {
