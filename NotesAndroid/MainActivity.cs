@@ -320,8 +320,29 @@ namespace NotesAndroid
         }
         protected override void OnResume()
         {
+            var circle = FindViewById<ProgressBar>(Resource.Id.loadingCircle);
+            circle.Visibility = ViewStates.Visible;
+            SetNoteEnabled(false);
+
+            Task.Run(() =>
+            {
+                ReqServerNotes();
+
+                RunOnUiThread(() =>
+                {
+                    circle.Visibility = ViewStates.Invisible;
+                    SetNoteEnabled(false);
+                });
+            });
+
             base.OnResume();
-            ReqServerNotes();
+        }
+        void SetNoteEnabled(bool enabled)
+        {
+            foreach (var v in NoteUi.UiToNote.Keys)
+            {
+                ((LayoutWrapper)v).Layout.Enabled = enabled;
+            }
         }
         protected override void OnDestroy()
         {
