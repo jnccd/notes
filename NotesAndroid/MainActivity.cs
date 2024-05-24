@@ -4,23 +4,15 @@ using Android.Runtime;
 using Android.Text;
 using Android.Views;
 using AndroidX.AppCompat.App;
-using System.Diagnostics;
 using Notes.Interface;
 using Config = Configuration.Config;
 using Notes.Interface.UiController;
 using NotesAndroid.UiInterface;
 using Activity = Android.App.Activity;
-using Android.Widget;
 using System.Numerics;
-using static Android.Provider.ContactsContract.CommonDataKinds;
 using Note = Notes.Interface.Note;
-using AndroidX.AppCompat.Widget;
 using Toolbar = Android.Widget.Toolbar;
-using AndroidX.AppCompat.View.Menu;
-using Android.Graphics.Drawables;
-using AndroidX.Core.Content.Resources;
 using Android.Graphics;
-using Android.OS;
 
 namespace NotesAndroid
 {
