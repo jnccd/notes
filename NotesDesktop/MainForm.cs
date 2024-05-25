@@ -308,17 +308,17 @@ namespace Notes.Desktop
                 if (state == CommsState.Connected)
                 {
                     labelConnectionStatus.Text = $"Connected to {new Uri(comms.serverUri).Host} as {comms.serverUsername}";
-                    labelConnectionStatus.BackColor = Color.FromArgb(0, 192, 0);
+                    labelConnectionStatusUnderline.BackColor = Color.FromArgb(0, 192, 0);
                 }
                 else if (state == CommsState.Disconnected)
                 {
                     labelConnectionStatus.Text = $"Disconnected!";
-                    labelConnectionStatus.BackColor = Color.FromArgb(192, 0, 0);
+                    labelConnectionStatusUnderline.BackColor = Color.FromArgb(192, 0, 0);
                 }
                 else if (state == CommsState.Working)
                 {
                     labelConnectionStatus.Text = $"Sending/Recieving...";
-                    labelConnectionStatus.BackColor = Color.FromArgb(64, 255, 64);
+                    labelConnectionStatusUnderline.BackColor = Color.FromArgb(64, 255, 64);
                 }
             });
         }

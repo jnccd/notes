@@ -32,6 +32,7 @@ namespace Notes.Desktop
             rootPanel = new System.Windows.Forms.Panel();
             barThingy = new System.Windows.Forms.PictureBox();
             labelConnectionStatus = new System.Windows.Forms.Label();
+            labelConnectionStatusUnderline = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)barThingy).BeginInit();
             SuspendLayout();
             // 
@@ -39,10 +40,10 @@ namespace Notes.Desktop
             // 
             rootPanel.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             rootPanel.AutoScroll = true;
-            rootPanel.Location = new System.Drawing.Point(10, 24);
+            rootPanel.Location = new System.Drawing.Point(10, 27);
             rootPanel.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             rootPanel.Name = "rootPanel";
-            rootPanel.Size = new System.Drawing.Size(416, 314);
+            rootPanel.Size = new System.Drawing.Size(416, 311);
             rootPanel.TabIndex = 1;
             // 
             // barThingy
@@ -59,12 +60,22 @@ namespace Notes.Desktop
             // labelConnectionStatus
             // 
             labelConnectionStatus.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-            labelConnectionStatus.BackColor = System.Drawing.Color.FromArgb(192, 0, 0);
+            labelConnectionStatus.BackColor = System.Drawing.Color.FromArgb(231, 222, 103);
             labelConnectionStatus.Location = new System.Drawing.Point(10, 9);
             labelConnectionStatus.Name = "labelConnectionStatus";
             labelConnectionStatus.Size = new System.Drawing.Size(416, 14);
             labelConnectionStatus.TabIndex = 3;
             labelConnectionStatus.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // labelConnectionStatusUnderline
+            // 
+            labelConnectionStatusUnderline.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            labelConnectionStatusUnderline.BackColor = System.Drawing.Color.FromArgb(192, 0, 0);
+            labelConnectionStatusUnderline.Location = new System.Drawing.Point(10, 23);
+            labelConnectionStatusUnderline.Name = "labelConnectionStatusUnderline";
+            labelConnectionStatusUnderline.Size = new System.Drawing.Size(416, 3);
+            labelConnectionStatusUnderline.TabIndex = 4;
+            labelConnectionStatusUnderline.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // MainForm
             // 
@@ -72,6 +83,7 @@ namespace Notes.Desktop
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             BackColor = System.Drawing.Color.FromArgb(231, 222, 103);
             ClientSize = new System.Drawing.Size(438, 347);
+            Controls.Add(labelConnectionStatusUnderline);
             Controls.Add(labelConnectionStatus);
             Controls.Add(barThingy);
             Controls.Add(rootPanel);
@@ -94,6 +106,7 @@ namespace Notes.Desktop
         private System.Windows.Forms.PictureBox barThingy;
         private System.Windows.Forms.Panel rootPanel;
         private System.Windows.Forms.Label labelConnectionStatus;
+        private System.Windows.Forms.Label labelConnectionStatusUnderline;
     }
 }
 
