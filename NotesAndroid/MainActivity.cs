@@ -30,6 +30,9 @@ namespace NotesAndroid
         bool cancelDragAnim = false;
         NoteUi? draggedNoteUi = null;
 
+        // Focus
+        NoteUi? focusedNote = null;
+
         const int treeDepthPadding = 20;
 
         // Load data to GUI or save config to disk
@@ -121,6 +124,7 @@ namespace NotesAndroid
             checkBox.Enabled = enabled;
             checkBox.Checked = note.Done;
             checkBox.CheckedChange += OnNoteDone;
+            checkBox.LongClick += OnNoteLongClick;
 
             var expandButton = newNoteLayout.FindViewById<Button>(Resource.Id.expandButton);
             expandButton.Enabled = enabled;
@@ -143,7 +147,12 @@ namespace NotesAndroid
             if (node != null)
                 foreach (var child in node.SubNotes)
                 {
-                    ((LayoutWrapper)child.UiLayout).Layout.Visibility = child.Shown ? ViewStates.Visible : ViewStates.Gone;
+                    if (focusedNote == null)
+                        ((LayoutWrapper)child.UiLayout).Layout.Visibility = child.Shown ? ViewStates.Visible : ViewStates.Gone;
+                    else
+                        ((LayoutWrapper)child.UiLayout).Layout.Visibility = child.Shown && (child.IsParent(focusedNote) || child == focusedNote) ? 
+                            ViewStates.Visible : ViewStates.Gone;
+
                     Relayout(child, depth + 1);
                 }
         }
@@ -535,6 +544,19 @@ namespace NotesAndroid
                 LoadConfig();
                 unsavedChanges = true;
             }
+        }
+        private void OnNoteLongClick(object? sender, View.LongClickEventArgs e)
+        {
+            var ed = (View?)sender;
+            var note = (ViewGroup?)ed?.Parent;
+            var noteUiOrigin = NoteUi.UiToNote[new LayoutWrapper(note)];
+
+            if (focusedNote == noteUiOrigin)
+                focusedNote = null;
+            else
+                focusedNote = noteUiOrigin;
+
+            Relayout();
         }
     }
 }
