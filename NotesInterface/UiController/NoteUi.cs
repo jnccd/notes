@@ -119,6 +119,15 @@ namespace Notes.Interface.UiController
             else
                 return Parent.AreAllParentsExpanded();
         }
+        public bool IsParent(NoteUi potentialParent)
+        {
+            if (Parent == null)
+                return false;
+            else if (Parent == potentialParent)
+                return true;
+            else
+                return Parent.IsParent(potentialParent);
+        }
         public List<NoteUi> GetAllChildren()
         {
             var re = SubNotes.ToList(); // List to List to make a shallow copy
