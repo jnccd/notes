@@ -550,11 +550,18 @@ namespace NotesAndroid
             var ed = (View?)sender;
             var note = (ViewGroup?)ed?.Parent;
             var noteUiOrigin = NoteUi.UiToNote[new LayoutWrapper(note)];
+            Toolbar? myToolbar = (Toolbar?)FindViewById(Resource.Id.my_toolbar);
 
             if (focusedNote == noteUiOrigin)
+            {
                 focusedNote = null;
+                myToolbar.Title = Resources.GetString(Resource.String.app_name);
+            }
             else
+            {
                 focusedNote = noteUiOrigin;
+                myToolbar.Title = Resources.GetString(Resource.String.app_name) + " - Note Focus";
+            }
 
             Relayout();
         }
