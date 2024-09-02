@@ -1,20 +1,20 @@
 ﻿using System.Diagnostics;
 using System.Text;
+using Notes.Server;
 
-namespace Notes.Server
+namespace NotesServer.BasicAuth
 {
-    public class BasicAuth
+    public interface IBasicAuthService
     {
-        readonly List<User> users;
-        readonly bool writeLogs = false;
-        readonly bool give404 = false;
+        public IResult GetUser(string? authTokenHeader, Func<User?, IResult> handleRequest);
+        public User? GetUser(string? authTokenHeader);
+    }
 
-        public BasicAuth(List<User> users, bool writeLogs = false, bool give404 = false)
-        {
-            this.users = users;
-            this.writeLogs = writeLogs;
-            this.give404 = give404;
-        }
+    public class BasicAuthService(BasicAuthOptions options) : IBasicAuthService
+    {
+        readonly List<User> users = options.Users;
+        readonly bool writeLogs = options.WriteLogs;
+        readonly bool give404 = options.Give404;
 
         public IResult GetUser(string? authTokenHeader, Func<User?, IResult> handleRequest)
         {
@@ -30,7 +30,7 @@ namespace Notes.Server
 
         public User? GetUser(string? authTokenHeader)
         {
-            if (authTokenHeader == null || !authTokenHeader.Contains(" "))
+            if (authTokenHeader == null || !authTokenHeader.Contains(' '))
                 return null;
             var authToken = authTokenHeader?.Split(" ")[1];
             if (string.IsNullOrWhiteSpace(authToken))
@@ -45,19 +45,6 @@ namespace Notes.Server
                 Debug.WriteLine(decodedAuthToken);
 
             return users.FirstOrDefault(u => u.Username == user && u.Password == pass);
-        }
-
-        class AuthReqResult : IResult
-        {
-            public AuthReqResult() { }
-
-            public Task ExecuteAsync(HttpContext httpContext)
-            {
-                httpContext.Response.StatusCode = 401;
-                httpContext.Response.Headers.Add("Www-Authenticate", "Basic realm=\"private\"");
-                httpContext.Response.Headers.Add("Connection", "close");
-                return Task.FromResult(httpContext.Response);
-            }
         }
     }
 }

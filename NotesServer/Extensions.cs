@@ -22,14 +22,9 @@ namespace Notes.Server
         }
     }
 
-    class HtmlResult : IResult
+    class HtmlResult(string html) : IResult
     {
-        private readonly string _html;
-
-        public HtmlResult(string html)
-        {
-            _html = html;
-        }
+        private readonly string _html = html;
 
         public Task ExecuteAsync(HttpContext httpContext)
         {
