@@ -35,8 +35,12 @@ namespace NotesServer.Notes
                 [FromHeader(Name = "Authorization")] string? authTokenHeader,
                 HttpRequest request) =>
             {
+                Logger.WriteLine($"GET {auth}");
                 auth?.GetUser(authTokenHeader, (User? u) =>
-                    Results.Text(u?.NotesPayloadText, contentType: "application/json"));
+                {
+                    Logger.WriteLine($"GET {auth} {u?.Username}");
+                    return Results.Text(u?.NotesPayloadText, contentType: "application/json");
+                });
             });
 
             routes.MapPost("/notes", async (
