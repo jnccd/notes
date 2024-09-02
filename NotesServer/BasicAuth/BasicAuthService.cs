@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Text;
 using Notes.Server;
+using NotesServer.Notes;
 
 namespace NotesServer.BasicAuth
 {
@@ -10,9 +11,8 @@ namespace NotesServer.BasicAuth
         public User? GetUser(string? authTokenHeader);
     }
 
-    public class BasicAuthService(BasicAuthOptions options) : IBasicAuthService
+    public class BasicAuthService(BasicAuthOptions options, INotesEnvironmentService notesEnv) : IBasicAuthService
     {
-        readonly List<User> users = options.Users;
         readonly bool writeLogs = options.WriteLogs;
         readonly bool give404 = options.Give404;
 
@@ -44,7 +44,7 @@ namespace NotesServer.BasicAuth
             if (writeLogs)
                 Debug.WriteLine(decodedAuthToken);
 
-            return users.FirstOrDefault(u => u.Username == user && u.Password == pass);
+            return notesEnv.Users?.FirstOrDefault(u => u.Username == user && u.Password == pass);
         }
     }
 }
