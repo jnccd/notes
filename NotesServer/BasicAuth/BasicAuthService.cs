@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Text;
+using Microsoft.Extensions.Options;
 using Notes.Server;
 using NotesServer.Notes;
 
@@ -11,10 +12,10 @@ namespace NotesServer.BasicAuth
         public User? GetUser(string? authTokenHeader);
     }
 
-    public class BasicAuthService(BasicAuthOptions options, INotesEnvironmentService notesEnv) : IBasicAuthService
+    public class BasicAuthService(IOptions<BasicAuthOptions> options, INotesEnvironmentService notesEnv) : IBasicAuthService
     {
-        readonly bool writeLogs = options.WriteLogs;
-        readonly bool give404 = options.Give404;
+        readonly bool writeLogs = options.Value.WriteLogs;
+        readonly bool give404 = options.Value.Give404;
 
         public IResult GetUser(string? authTokenHeader, Func<User?, IResult> handleRequest)
         {

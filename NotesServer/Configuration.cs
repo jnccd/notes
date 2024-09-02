@@ -37,8 +37,7 @@ namespace NotesServer
 
         public static void RegisterServices(this WebApplicationBuilder builder)
         {
-            var basicAuthOptions = new BasicAuthOptions();
-            builder.Configuration.GetSection(nameof(basicAuthOptions)).Bind(basicAuthOptions);
+            builder.Configuration.GetSection(nameof(BasicAuthOptions)).Bind(new BasicAuthOptions());
 
             builder.Services
                 .AddSingleton<IBasicAuthService, BasicAuthService>()
