@@ -13,7 +13,7 @@ namespace NotesServer.Notes
                 [FromServices] IBasicAuthService auth,
                 [FromServices] INotesEnvironmentService notesEnv) =>
             {
-                Results.Extensions.Html(@$"<!doctype html>
+                return Results.Extensions.Html(@$"<!doctype html>
                 <html>
                     <head>
                         <title>Hewwo</title>
@@ -35,10 +35,8 @@ namespace NotesServer.Notes
                 [FromHeader(Name = "Authorization")] string? authTokenHeader,
                 HttpRequest request) =>
             {
-                Logger.WriteLine($"GET {auth}");
-                auth?.GetUser(authTokenHeader, (User? u) =>
+                return auth?.GetUser(authTokenHeader, (User? u) =>
                 {
-                    Logger.WriteLine($"GET {auth} {u?.Username}");
                     return Results.Text(u?.NotesPayloadText, contentType: "application/json");
                 });
             });
