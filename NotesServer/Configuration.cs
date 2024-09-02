@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Notes.Interface;
 using NotesServer.BasicAuth;
 using NotesServer.Notes;
@@ -36,8 +37,10 @@ namespace NotesServer
 
         public static void RegisterServices(this WebApplicationBuilder builder)
         {
+            var basicAuthOptions = new BasicAuthOptions();
+            builder.Configuration.GetSection(nameof(basicAuthOptions)).Bind(basicAuthOptions);
+
             builder.Services
-                .Configure<BasicAuthOptions>(b => { })
                 .AddSingleton<IBasicAuthService, BasicAuthService>()
                 .AddSingleton<INotesEnvironmentService, NotesEnvironmentService>();
         }
