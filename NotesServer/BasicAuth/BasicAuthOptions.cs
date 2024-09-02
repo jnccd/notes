@@ -3,11 +3,9 @@ using System.Collections.Generic;
 
 namespace NotesServer.BasicAuth
 {
-    public class BasicAuthOptions(bool writeLogs = false, bool give404 = false)
+    public class BasicAuthOptions()
     {
-        public const string BasicAuth = "BasicAuth";
-
-        public bool WriteLogs { get; set; } = writeLogs;
-        public bool Give404 { get; set; } = give404;
+        public bool WriteLogs { get; set; }
+        public bool Give404 { get; set; }
     }
 }
