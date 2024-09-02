@@ -20,17 +20,17 @@ namespace Notes.Server
 
             return new HtmlResult(html);
         }
-    }
 
-    class HtmlResult(string html) : IResult
-    {
-        private readonly string _html = html;
-
-        public Task ExecuteAsync(HttpContext httpContext)
+        class HtmlResult(string html) : IResult
         {
-            httpContext.Response.ContentType = MediaTypeNames.Text.Html;
-            httpContext.Response.ContentLength = Encoding.UTF8.GetByteCount(_html);
-            return httpContext.Response.WriteAsync(_html);
+            private readonly string _html = html;
+
+            public Task ExecuteAsync(HttpContext httpContext)
+            {
+                httpContext.Response.ContentType = MediaTypeNames.Text.Html;
+                httpContext.Response.ContentLength = Encoding.UTF8.GetByteCount(_html);
+                return httpContext.Response.WriteAsync(_html);
+            }
         }
     }
 }
