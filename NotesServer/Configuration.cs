@@ -16,7 +16,18 @@ namespace NotesServer
                 (ushort)7777 :
                 Convert.ToUInt16(builder.Configuration["PORT"]);
 
-            // Set up cert
+            X509Certificate2 x509 = GetCertificateFromConfig(builder);
+            builder.WebHost.ConfigureKestrel(options =>
+            {
+                options.Listen(IPAddress.Any, port, listenOptions =>
+                {
+                    listenOptions.UseHttps(x509);
+                });
+            });
+        }
+
+        private static X509Certificate2 GetCertificateFromConfig(WebApplicationBuilder builder)
+        {
             char _s = Path.DirectorySeparatorChar;
             if (string.IsNullOrWhiteSpace(builder.Configuration["CERT_PATH"]))
             {
@@ -26,13 +37,7 @@ namespace NotesServer
             var certPem = File.ReadAllText($"{builder.Configuration["CERT_PATH"]}{_s}fullchain.pem");
             var keyPem = File.ReadAllText($"{builder.Configuration["CERT_PATH"]}{_s}privkey.pem");
             var x509 = X509Certificate2.CreateFromPem(certPem, keyPem);
-            builder.WebHost.ConfigureKestrel(options =>
-            {
-                options.Listen(IPAddress.Any, port, listenOptions =>
-                {
-                    listenOptions.UseHttps(x509);
-                });
-            });
+            return x509;
         }
 
         public static void RegisterServices(this WebApplicationBuilder builder)
