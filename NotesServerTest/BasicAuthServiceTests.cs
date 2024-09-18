@@ -28,12 +28,12 @@ namespace NotesServer.UnitTests
             _environment.Users.Returns([testUser1, testUser2]);
 
             // Act
-            var result_positive = _sut.GetUser(testUser1.ToAuthHeader());
-            var result_negative = _sut.GetUser(testUser3.ToAuthHeader());
+            var resultPositive = _sut.GetUser(testUser1.ToAuthHeader());
+            var resultNegative = _sut.GetUser(testUser3.ToAuthHeader());
 
             // Assert
-            Assert.Equal(testUser1, result_positive);
-            Assert.Null(result_negative);
+            Assert.Equal(testUser1, resultPositive);
+            Assert.Null(resultNegative);
         }
     }
 }
