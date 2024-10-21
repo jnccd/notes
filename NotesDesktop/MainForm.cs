@@ -317,8 +317,8 @@ namespace Notes.Desktop
                 }
                 else if (state == CommsState.Working)
                 {
-                    labelConnectionStatus.Text = $"Sending/Recieving...";
-                    labelConnectionStatusUnderline.BackColor = Color.FromArgb(64, 255, 64);
+                    //labelConnectionStatus.Text = $"Sending/Recieving...";
+                    //labelConnectionStatusUnderline.BackColor = Color.FromArgb(64, 255, 64);
                 }
             });
         }
