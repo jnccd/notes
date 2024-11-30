@@ -6,6 +6,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <StartupObject>Notes.Desktop.Program</StartupObject>
     <ApplicationIcon>widgetThumb.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
 
   <ItemGroup>
