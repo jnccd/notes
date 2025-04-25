@@ -16,14 +16,24 @@ namespace NotesServer
                 (ushort)7777 :
                 Convert.ToUInt16(builder.Configuration["PORT"]);
 
-            X509Certificate2 x509 = GetCertificateFromConfig(builder);
-            builder.WebHost.ConfigureKestrel(options =>
+            if (!string.IsNullOrWhiteSpace(builder.Configuration["CERT_PATH"]))
             {
-                options.Listen(IPAddress.Any, port, listenOptions =>
+                X509Certificate2 x509 = GetCertificateFromConfig(builder);
+                builder.WebHost.ConfigureKestrel(options =>
                 {
-                    listenOptions.UseHttps(x509);
+                    options.Listen(IPAddress.Any, port, listenOptions =>
+                    {
+                        listenOptions.UseHttps(x509);
+                    });
                 });
-            });
+            }
+            else
+            {
+                builder.WebHost.ConfigureKestrel(options =>
+                {
+                    options.Listen(IPAddress.Any, port, listenOptions => { });
+                });
+            }
         }
 
         private static X509Certificate2 GetCertificateFromConfig(WebApplicationBuilder builder)
@@ -51,7 +61,8 @@ namespace NotesServer
 
         public static void RegisterMiddlewares(this WebApplication app)
         {
-            app.UseHttpsRedirection();
+            if (!string.IsNullOrWhiteSpace(app.Configuration["CERT_PATH"]))
+                app.UseHttpsRedirection();
         }
     }
 }
