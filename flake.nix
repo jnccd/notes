@@ -1,5 +1,6 @@
 # nix develop . --experimental-features 'nix-command flakes'
-# nix develop --experimental-features 'nix-command flakes' --command bash -c "./update_and_start.sh"
+# nix develop --experimental-features 'nix-command flakes' --command bash -c "bash update_and_start.sh"
+# export NIXPKGS_ALLOW_INSECURE=1 && nix develop --impure --experimental-features 'nix-command flakes' --command bash -c "bash update_and_start.sh"
 {
   description = "Nix Shell Wrapper";
 
