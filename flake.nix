@@ -1,5 +1,5 @@
 # nix develop . --experimental-features 'nix-command flakes'
-# nix develop --experimental-features 'nix-command flakes' --command bash -c "npm run build"
+# nix develop --experimental-features 'nix-command flakes' --command bash -c "./update_and_start.sh"
 {
   description = "Nix Shell Wrapper";
 
