@@ -1,4 +1,4 @@
-#nix-shell --command "npm run build"
+#nix-shell --command "./update_and_start.sh"
 { pkgs ? import <nixpkgs> {} }:
 with pkgs;
 mkShell {
