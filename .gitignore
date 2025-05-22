@@ -340,3 +340,5 @@ ASALocalRun/
 healthchecksdb
 
 /NotesServer/Properties/launchSettings.json
+
+.direnv/
