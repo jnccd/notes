@@ -70,6 +70,8 @@ public static class NotesEndpoints
             }
             else
             {
+                Logger.WriteLine($"Invalid post req received " +
+                    checks.Select(x => x.ToString()).Aggregate((x, y) => x + ", " + y));
                 return Results.BadRequest("Invalid Payload " +
                     checks.Select(x => x.ToString()).Aggregate((x, y) => x + ", " + y));
             }
