@@ -24,11 +24,6 @@ public class PersistenceService : IDisposable
 
     public PersistenceService(IConfiguration config)
     {
-        // foreach (var user in db.Users)
-        // {
-        //     FixZeros(user.NotesPayload.Notes);
-        // }
-
         // Init users
         foreach (string userDef in config["NOTES_USERS"]?.Split(' ') ?? [])
         {
@@ -39,18 +34,6 @@ public class PersistenceService : IDisposable
         }
         db.SaveChanges();
     }
-    // public void FixZeros(List<Note> notes)
-    // {
-    //     var zeroGuid = Guid.ParseExact("00000000-0000-0000-0000-000000000000", "D");
-    //     foreach (var note in notes)
-    //     {
-    //         if (note.Id == zeroGuid)
-    //         {
-    //             note.Id = Guid.NewGuid();
-    //         }
-    //         FixZeros(note.SubNotes);
-    //     }
-    // }
 
     public bool Exists() => db.Users.Any();
     public void Save() => db.SaveChanges();
