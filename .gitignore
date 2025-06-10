@@ -342,3 +342,5 @@ healthchecksdb
 /NotesServer/Properties/launchSettings.json
 
 .direnv/
+
+.env
