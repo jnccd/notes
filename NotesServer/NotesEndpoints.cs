@@ -58,7 +58,7 @@ public static class NotesEndpoints
 
             bool[] checks = [bodyPayload != null,
                 (bodyPayload?.SaveTime > u?.NotesPayload?.SaveTime || u?.NotesPayload == null),
-                bodyPayload?.SaveTime <= DateTime.Now,
+                bodyPayload?.SaveTime <= DateTime.Now.AddSeconds(3),
                 bodyPayload?.Checksum == bodyPayload?.GenerateChecksum()
             ];
             if (checks.All(x => x))
