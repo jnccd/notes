@@ -99,7 +99,7 @@ namespace Notes.Interface
             {
                 stateChanged?.Invoke(CommsState.Working);
                 using var response = client.PostAsync(serverUri, new StringContent(s, Encoding.UTF8, "application/json")).Result;
-                stateChanged?.Invoke(response.StatusCode == HttpStatusCode.OK ? CommsState.Connected : CommsState.Disconnected);
+                stateChanged?.Invoke(response.StatusCode != HttpStatusCode.GatewayTimeout ? CommsState.Connected : CommsState.Disconnected);
 
                 Logger.WriteLine(response.StatusCode);
                 Logger.WriteLine(response.Content.ReadAsStringAsync().Result);
