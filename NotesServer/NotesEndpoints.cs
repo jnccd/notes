@@ -63,9 +63,10 @@ public static class NotesEndpoints
             ];
             if (checks.All(x => x))
             {
-                Logger.WriteLine($"Checksum check okay, writing for {u.Username}");
+                Logger.WriteLine($"Checksum check okay, writing for {u?.Username}");
 
-                u.NotesPayload = bodyPayload;
+                if (u != null)
+                    u.NotesPayload = bodyPayload;
                 persistence.Save();
             }
             else
