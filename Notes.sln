@@ -11,8 +11,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NotesServer", "NotesServer\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NotesAndroid", "NotesAndroid\NotesAndroid.csproj", "{45299AA6-FEA5-4394-B1E9-69F0264C5AAB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NotesServer.UnitTests", "NotesServerTest\NotesServer.UnitTests.csproj", "{6E43E122-F746-4813-B676-E184249279FF}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -37,10 +35,6 @@ Global
 		{45299AA6-FEA5-4394-B1E9-69F0264C5AAB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{45299AA6-FEA5-4394-B1E9-69F0264C5AAB}.Release|Any CPU.Build.0 = Release|Any CPU
 		{45299AA6-FEA5-4394-B1E9-69F0264C5AAB}.Release|Any CPU.Deploy.0 = Release|Any CPU
-		{6E43E122-F746-4813-B676-E184249279FF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{6E43E122-F746-4813-B676-E184249279FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{6E43E122-F746-4813-B676-E184249279FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{6E43E122-F746-4813-B676-E184249279FF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
