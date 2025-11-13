@@ -1,5 +1,7 @@
 using NotesServer;
+using System;
 
+Console.WriteLine("Hewwo!");
 DotNetEnv.Env.Load("../.env", new(setEnvVars: true));
 
 var builder = WebApplication.CreateBuilder(args);
