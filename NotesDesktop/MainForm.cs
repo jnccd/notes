@@ -139,8 +139,6 @@ namespace Notes.Desktop
         Payload GetNewPayload() => new(Config.Data.SaveTime, Config.Data.Notes);
         void OnPayloadRecieved(string receivedText, Payload payload)
         {
-            Logger.WriteLine($"Recived {receivedText}");
-
             bool validPayload = false;
             lock (Config.Data)
             {
@@ -403,8 +401,8 @@ namespace Notes.Desktop
 
                 int minVal = int.MaxValue; Panel minPanel = null;
                 foreach (Panel x in rootPanel.Controls.OfType<Panel>())
-                    if (x.Height > 5 && 
-                        !draggedNoteSubNotePanels.Contains(x) && 
+                    if (x.Height > 5 &&
+                        !draggedNoteSubNotePanels.Contains(x) &&
                         Math.Abs(mousePosY - x.Location.Y) < minVal)
                     {
                         minVal = Math.Abs(mousePosY - x.Location.Y);
@@ -436,11 +434,11 @@ namespace Notes.Desktop
 
                 int mousePosY = e.Y + origin.Location.Y + origin.Parent.Location.Y;
 
-                int minVal = int.MaxValue, counter = 0; 
-                minPanelCounter = 0; 
+                int minVal = int.MaxValue, counter = 0;
+                minPanelCounter = 0;
                 Panel minPanel = null;
                 foreach (Panel x in rootPanel.Controls.OfType<Panel>())
-                    if (x.Height > 5 && 
+                    if (x.Height > 5 &&
                         !draggedNoteSubNotePanels.Contains(x))
                     {
                         counter++;
@@ -451,10 +449,10 @@ namespace Notes.Desktop
                             minPanelCounter = counter;
                         }
                     }
-                    
+
                 int panelIndex = rootPanel.Controls.IndexOf(minPanel);
 
-                barThingy.Location = new Point(barThingy.Location.X, (minPanelCounter-1) * Globals.defaultPanelHeight + rootPanel.Location.Y);
+                barThingy.Location = new Point(barThingy.Location.X, (minPanelCounter - 1) * Globals.defaultPanelHeight + rootPanel.Location.Y);
             }
         }
         private void ExpandButton_Click(object sender, EventArgs e)

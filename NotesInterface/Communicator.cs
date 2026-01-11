@@ -50,7 +50,8 @@ namespace Notes.Interface
 
         public void StartRequestLoop(Action<string, Payload?> receivedEvent)
         {
-            serverTask = Task.Run(() => {
+            serverTask = Task.Run(() =>
+            {
                 Thread.CurrentThread.Name = "Server Thread";
 
                 string last = "";
@@ -72,7 +73,7 @@ namespace Notes.Interface
                                 continue;
                             }
 
-                            Logger.WriteLine($"Recived {receivedText} from {serverUri}");
+                            Logger.WriteLine($"Recived payload from {serverUri}");
 
                             receivedEvent(receivedText, receivedPayload);
 
