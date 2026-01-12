@@ -94,7 +94,7 @@ namespace Notes.Interface
 
         public void SendString(string s)
         {
-            Logger.WriteLine($"Sending {s}");
+            Logger.WriteLine($"Sending string...");
 
             try
             {
@@ -103,7 +103,7 @@ namespace Notes.Interface
                 stateChanged?.Invoke(response.StatusCode != HttpStatusCode.GatewayTimeout ? CommsState.Connected : CommsState.Disconnected);
 
                 Logger.WriteLine(response.StatusCode);
-                Logger.WriteLine(response.Content.ReadAsStringAsync().Result);
+                //Logger.WriteLine(response.Content.ReadAsStringAsync().Result);
             }
             catch (Exception e)
             {

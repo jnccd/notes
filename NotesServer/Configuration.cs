@@ -121,7 +121,7 @@ public static class Configuration
             if (context.Request.Method != "GET")
                 try
                 {
-                    logger?.WriteLine($"{context.Request.Method} {context.Request.Path}{context.Request.QueryString} - ORIGIN: {context.Request.Headers.Origin} - {{{GetRequestBody(context.Request).Result}}}");
+                    logger?.WriteLine($"{context.Request.Method} {context.Request.Path}{context.Request.QueryString} - ORIGIN: {context.Request.Headers.Origin}");
                 }
                 catch (Exception e)
                 {
