@@ -1,0 +1,208 @@
+<UserControl
+    x:Class="NotesAvalonia.Views.MainView"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:NotesAvalonia.Helpers;assembly=NotesAvalonia"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="using:NotesAvalonia.ViewModels"
+    Padding="0"
+    HorizontalAlignment="Stretch"
+    VerticalAlignment="Stretch"
+    x:DataType="vm:MainViewModel"
+    mc:Ignorable="d">
+    <UserControl.Resources>
+        <local:ExpandCollapseConverter x:Key="ExpandCollapseConverter" />
+        <local:AddMultiplyConverter x:Key="AddMultiplyConverter" />
+    </UserControl.Resources>
+
+    <Design.DataContext>
+        <!--
+            This only sets the DataContext for the previewer in an IDE,
+            to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs)
+        -->
+        <vm:MainViewModel />
+    </Design.DataContext>
+
+    <LayoutTransformControl LayoutTransform="scale(1)">
+
+        <Border
+            Name="WindowBorder"
+            BorderBrush="#E7DE67"
+            BorderThickness="12"
+            Cursor="SizeAll"
+            PointerMoved="Border_PointerMoved"
+            PointerPressed="WindowBorder_PointerPressed"
+            PointerReleased="WindowBorder_PointerReleased">
+            <Border.ContextMenu>
+                <ContextMenu Cursor="Arrow">
+                    <MenuItem Click="Border_ContextMenu_Close_Click" Header="Close" />
+                </ContextMenu>
+            </Border.ContextMenu>
+            <Grid
+                x:Name="Root"
+                Background="#E7DE67"
+                Cursor="Arrow"
+                RowDefinitions="Auto, *, Auto">
+                <Grid.RenderTransform>
+                    <!--  Fixes border around grid  -->
+                    <ScaleTransform ScaleX="1.005" ScaleY="1.005" />
+                </Grid.RenderTransform>
+
+                <StackPanel Grid.Row="0">
+                    <Button
+                        Padding="5,1"
+                        HorizontalAlignment="Center"
+                        Background="Transparent">
+                        <TextBlock Text="{Binding ConnectionState}" />
+                        <Button.Flyout>
+                            <Flyout ShowMode="Standard">
+                                <StackPanel
+                                    Width="250"
+                                    Margin="5,2"
+                                    Spacing="3">
+                                    <TextBlock Text="Connect" />
+                                    <TextBox Name="UrlTextBox" Watermark="URL" />
+                                    <TextBox Name="UsernameTextBox" Watermark="Username" />
+                                    <TextBox
+                                        Name="PasswordTextBox"
+                                        PasswordChar="•"
+                                        Watermark="Password" />
+
+                                    <Button HorizontalAlignment="Right" Content="Login" />
+                                </StackPanel>
+                            </Flyout>
+                        </Button.Flyout>
+                    </Button>
+                    <Rectangle Height="3" Fill="Red">
+                        <Rectangle.RenderTransform>
+                            <TranslateTransform X="0" Y="-4" />
+                        </Rectangle.RenderTransform>
+                    </Rectangle>
+                </StackPanel>
+
+                <ScrollViewer
+                    Name="RootScrollViewer"
+                    Grid.Row="1"
+                    ScrollChanged="ScrollViewer_ScrollChanged">
+                    <ItemsControl ItemsSource="{Binding FlattenedNotes}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <VirtualizingStackPanel />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="vm:FlattenedNoteViewModel">
+                                <Grid
+                                    Name="NoteContainer"
+                                    ColumnDefinitions="Auto, 24, 24, 24, *, 24"
+                                    DragDrop.AllowDrop="True"
+                                    DragDrop.DragOver="NoteContainer_OnDragOver"
+                                    DragDrop.Drop="NoteContainer_OnDrop">
+
+                                    <Border Grid.Column="0" Width="{Binding Depth, Converter={StaticResource AddMultiplyConverter}, ConverterParameter='-1,20'}" />
+
+                                    <Button
+                                        Grid.Column="1"
+                                        Height="23"
+                                        MinHeight="0"
+                                        Margin="0"
+                                        Padding="2"
+                                        VerticalAlignment="Top"
+                                        Background="Transparent"
+                                        PointerMoved="DragButton_PointerMoved">
+                                        <Svg
+                                            Width="18"
+                                            Height="18"
+                                            Path="/Assets/drag.svg" />
+                                    </Button>
+
+                                    <Button
+                                        Grid.Column="2"
+                                        Width="20"
+                                        Height="23"
+                                        MinHeight="0"
+                                        Margin="0"
+                                        Padding="2"
+                                        VerticalAlignment="Top"
+                                        Background="Transparent"
+                                        Command="{Binding #Root.((vm:MainViewModel)DataContext).ToggleExpand}"
+                                        CommandParameter="{Binding .}">
+                                        <Svg
+                                            Width="18"
+                                            Height="18"
+                                            Path="{Binding Expanded, Converter={StaticResource ExpandCollapseConverter}}" />
+                                    </Button>
+
+                                    <CheckBox
+                                        Grid.Column="3"
+                                        Width="26"
+                                        Height="26"
+                                        MinHeight="0"
+                                        Margin="0"
+                                        Padding="0"
+                                        VerticalAlignment="Top"
+                                        Content=""
+                                        FontSize="1"
+                                        IsChecked="{Binding Done}">
+                                        <CheckBox.RenderTransform>
+                                            <TransformGroup>
+                                                <TranslateTransform X="2" Y="-4" />
+                                                <ScaleTransform ScaleX="0.8" ScaleY="0.8" />
+                                            </TransformGroup>
+                                        </CheckBox.RenderTransform>
+                                    </CheckBox>
+
+                                    <TextBox
+                                        Grid.Column="4"
+                                        MinHeight="0"
+                                        Margin="0"
+                                        Padding="2,5"
+                                        Background="Transparent"
+                                        BorderThickness="0"
+                                        FontSize="13"
+                                        KeyDown="TextBox_KeyDown"
+                                        Text="{Binding Text}"
+                                        TextChanged="TextBox_TextChanged"
+                                        TextWrapping="Wrap" />
+
+                                    <Button
+                                        Grid.Column="5"
+                                        Height="25"
+                                        MinHeight="0"
+                                        Margin="0,0,12,0"
+                                        Padding="1,1"
+                                        VerticalAlignment="Top"
+                                        Background="Transparent"
+                                        FontSize="16">
+                                        <Svg
+                                            Width="18"
+                                            Height="18"
+                                            Path="/Assets/meatballs.svg" />
+                                        <Button.Flyout>
+                                            <MenuFlyout>
+                                                <MenuItem Header="UwU" />
+                                                <MenuItem
+                                                    Command="{Binding #Root.((vm:MainViewModel)DataContext).RemoveItemCommand}"
+                                                    CommandParameter="{Binding .}"
+                                                    Header="Delete" />
+                                            </MenuFlyout>
+                                        </Button.Flyout>
+                                    </Button>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+                <TextBlock
+                    Grid.Row="2"
+                    HorizontalAlignment="Center"
+                    FontSize="4"
+                    Text="{Binding DebugText}" />
+            </Grid>
+        </Border>
+
+    </LayoutTransformControl>
+
+</UserControl>
