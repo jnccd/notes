@@ -64,7 +64,7 @@ namespace NotesAvalonia.Config
             lock (lockject)
             {
                 if (Exists())
-                    Data = JsonConvert.DeserializeObject<ConfigData>(File.ReadAllText(configPath));
+                    Data = JsonConvert.DeserializeObject<ConfigData>(File.ReadAllText(configPath)) ?? Data;
                 else
                     Data = new ConfigData();
             }
@@ -73,7 +73,7 @@ namespace NotesAvalonia.Config
         {
             lock (lockject)
             {
-                Data = JsonConvert.DeserializeObject<ConfigData>(JSON);
+                Data = JsonConvert.DeserializeObject<ConfigData>(JSON) ?? Data;
             }
         }
         public static new string ToString()
@@ -88,7 +88,7 @@ namespace NotesAvalonia.Config
                 if (info.FieldType != typeof(string) && typeof(IEnumerable).IsAssignableFrom(info.FieldType))
                 {
                     output += "\n";
-                    IEnumerable a = (IEnumerable)info.GetValue(Data);
+                    IEnumerable a = info.GetValue(Data) as IEnumerable ?? Array.Empty<string>();
                     IEnumerator e = a.GetEnumerator();
                     e.Reset();
                     while (e.MoveNext())
