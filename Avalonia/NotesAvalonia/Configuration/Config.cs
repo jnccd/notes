@@ -5,7 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 
-namespace NotesAvalonia.Config
+namespace NotesAvalonia.Configuration
 {
     public static class Config
     {
