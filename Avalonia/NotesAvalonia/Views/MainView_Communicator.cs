@@ -51,7 +51,7 @@ public partial class MainView : UserControl
                             connectionBar.Fill = Avalonia.Media.Brushes.Red;
                         }
                         if (viewModel != null)
-                            viewModel.ConnectionState = state == CommsState.Disconnected ? "Disconnected" : $"Connected to {Config.Data.ServerUsername}@{Config.Data.ServerUri}";
+                            viewModel.ConnectionState = state == CommsState.Disconnected ? "Disconnected" : $"Connected to {Config.Data.ServerUsername}@{Config.Data.ServerUri.Split("//").Last()}";
                     });
                 }
             );
@@ -137,8 +137,11 @@ public partial class MainView : UserControl
             var windowPos = window?.Position;
             if (windowPos != null)
                 Config.Data.Pos = window!.Position;
-            if (window != null)
-                Config.Data.Size = window.FrameSize;
+            if (window != null && window.FrameSize != null)
+            {
+                Config.Data.Width = window.FrameSize.Value.Width;
+                Config.Data.Height = window.FrameSize.Value.Height;
+            }
 
             if (updateSaveTime)
                 Config.Data.SaveTime = DateTime.Now;

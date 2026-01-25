@@ -10,6 +10,8 @@ using System;
 using System.IO;
 using Avalonia.Controls;
 using NotesAvalonia.Configuration;
+using Notes.Interface;
+using System.Collections.Generic;
 
 namespace NotesAvalonia;
 
@@ -27,8 +29,15 @@ public partial class CrossPlatformAvaloniaApp : Application
         // Avoid duplicate validations from both Avalonia and the CommunityToolkit. 
         // More info: https://docs.avaloniaui.net/docs/guides/development-guides/data-validation#manage-validationplugins
         DisableAvaloniaDataAnnotationValidation();
-        Config.Load();
 
+        // Init Config
+        Config.Load();
+        if (Config.Data.Notes == null || Config.Data.Notes.Count == 0)
+        {
+            Config.Data.Notes = new List<Note>() { new Note() };
+        }
+
+        // Init platform specific wrapper element
         if (ApplicationLifetime is ISingleViewApplicationLifetime singleViewPlatform)
         {
             singleViewPlatform.MainView = new MainView
@@ -46,8 +55,8 @@ public partial class CrossPlatformAvaloniaApp : Application
                     DataContext = MainViewModel
                 },
                 Position = Config.Data.Pos ?? new PixelPoint(100, 100),
-                Width = Config.Data.Size?.Width ?? Globals.InitialWindowSize.X,
-                Height = Config.Data.Size?.Height ?? Globals.InitialWindowSize.Y,
+                Width = Config.Data.Width ?? Globals.InitialWindowSize.X,
+                Height = Config.Data.Height ?? Globals.InitialWindowSize.Y,
                 ShowInTaskbar = false,
                 Title = "Notes",
                 ExtendClientAreaToDecorationsHint = true,
@@ -56,7 +65,7 @@ public partial class CrossPlatformAvaloniaApp : Application
                 SystemDecorations = SystemDecorations.None,
                 Clip = new Avalonia.Media.RectangleGeometry
                 {
-                    Rect = new Avalonia.Rect(0, 0, Config.Data.Size?.Width ?? Globals.InitialWindowSize.X, Config.Data.Size?.Height ?? Globals.InitialWindowSize.Y),
+                    Rect = new Avalonia.Rect(0, 0, Config.Data.Width ?? Globals.InitialWindowSize.X, Config.Data.Height ?? Globals.InitialWindowSize.Y),
                     RadiusX = Globals.WindowBorderRadius,
                     RadiusY = Globals.WindowBorderRadius
                 }
