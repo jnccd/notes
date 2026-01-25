@@ -43,7 +43,7 @@
             export DOTNET_ROOT="$HOME/.dotnet"
             export PATH="$DOTNET_ROOT:$PATH"
 
-            echo "🧰 Entering FHS environment..."
+            echo "Entering FHS environment..."
             if [ -z "$IN_FHS_SHELL" ]; then
               export IN_FHS_SHELL=1
               exec ${
@@ -116,15 +116,15 @@
                     export PATH=$ANDROID_SDK_ROOT/tools:$ANDROID_SDK_ROOT/platform-tools:$PATH
 
                     if [ ! -x "$DOTNET_ROOT/dotnet" ]; then
-                      echo "📦 Installing Microsoft .NET SDK..."
+                      echo "Installing Microsoft .NET SDK..."
                       mkdir -p "$DOTNET_ROOT"
                       curl -sSL https://dot.net/v1/dotnet-install.sh \
                         | bash -s -- --channel 8.0 --install-dir "$DOTNET_ROOT"
                     else
-                      echo "✅ Using existing .NET SDK from $DOTNET_ROOT"
+                      echo "Using existing .NET SDK from $DOTNET_ROOT"
                     fi
 
-                    echo "💡 .NET + Android ready!"
+                    echo ".NET Desktop + Android Dev Environment ready!"
                     exec bash -l
                   '';
                 }
