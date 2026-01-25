@@ -49,10 +49,19 @@ public class MainActivity : AvaloniaMainActivity<CrossPlatformAvaloniaApp>
     void UpdateWidget()
     {
         var app = (CrossPlatformAvaloniaApp)Avalonia.Application.Current!;
-        var dataToShow = app.MainViewModel.FlattenedNotes
+        var dataToShow = app.MainViewModel.FlattenedNotes.Count > 0 ?
+        app.MainViewModel.FlattenedNotes
             .Select(x =>
-                Enumerable.Repeat("  ", (int)x.Depth).Aggregate((x, y) => x + y) + " " + (x.Expanded ? "▼" : "▶") + x.Text)
-            .Aggregate((x, y) => x + "\n" + y);
+                Enumerable
+                    .Repeat("  ", (int)x.Depth)
+                    .Aggregate((x, y) => x + y)
+                + " " +
+                (x.Expanded ? "▼" : "▶") +
+                (x.Done ?
+                    x.Text.Select(x => x + "" + (char)822).Aggregate((x, y) => x + y) : // Cross through if done
+                    x.Text))
+            .Aggregate((x, y) => x + "\n" + y)
+        : "No notes available.";
         WidgetDataRepository.SaveData(this, dataToShow);
         WidgetDataRepository.RequestUpdate(this);
     }

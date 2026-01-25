@@ -30,6 +30,13 @@ public partial class CrossPlatformAvaloniaApp : Application
         // More info: https://docs.avaloniaui.net/docs/guides/development-guides/data-validation#manage-validationplugins
         DisableAvaloniaDataAnnotationValidation();
 
+        // Init config
+        Config.Load();
+        if (Config.Data.Notes == null || Config.Data.Notes.Count == 0)
+        {
+            Config.Data.Notes = new List<Note>() { new Note() };
+        }
+
         // Init platform specific wrapper element
         if (ApplicationLifetime is ISingleViewApplicationLifetime singleViewPlatform)
         {
@@ -41,12 +48,6 @@ public partial class CrossPlatformAvaloniaApp : Application
         }
         else if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            Config.Load();
-            if (Config.Data.Notes == null || Config.Data.Notes.Count == 0)
-            {
-                Config.Data.Notes = new List<Note>() { new Note() };
-            }
-
             desktop.MainWindow = new Window
             {
                 Content = new MainView
