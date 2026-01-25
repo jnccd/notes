@@ -39,21 +39,23 @@ namespace Notes.Interface
         {
             return s.Count() == 0 ? "" : s.Foldl("", (x, y) => x + combinator + y).Remove(0, combinator.Length);
         }
-        public static b Foldl<a, b>(this IEnumerable<a> xs, b y, Func<b, a, b> f)
+        public static B Foldl<A, B>(this IEnumerable<A> xs, B y, Func<B, A, B> f)
         {
-            foreach (a x in xs)
+            foreach (A x in xs)
                 y = f(y, x);
             return y;
         }
-        public static b Foldl<a, b>(this IEnumerable<a> xs, Func<b, a, b> f)
+        public static B? Foldl<A, B>(this IEnumerable<A> xs, Func<B, A, B> f)
         {
+#pragma warning disable CS8620 // Argument cannot be used for parameter due to differences in the nullability of reference types.
             return xs.Foldl(default, f);
+#pragma warning restore CS8620 // Argument cannot be used for parameter due to differences in the nullability of reference types.
         }
-        public static a MaxElement<a>(this IEnumerable<a> xs, Func<a, double> f) { return xs.MaxElement(f, out double _); }
-        public static a MaxElement<a>(this IEnumerable<a> xs, Func<a, double> f, out double max)
+        public static A? MaxElement<A>(this IEnumerable<A> xs, Func<A, double> f) { return xs.MaxElement(f, out double _); }
+        public static A? MaxElement<A>(this IEnumerable<A> xs, Func<A, double> f, out double max)
         {
-            max = double.MinValue; a maxE = default;
-            foreach (a x in xs)
+            max = double.MinValue; A? maxE = default;
+            foreach (A x in xs)
             {
                 double res = f(x);
                 if (res > max)
@@ -64,11 +66,11 @@ namespace Notes.Interface
             }
             return maxE;
         }
-        public static a MinElement<a>(this IEnumerable<a> xs, Func<a, double> f) { return xs.MinElement(f, out double _); }
-        public static a MinElement<a>(this IEnumerable<a> xs, Func<a, double> f, out double min)
+        public static A? MinElement<A>(this IEnumerable<A> xs, Func<A, double> f) { return xs.MinElement(f, out double _); }
+        public static A? MinElement<A>(this IEnumerable<A> xs, Func<A, double> f, out double min)
         {
-            min = double.MaxValue; a minE = default;
-            foreach (a x in xs)
+            min = double.MaxValue; A? minE = default;
+            foreach (A x in xs)
             {
                 double res = f(x);
                 if (res < min)
@@ -79,16 +81,16 @@ namespace Notes.Interface
             }
             return minE;
         }
-        public static bool ContainsAny<a>(this IEnumerable<a> xs, params a[] ys)
+        public static bool ContainsAny<A>(this IEnumerable<A> xs, params A[] ys)
         {
-            foreach (a y in ys)
+            foreach (A y in ys)
                 if (xs.Contains(y))
                     return true;
             return false;
         }
-        public static a GetRandomValue<a>(this IEnumerable<a> xs)
+        public static A GetRandomValue<A>(this IEnumerable<A> xs)
         {
-            a[] arr = xs.ToArray();
+            A[] arr = xs.ToArray();
             return arr[RDM.Next(arr.Length)];
         }
     }
