@@ -1,6 +1,7 @@
 ﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
+using Avalonia.Controls;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Notes.Interface;
 
@@ -64,6 +65,15 @@ public partial class FlattenedNoteViewModel : ViewModelBase
     public FlattenedNote FlattenedNote { get; set; }
 
     public uint Depth => FlattenedNote.Depth;
+
+    public string NumRecursiveChildren
+    {
+        get
+        {
+            var childCount = FlattenedNote.OriginalNote.RecursiveSubnotes().Count(x => x != FlattenedNote.OriginalNote && !string.IsNullOrWhiteSpace(x.Text));
+            return childCount > 0 && childCount < 10 && !FlattenedNote.OriginalNote.Expanded ? childCount.ToString() : "";
+        }
+    }
 
     private bool _done;
     public bool Done
