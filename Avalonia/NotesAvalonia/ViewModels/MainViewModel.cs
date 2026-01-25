@@ -48,6 +48,26 @@ public partial class MainViewModel : ViewModelBase
             FlattenedNotes.Add(fnvm);
     }
 
+    // Login flyout bindings
+    public string? LoginServerUri
+    {
+        get
+        {
+            return Config.Data.ServerUri;
+        }
+        set { Config.Data.ServerUri = value; SetProperty(ref Config.Data.ServerUri, value); }
+    }
+    public string? LoginServerUsername
+    {
+        get { return Config.Data.ServerUsername; }
+        set { Config.Data.ServerUsername = value; SetProperty(ref Config.Data.ServerUsername, value); }
+    }
+    public string? LoginServerPassword
+    {
+        get { return Config.Data.ServerPassword; }
+        set { Config.Data.ServerPassword = value; SetProperty(ref Config.Data.ServerPassword, value); }
+    }
+
     public ObservableCollection<FlattenedNoteViewModel> FlattenedNotes { get; } = new();
 
     [ObservableProperty]
