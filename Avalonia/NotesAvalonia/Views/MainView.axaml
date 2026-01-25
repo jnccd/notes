@@ -144,10 +144,21 @@
                                         Background="Transparent"
                                         Command="{Binding #Root.((vm:MainViewModel)DataContext).ToggleExpand}"
                                         CommandParameter="{Binding .}">
-                                        <Svg
-                                            Width="18"
-                                            Height="18"
-                                            Path="{Binding Expanded, Converter={StaticResource ExpandCollapseConverter}}" />
+                                        <StackPanel>
+                                            <Svg
+                                                Width="18"
+                                                Height="18"
+                                                Path="{Binding Expanded, Converter={StaticResource ExpandCollapseConverter}}" />
+                                            <TextBlock
+                                                FontSize="10"
+                                                Foreground="#1d8eeb"
+                                                Text="{Binding NumRecursiveChildren}"
+                                                ZIndex="10">
+                                                <TextBlock.RenderTransform>
+                                                    <TranslateTransform X="6" Y="-22" />
+                                                </TextBlock.RenderTransform>
+                                            </TextBlock>
+                                        </StackPanel>
                                     </Button>
 
                                     <CheckBox
