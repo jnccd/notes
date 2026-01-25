@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using Avalonia.Controls.Platform;
-using CommunityToolkit.Mvvm.ComponentModel;
-
-namespace NotesAvalonia.Models;
+namespace Notes.Interface;
 
 public enum NotePriority
 {
@@ -13,30 +8,14 @@ public enum NotePriority
     Low,
     VeryLow
 }
-public abstract class NoteData
-{
-    public NoteData()
-    {
-    }
 
-    public NoteData(NoteData other)
-    {
-        this.Id = other.Id;
-        this.Done = other.Done;
-        this.Text = other.Text;
-        this.Expanded = other.Expanded;
-        this.Prio = other.Prio;
-    }
-
-    public Guid Id { get; set; } = Guid.NewGuid();
-    public bool Done { get; set; }
-    public string? Text { get; set; }
-    public bool Expanded { get; set; }
-    public NotePriority Prio { get; set; }
-}
-public class Note : NoteData
+public class Note
 {
-    public List<Note> SubNotes { get; set; } = [];
+    public bool Done { get; set; } = false;
+    public string Text { get; set; } = "";
+    public bool Expanded { get; set; } = false;
+    public List<Note> SubNotes { get; set; } = new();
+    public NotePriority Prio { get; set; } = NotePriority.Meduim;
 
     public static Note EmptyNote() => new Note()
     {
@@ -67,6 +46,7 @@ public class Note : NoteData
         return result;
     }
 }
+
 public class FlattenedNote
 {
     public FlattenedNote(Note OriginalNote)

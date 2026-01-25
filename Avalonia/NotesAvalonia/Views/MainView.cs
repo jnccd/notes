@@ -10,7 +10,6 @@ using Avalonia.LogicalTree;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using NotesAvalonia.Helpers;
-using NotesAvalonia.Models;
 using NotesAvalonia.ViewModels;
 
 namespace NotesAvalonia.Views;

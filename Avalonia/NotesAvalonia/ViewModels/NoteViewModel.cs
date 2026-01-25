@@ -2,7 +2,7 @@
 using System.ComponentModel;
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
-using NotesAvalonia.Models;
+using Notes.Interface;
 
 namespace NotesAvalonia.ViewModels;
 
