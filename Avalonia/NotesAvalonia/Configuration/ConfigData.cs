@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 
-namespace NotesAvalonia.Config
+namespace NotesAvalonia.Configuration
 {
     public class ConfigData
     {

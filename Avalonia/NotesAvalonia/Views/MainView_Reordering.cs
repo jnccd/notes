@@ -126,6 +126,7 @@ public partial class MainView : UserControl
 
         // Reflatten
         model.ReFlatten();
+        unsavedChanges = true;
         // TODO: Update Server?
     }
 

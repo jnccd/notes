@@ -70,12 +70,19 @@
                                         PasswordChar="•"
                                         Watermark="Password" />
 
-                                    <Button HorizontalAlignment="Right" Content="Login" />
+                                    <Button
+                                        Name="LoginButton"
+                                        HorizontalAlignment="Right"
+                                        Content="Login"
+                                        PointerPressed="LoginButton_PointerPressed" />
                                 </StackPanel>
                             </Flyout>
                         </Button.Flyout>
                     </Button>
-                    <Rectangle Height="3" Fill="Red">
+                    <Rectangle
+                        Name="ConnectionBar"
+                        Height="3"
+                        Fill="Red">
                         <Rectangle.RenderTransform>
                             <TranslateTransform X="0" Y="-4" />
                         </Rectangle.RenderTransform>

@@ -35,15 +35,25 @@ public partial class MainView : UserControl
 
     private void Handle_AndroidCompat_On_MainView_Loaded(object? sender, RoutedEventArgs e)
     {
-        // Mobile scrolling without triggering textboxes
         if (!Globals.IsDesktop)
         {
+            // Mobile scrolling without triggering textboxes
             var textBoxes = this.GetLogicalDescendants()
                 .OfType<TextBox>();
             foreach (var tb in textBoxes)
             {
                 tb.Focusable = false;
             }
+
+            // No scroll while dragging
+            scrollViewer = this.GetLogicalDescendants()
+                .OfType<ScrollViewer>()
+                .First();
+            scrollViewer.PropertyChanged += (s, e) =>
+            {
+                if (e.Property == ScrollViewer.OffsetProperty && disableScrolling)
+                    scrollViewer.Offset = new Avalonia.Vector(0, lockedY);
+            };
         }
     }
 
@@ -63,6 +73,7 @@ public partial class MainView : UserControl
         if (model != null)
             model.AddDebugText($"setting focus... {lastTextBoxFocusTime}");
     }
+
     private void Handle_AndroidCompat_On_MainView_PointerReleased(object? sender, PointerReleasedEventArgs e)
     {
         var model = DataContext as MainViewModel;
@@ -78,6 +89,32 @@ public partial class MainView : UserControl
         {
             if (model != null)
                 model.AddDebugText($"focus too old... {lastTextBoxFocusTime} {DateTime.Now}");
+        }
+    }
+
+    private void ScrollViewer_ScrollChanged(object? sender, ScrollChangedEventArgs e)
+    {
+        if (!Globals.IsDesktop)
+        {
+            if (Convert.ToInt32(scrollViewer?.Offset.ToString().Last()) % 5 != 0)
+                return;
+            var model = DataContext as MainViewModel;
+            if (model != null)
+                model.AddDebugText($"ScrollViewer_ScrollChanged: ViewportDelta={e.ViewportDelta}, Offset={scrollViewer?.Offset}");
+            if (!Globals.IsDesktop || true)
+            {
+                var textBoxes = this.GetLogicalDescendants()
+                        .OfType<TextBox>();
+                foreach (var tb in textBoxes)
+                {
+                    tb.Focusable = false;
+                    tb.AddHandler(
+                        InputElement.PointerPressedEvent,
+                        TextBox_PointerPressed,
+                        RoutingStrategies.Tunnel | RoutingStrategies.Bubble
+                    );
+                }
+            }
         }
     }
 }

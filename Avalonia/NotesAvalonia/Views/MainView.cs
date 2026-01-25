@@ -4,13 +4,17 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Controls;
+using Avalonia.Controls.Shapes;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.LogicalTree;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using Notes.Interface;
+using NotesAvalonia.Configuration;
 using NotesAvalonia.Helpers;
 using NotesAvalonia.ViewModels;
+using CommsState = Notes.Interface.CommsState;
 
 namespace NotesAvalonia.Views;
 
@@ -19,11 +23,16 @@ public partial class MainView : UserControl
     ScrollViewer? scrollViewer;
     MainViewModel? viewModel => DataContext as MainViewModel;
 
+    public bool unsavedChanges = false;
+
     public MainView()
     {
         InitializeComponent();
-        this.Loaded += MainView_Loaded;
+        Loaded += MainView_Loaded;
 
+        InitCommunicatorBasedOnConfig();
+
+        // Set platform ui scale
         var layoutTransformControl = this.GetLogicalDescendants()
             .OfType<LayoutTransformControl>()
             .FirstOrDefault();
@@ -36,6 +45,7 @@ public partial class MainView : UserControl
     private void MainView_Loaded(object? sender, RoutedEventArgs e)
     {
         Debug.WriteLine("MainView loaded!");
+        Handle_Communicator_On_MainView_Loaded(sender, e);
 
         // Handler
         this.AddHandler(
@@ -49,43 +59,7 @@ public partial class MainView : UserControl
             RoutingStrategies.Tunnel | RoutingStrategies.Bubble
         );
 
-        // For reordering on mobile
-        scrollViewer = this.GetLogicalDescendants()
-            .OfType<ScrollViewer>()
-            .First();
-        scrollViewer.PropertyChanged += (s, e) =>
-        {
-            if (e.Property == ScrollViewer.OffsetProperty && disableScrolling)
-                scrollViewer.Offset = new Avalonia.Vector(0, lockedY);
-        };
-
         Handle_AndroidCompat_On_MainView_Loaded(sender, e);
-    }
-
-    private void ScrollViewer_ScrollChanged(object? sender, ScrollChangedEventArgs e)
-    {
-        if (!Globals.IsDesktop)
-        {
-            if (Convert.ToInt32(scrollViewer?.Offset.ToString().Last()) % 5 != 0)
-                return;
-            var model = DataContext as MainViewModel;
-            if (model != null)
-                model.AddDebugText($"ScrollViewer_ScrollChanged: ViewportDelta={e.ViewportDelta}, Offset={scrollViewer?.Offset}");
-            if (!Globals.IsDesktop || true)
-            {
-                var textBoxes = this.GetLogicalDescendants()
-                        .OfType<TextBox>();
-                foreach (var tb in textBoxes)
-                {
-                    tb.Focusable = false;
-                    tb.AddHandler(
-                        InputElement.PointerPressedEvent,
-                        TextBox_PointerPressed,
-                        RoutingStrategies.Tunnel | RoutingStrategies.Bubble
-                    );
-                }
-            }
-        }
     }
 
     private void MainView_PointerReleased(object? sender, PointerReleasedEventArgs e)

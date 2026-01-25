@@ -21,8 +21,8 @@ public partial class MainView : UserControl
         var tb = sender as TextBox;
         if (tb?.IsFocused == false)
             return;
+        unsavedChanges = true;
         Debug.WriteLine($"Current TextBox.Text: {tb?.Text}");
-        e.Handled = false;
     }
 
     private void MainView_KeyDown(object? sender, KeyEventArgs e)
@@ -43,6 +43,7 @@ public partial class MainView : UserControl
             var noteIndex = parentNote?.SubNotes.IndexOf(note!);
             parentNote?.SubNotes.Remove(note!);
             viewModel?.ReFlatten();
+            unsavedChanges = true;
 
             if (noteIndex != null && noteIndex > 0)
             {
@@ -82,6 +83,8 @@ public partial class MainView : UserControl
 
             ogParent.SubNotes.Insert(insertionIndex, newNote);
             viewModel?.FlattenedNotes.Insert(flattenedInsertionIndex, new FlattenedNoteViewModel(flattenedNewNote) { });
+
+            unsavedChanges = true;
 
             Dispatcher.UIThread.Post(() =>
             {

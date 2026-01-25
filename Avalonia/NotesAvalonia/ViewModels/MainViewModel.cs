@@ -1,4 +1,5 @@
-﻿using System.Collections.ObjectModel;
+﻿using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Security;
 using Avalonia.Controls;
@@ -7,16 +8,10 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Notes.Interface;
+using NotesAvalonia.Configuration;
 using NotesAvalonia.Views;
 
 namespace NotesAvalonia.ViewModels;
-
-public enum CommsState
-{
-    Disconnected,
-    Connected,
-    Working
-}
 
 public partial class MainViewModel : ViewModelBase
 {
@@ -30,15 +25,15 @@ public partial class MainViewModel : ViewModelBase
     public Note VirtualRoot { get; set; } = new();
     public MainViewModel()
     {
-        Refetch();
+
     }
 
-    public void Refetch()
+    public void LoadNew(List<Note> notes)
     {
         VirtualRoot = new Note()
         {
             Expanded = true,
-            SubNotes = ExampleNote.Example!.ToList()
+            SubNotes = notes
         };
         ReFlatten();
     }
@@ -99,6 +94,8 @@ public partial class MainViewModel : ViewModelBase
         {
             var newNote = Note.EmptyNote();
             item.FlattenedNote.OriginalNote.SubNotes.Add(newNote);
+            if (mainView != null)
+                mainView.unsavedChanges = true;
 
             // Focus the new note's TextBox
             Dispatcher.UIThread.Post(() =>
@@ -112,6 +109,8 @@ public partial class MainViewModel : ViewModelBase
         if (!item.Expanded)
         {
             item.FlattenedNote.OriginalNote.SubNotes.RemoveAll(x => string.IsNullOrWhiteSpace(x.Text));
+            if (mainView != null)
+                mainView.unsavedChanges = true;
         }
         ReFlatten();
     }

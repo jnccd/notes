@@ -24,6 +24,7 @@ namespace Notes.Interface
         readonly public string serverUri;
         public readonly string serverUsername;
         readonly Action<CommsState>? stateChanged;
+        public int RequestLoopInterval { get; set; } = 1000;
 
         readonly CancellationTokenSource serverToken = new();
         public Task? ServerTask { get => serverTask; private set { } }
@@ -69,23 +70,23 @@ namespace Notes.Interface
 
                             if (receivedText == last)
                             {
-                                Task.Delay(1000).Wait();
+                                Task.Delay(RequestLoopInterval).Wait();
                                 continue;
                             }
 
-                            Logger.WriteLine($"Recived payload from {serverUri}");
+                            Logger.WriteLine($"Received payload from {serverUri}");
 
                             receivedEvent(receivedText, receivedPayload);
 
                             last = receivedText;
-                            Task.Delay(1000).Wait();
+                            Task.Delay(RequestLoopInterval).Wait();
                         }
                         catch (OperationCanceledException) { break; }
                     }
                     catch (Exception e)
                     {
                         Debug.WriteLine(e.ToString());
-                        Task.Delay(1000).Wait();
+                        Task.Delay(RequestLoopInterval).Wait();
                     }
                 }
                 serverToken.Dispose();
