@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
@@ -21,6 +22,7 @@ public partial class MainView : UserControl
 {
     public Communicator? communicator = null;
     DateTime lastSaveTime = DateTime.MinValue;
+    public bool unsavedChanges = false;
 
     private void InitCommunicatorBasedOnConfig()
     {
@@ -49,7 +51,7 @@ public partial class MainView : UserControl
                             connectionBar.Fill = Avalonia.Media.Brushes.Red;
                         }
                         if (viewModel != null)
-                            viewModel.ConnectionState = state;
+                            viewModel.ConnectionState = state == CommsState.Disconnected ? "Disconnected" : $"Connected to {Config.Data.ServerUsername}@{Config.Data.ServerUri}";
                     });
                 }
             );
@@ -61,6 +63,22 @@ public partial class MainView : UserControl
     private void Handle_Communicator_On_MainView_Loaded(object? sender, RoutedEventArgs e)
     {
         LoadConfig();
+
+        Payload GetNewPayload() => new(Config.Data.SaveTime, Config.Data.Notes);
+        Task.Run(() =>
+            {
+                Thread.CurrentThread.Name = "Autosave Thread";
+                while (true)
+                {
+                    Task.Delay(500).Wait();
+                    if (unsavedChanges)
+                    {
+                        unsavedChanges = false;
+                        SaveConfig();
+                        communicator?.SendString(GetNewPayload().ToString());
+                    }
+                }
+            });
     }
 
     private void LoginButton_Click(object? sender, RoutedEventArgs e)
@@ -116,11 +134,11 @@ public partial class MainView : UserControl
         lock (Config.Data)
         {
             var window = this.Parent as Window;
-            var windowPos = window?.Position.ToPoint(1);
+            var windowPos = window?.Position;
             if (windowPos != null)
-                Config.Data.Pos = new System.Drawing.Point((int)windowPos!.Value.X, (int)windowPos!.Value.Y);
+                Config.Data.Pos = window!.Position;
             if (window != null)
-                Config.Data.Size = new System.Drawing.Size((int)window!.Width, (int)window!.Height);
+                Config.Data.Size = window.FrameSize;
 
             if (updateSaveTime)
                 Config.Data.SaveTime = DateTime.Now;

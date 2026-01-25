@@ -9,6 +9,7 @@ using NotesAvalonia.Views;
 using System;
 using System.IO;
 using Avalonia.Controls;
+using NotesAvalonia.Configuration;
 
 namespace NotesAvalonia;
 
@@ -26,6 +27,7 @@ public partial class CrossPlatformAvaloniaApp : Application
         // Avoid duplicate validations from both Avalonia and the CommunityToolkit. 
         // More info: https://docs.avaloniaui.net/docs/guides/development-guides/data-validation#manage-validationplugins
         DisableAvaloniaDataAnnotationValidation();
+        Config.Load();
 
         if (ApplicationLifetime is ISingleViewApplicationLifetime singleViewPlatform)
         {
@@ -43,8 +45,9 @@ public partial class CrossPlatformAvaloniaApp : Application
                 {
                     DataContext = MainViewModel
                 },
-                Width = Globals.InitialWindowSize.X,
-                Height = Globals.InitialWindowSize.Y,
+                Position = Config.Data.Pos ?? new PixelPoint(100, 100),
+                Width = Config.Data.Size?.Width ?? Globals.InitialWindowSize.X,
+                Height = Config.Data.Size?.Height ?? Globals.InitialWindowSize.Y,
                 ShowInTaskbar = false,
                 Title = "Notes",
                 ExtendClientAreaToDecorationsHint = true,
@@ -53,7 +56,7 @@ public partial class CrossPlatformAvaloniaApp : Application
                 SystemDecorations = SystemDecorations.None,
                 Clip = new Avalonia.Media.RectangleGeometry
                 {
-                    Rect = new Avalonia.Rect(0, 0, Globals.InitialWindowSize.X, Globals.InitialWindowSize.Y),
+                    Rect = new Avalonia.Rect(0, 0, Config.Data.Size?.Width ?? Globals.InitialWindowSize.X, Config.Data.Size?.Height ?? Globals.InitialWindowSize.Y),
                     RadiusX = Globals.WindowBorderRadius,
                     RadiusY = Globals.WindowBorderRadius
                 }

@@ -56,9 +56,8 @@
                         Name="ConnectionButton"
                         Padding="5,1"
                         HorizontalAlignment="Center"
-                        Background="Transparent"
-                        PointerPressed="ConnectionButton_PointerPressed">
-                        <TextBlock Text="{Binding ConnectionState, Converter={StaticResource ConnectedStateConverter}}" />
+                        Background="Transparent">
+                        <TextBlock Text="{Binding ConnectionState}" />
                         <Button.Flyout>
                             <Flyout OverlayDismissEventPassThrough="False" ShowMode="Standard">
                                 <StackPanel

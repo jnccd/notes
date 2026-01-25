@@ -23,8 +23,6 @@ public partial class MainView : UserControl
     ScrollViewer? scrollViewer;
     MainViewModel? viewModel => DataContext as MainViewModel;
 
-    public bool unsavedChanges = false;
-
     public MainView()
     {
         InitializeComponent();
@@ -74,6 +72,7 @@ public partial class MainView : UserControl
 
     private void Border_ContextMenu_Close_Click(object? sender, RoutedEventArgs e)
     {
+        SaveConfig();
         var window = this.GetVisualRoot() as Window;
         window?.Close();
     }

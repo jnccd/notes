@@ -51,7 +51,7 @@ public partial class MainViewModel : ViewModelBase
     public ObservableCollection<FlattenedNoteViewModel> FlattenedNotes { get; } = new();
 
     [ObservableProperty]
-    private CommsState _connectionState = CommsState.Disconnected;
+    private string _connectionState = "Disconnected";
     [ObservableProperty]
     private string _debugText = "";
     public void AddDebugText(string text)

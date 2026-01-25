@@ -1,15 +1,17 @@
-﻿using Notes.Interface;
+﻿using Avalonia;
+using Avalonia.Media;
+using Notes.Interface;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
+using Size = Avalonia.Size;
 
 namespace NotesAvalonia.Configuration
 {
     public class ConfigData
     {
         // Local Gui Settings
-        public Point Pos;
-        public Size Size;
+        public PixelPoint? Pos;
+        public Size? Size;
         public Color BackColor;
 
         // Server
@@ -23,8 +25,8 @@ namespace NotesAvalonia.Configuration
 
         public ConfigData()
         {
-            Pos = new Point(-1, -1);
-            Size = new Size(-1, -1);
+            Pos = null;
+            Size = null;
             SaveTime = DateTime.MinValue;
             Notes = new List<Note>() { new Note() };
         }
