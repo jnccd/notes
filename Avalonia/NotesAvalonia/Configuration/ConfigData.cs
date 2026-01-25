@@ -11,7 +11,8 @@ namespace NotesAvalonia.Configuration
     {
         // Local Gui Settings
         public PixelPoint? Pos;
-        public Size? Size;
+        public double? Width;
+        public double? Height;
         public Color BackColor;
 
         // Server
@@ -26,9 +27,10 @@ namespace NotesAvalonia.Configuration
         public ConfigData()
         {
             Pos = null;
-            Size = null;
+            Width = null;
+            Height = null;
             SaveTime = DateTime.MinValue;
-            Notes = new List<Note>() { new Note() };
+            Notes = [];
         }
     }
 }
