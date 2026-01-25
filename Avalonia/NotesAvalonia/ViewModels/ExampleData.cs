@@ -1,5 +1,5 @@
 using System.Text.Json;
-using NotesAvalonia.Models;
+using Notes.Interface;
 
 public static class ExampleNote
 {

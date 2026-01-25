@@ -6,7 +6,7 @@ using Avalonia.LogicalTree;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using NotesAvalonia.Models;
+using Notes.Interface;
 using NotesAvalonia.Views;
 
 namespace NotesAvalonia.ViewModels;

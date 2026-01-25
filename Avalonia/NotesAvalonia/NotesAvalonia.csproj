@@ -5,6 +5,10 @@
     <LangVersion>latest</LangVersion>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
   </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\NotesInterface\NotesInterface.csproj" />
+  </ItemGroup>
   
   <ItemGroup>
     <AvaloniaResource Include="Assets\**" />
@@ -21,6 +25,7 @@
     </PackageReference>
     <PackageReference Include="CommunityToolkit.Mvvm" />
     <PackageReference Include="MessageBox.Avalonia" />
+    <PackageReference Include="Newtonsoft.Json" />
     <PackageReference Include="Svg.Controls.Avalonia" /> 
   </ItemGroup>
 </Project>

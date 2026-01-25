@@ -9,7 +9,7 @@ using Avalonia.Controls.Presenters;
 using Avalonia.Input;
 using Avalonia.LogicalTree;
 using Avalonia.Threading;
-using NotesAvalonia.Models;
+using Notes.Interface;
 using NotesAvalonia.ViewModels;
 
 namespace NotesAvalonia.Views;
