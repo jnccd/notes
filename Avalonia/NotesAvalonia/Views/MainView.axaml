@@ -15,6 +15,7 @@
     <UserControl.Resources>
         <local:ExpandCollapseConverter x:Key="ExpandCollapseConverter" />
         <local:AddMultiplyConverter x:Key="AddMultiplyConverter" />
+        <local:ConnectedStateConverter x:Key="ConnectedStateConverter" />
     </UserControl.Resources>
 
     <Design.DataContext>
@@ -52,12 +53,14 @@
 
                 <StackPanel Grid.Row="0">
                     <Button
+                        Name="ConnectionButton"
                         Padding="5,1"
                         HorizontalAlignment="Center"
-                        Background="Transparent">
-                        <TextBlock Text="{Binding ConnectionState}" />
+                        Background="Transparent"
+                        PointerPressed="ConnectionButton_PointerPressed">
+                        <TextBlock Text="{Binding ConnectionState, Converter={StaticResource ConnectedStateConverter}}" />
                         <Button.Flyout>
-                            <Flyout ShowMode="Standard">
+                            <Flyout OverlayDismissEventPassThrough="False" ShowMode="Standard">
                                 <StackPanel
                                     Width="250"
                                     Margin="5,2"
@@ -73,8 +76,8 @@
                                     <Button
                                         Name="LoginButton"
                                         HorizontalAlignment="Right"
-                                        Content="Login"
-                                        PointerPressed="LoginButton_PointerPressed" />
+                                        Click="LoginButton_Click"
+                                        Content="Login" />
                                 </StackPanel>
                             </Flyout>
                         </Button.Flyout>

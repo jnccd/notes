@@ -25,7 +25,8 @@ namespace NotesAvalonia.Configuration
         {
             Pos = new Point(-1, -1);
             Size = new Size(-1, -1);
-            Notes = new List<Note>();
+            SaveTime = DateTime.MinValue;
+            Notes = new List<Note>() { new Note() };
         }
     }
 }
