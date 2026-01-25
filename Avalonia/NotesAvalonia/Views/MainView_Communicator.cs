@@ -33,21 +33,24 @@ public partial class MainView : UserControl
                 Config.Data.ServerUsername,
                 Config.Data.ServerPassword, (CommsState state) =>
                 {
-                    var connectionBar = this.GetLogicalDescendants()
-                        .OfType<Rectangle>()
-                        .FirstOrDefault(x => x.Name == "ConnectionBar");
-                    if (connectionBar == null)
-                        return;
-                    if (state == CommsState.Connected)
+                    Dispatcher.UIThread.Post(() =>
                     {
-                        connectionBar.Fill = Avalonia.Media.Brushes.Green;
-                    }
-                    else if (state == CommsState.Disconnected)
-                    {
-                        connectionBar.Fill = Avalonia.Media.Brushes.Red;
-                    }
-                    if (viewModel != null)
-                        viewModel.ConnectionState = state;
+                        var connectionBar = this.GetLogicalDescendants()
+                                .OfType<Rectangle>()
+                                .FirstOrDefault(x => x.Name == "ConnectionBar");
+                        if (connectionBar == null)
+                            return;
+                        if (state == CommsState.Connected)
+                        {
+                            connectionBar.Fill = Avalonia.Media.Brushes.Green;
+                        }
+                        else if (state == CommsState.Disconnected)
+                        {
+                            connectionBar.Fill = Avalonia.Media.Brushes.Red;
+                        }
+                        if (viewModel != null)
+                            viewModel.ConnectionState = state;
+                    });
                 }
             );
             communicator.RequestLoopInterval = 5000;
@@ -60,18 +63,21 @@ public partial class MainView : UserControl
         LoadConfig();
     }
 
-    private void LoginButton_PointerPressed(object? sender, PointerPressedEventArgs e)
+    private void LoginButton_Click(object? sender, RoutedEventArgs e)
     {
-        var hostBox = this.GetLogicalDescendants()
+        if (viewModel != null)
+            viewModel.AddDebugText($"LoginButton_PointerPressed");
+        var parent = (sender as Button)?.Parent;
+        var hostBox = parent?.GetLogicalDescendants()
             .OfType<TextBox>()
             .FirstOrDefault(x => x.Name == "UrlTextBox");
-        var usernameBox = this.GetLogicalDescendants()
+        var usernameBox = parent?.GetLogicalDescendants()
             .OfType<TextBox>()
             .FirstOrDefault(x => x.Name == "UsernameTextBox");
-        var passwordBox = this.GetLogicalDescendants()
+        var passwordBox = parent?.GetLogicalDescendants()
             .OfType<TextBox>()
             .FirstOrDefault(x => x.Name == "PasswordTextBox");
-        if (hostBox == null || usernameBox == null || passwordBox == null)
+        if (string.IsNullOrWhiteSpace(hostBox?.Text) || string.IsNullOrWhiteSpace(usernameBox?.Text) || string.IsNullOrWhiteSpace(passwordBox?.Text))
             return;
 
         Config.Data.ServerUri = hostBox.Text;
