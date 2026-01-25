@@ -18,6 +18,9 @@ public partial class MainView : UserControl
 {
     DateTime lastTextBoxPointerPressed = DateTime.MinValue;
 
+    TextBox? focusedTextBox = null;
+    DateTime lastTextBoxFocusTime = DateTime.MinValue;
+
     private void Handle_AndroidCompat_On_Constructor()
     {
         if (!Globals.IsDesktop)
