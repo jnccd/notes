@@ -19,9 +19,6 @@ public partial class MainView : UserControl
     ScrollViewer? scrollViewer;
     MainViewModel? viewModel => DataContext as MainViewModel;
 
-    TextBox? focusedTextBox = null;
-    DateTime lastTextBoxFocusTime = DateTime.MinValue;
-
     public MainView()
     {
         InitializeComponent();
