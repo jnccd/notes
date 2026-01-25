@@ -5,7 +5,7 @@ using Android.Text;
 using Android.Views;
 using AndroidX.AppCompat.App;
 using Notes.Interface;
-using Config = Configuration.Config;
+using Config = NotesAndroid.Configuration.Config;
 using Notes.Interface.UiController;
 using NotesAndroid.UiInterface;
 using Activity = Android.App.Activity;
@@ -150,7 +150,7 @@ namespace NotesAndroid
                     if (focusedNote == null)
                         ((LayoutWrapper)child.UiLayout).Layout.Visibility = child.Shown ? ViewStates.Visible : ViewStates.Gone;
                     else
-                        ((LayoutWrapper)child.UiLayout).Layout.Visibility = child.Shown && (child.IsParent(focusedNote) || child == focusedNote) ? 
+                        ((LayoutWrapper)child.UiLayout).Layout.Visibility = child.Shown && (child.IsParent(focusedNote) || child == focusedNote) ?
                             ViewStates.Visible : ViewStates.Gone;
 
                     Relayout(child, depth + 1);
