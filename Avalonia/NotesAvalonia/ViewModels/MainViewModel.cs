@@ -105,6 +105,8 @@ public partial class MainViewModel : ViewModelBase
 
         FlattenedNotes.Remove(toDeleteFlattenedNote);
         ReFlatten();
+        if (mainView != null)
+            mainView.unsavedChanges = true;
     }
 
     [RelayCommand]
