@@ -71,7 +71,11 @@ public partial class FlattenedNoteViewModel : ViewModelBase
         get
         {
             var childCount = FlattenedNote.OriginalNote.RecursiveSubnotes().Count(x => x != FlattenedNote.OriginalNote && !string.IsNullOrWhiteSpace(x.Text));
-            return childCount > 0 && childCount < 10 && !FlattenedNote.OriginalNote.Expanded ? childCount.ToString() : "";
+            if (childCount <= 0 || FlattenedNote.OriginalNote.Expanded)
+                return "";
+            if (childCount >= 10)
+                return "✹";
+            return childCount.ToString();
         }
     }
 
