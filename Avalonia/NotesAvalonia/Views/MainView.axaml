@@ -155,7 +155,7 @@
                                                 Text="{Binding NumRecursiveChildren}"
                                                 ZIndex="10">
                                                 <TextBlock.RenderTransform>
-                                                    <TranslateTransform X="6" Y="-22" />
+                                                    <TranslateTransform X="6" Y="-23" />
                                                 </TextBlock.RenderTransform>
                                             </TextBlock>
                                         </StackPanel>
