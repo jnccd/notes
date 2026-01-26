@@ -104,6 +104,7 @@ public partial class MainViewModel : ViewModelBase
         ogToDeleteFlattenedNoteParent.SubNotes.Remove(ogToDeleteFlattenedNote);
 
         FlattenedNotes.Remove(toDeleteFlattenedNote);
+        ReFlatten();
     }
 
     [RelayCommand]
