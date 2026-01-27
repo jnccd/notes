@@ -16,15 +16,6 @@ namespace NotesAvalonia.Views;
 
 public partial class MainView : UserControl
 {
-    private void TextBox_TextChanged(object? sender, TextChangedEventArgs e)
-    {
-        var tb = sender as TextBox;
-        if (tb?.IsFocused == false)
-            return;
-        unsavedChanges = true;
-        Debug.WriteLine($"Current TextBox.Text: {tb?.Text}");
-    }
-
     private void MainView_KeyDown(object? sender, KeyEventArgs e)
     {
         Debug.WriteLine($"MainView_KeyDown: {e.Key} {e.KeyModifiers} {e.Handled}");

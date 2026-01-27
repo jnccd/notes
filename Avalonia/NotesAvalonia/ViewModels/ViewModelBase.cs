@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using NotesAvalonia.Views;
 
 namespace NotesAvalonia.ViewModels;
 
@@ -13,4 +14,10 @@ namespace NotesAvalonia.ViewModels;
 /// </summary>
 public class ViewModelBase : ObservableObject
 {
+    internal static MainView? mainView = null;
+    public static MainView? MainView
+    {
+        get => mainView;
+        set => mainView ??= value;
+    }
 }

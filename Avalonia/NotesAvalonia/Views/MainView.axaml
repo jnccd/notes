@@ -190,7 +190,6 @@
                                         FontSize="13"
                                         KeyDown="TextBox_KeyDown"
                                         Text="{Binding Text}"
-                                        TextChanged="TextBox_TextChanged"
                                         TextWrapping="Wrap" />
 
                                     <Button
