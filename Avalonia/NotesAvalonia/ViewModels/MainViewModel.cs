@@ -15,13 +15,6 @@ namespace NotesAvalonia.ViewModels;
 
 public partial class MainViewModel : ViewModelBase
 {
-    MainView? mainView = null;
-    public MainView? MainView
-    {
-        get => mainView;
-        set => mainView ??= value;
-    }
-
     public Note VirtualRoot { get; set; } = new();
     public MainViewModel()
     {
