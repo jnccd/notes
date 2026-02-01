@@ -6,6 +6,7 @@
   outputs = { self, nixpkgs }:
     let
       system = "x86_64-linux";
+      dotnetVersion = "9.0";
       pkgs = import nixpkgs {
         inherit system;
         config = {
@@ -15,7 +16,8 @@
       };
 
       androidComposition = pkgs.androidenv.composeAndroidPackages {
-        platformVersions = [ "33" "34" ]; # Include both android version 13 + 14 SDKs
+        platformVersions =
+          [ "33" "34" ]; # Include both android version 13 + 14 SDKs
         buildToolsVersions = [ "34.0.0" ];
         includeEmulator = false;
         includeSources = false;
@@ -115,11 +117,11 @@
                     export ANDROID_NDK_ROOT=${androidNdk}
                     export PATH=$ANDROID_SDK_ROOT/tools:$ANDROID_SDK_ROOT/platform-tools:$PATH
 
-                    if [ ! -x "$DOTNET_ROOT/dotnet" ]; then
+                    if [ ! -x "$DOTNET_ROOT/dotnet${dotnetVersion}" ]; then
                       echo "Installing Microsoft .NET SDK..."
                       mkdir -p "$DOTNET_ROOT"
                       curl -sSL https://dot.net/v1/dotnet-install.sh \
-                        | bash -s -- --channel 8.0 --install-dir "$DOTNET_ROOT"
+                        | bash -s -- --channel ${dotnetVersion} --install-dir "$DOTNET_ROOT"
                     else
                       echo "Using existing .NET SDK from $DOTNET_ROOT"
                     fi
