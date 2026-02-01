@@ -96,24 +96,20 @@ public partial class MainView : UserControl
     {
         if (!Globals.IsDesktop)
         {
-            if (Convert.ToInt32(scrollViewer?.Offset.ToString().Last()) % 5 != 0)
-                return;
             var model = DataContext as MainViewModel;
             if (model != null)
                 model.AddDebugText($"ScrollViewer_ScrollChanged: ViewportDelta={e.ViewportDelta}, Offset={scrollViewer?.Offset}");
-            if (!Globals.IsDesktop || true)
-            {
-                var textBoxes = this.GetLogicalDescendants()
+
+            var textBoxes = this.GetLogicalDescendants()
                         .OfType<TextBox>();
-                foreach (var tb in textBoxes)
-                {
-                    tb.Focusable = false;
-                    tb.AddHandler(
-                        InputElement.PointerPressedEvent,
-                        TextBox_PointerPressed,
-                        RoutingStrategies.Tunnel | RoutingStrategies.Bubble
-                    );
-                }
+            foreach (var tb in textBoxes)
+            {
+                tb.Focusable = false;
+                tb.AddHandler(
+                    InputElement.PointerPressedEvent,
+                    TextBox_PointerPressed,
+                    RoutingStrategies.Tunnel | RoutingStrategies.Bubble
+                );
             }
         }
     }
