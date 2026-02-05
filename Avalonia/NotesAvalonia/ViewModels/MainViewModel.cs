@@ -119,6 +119,8 @@ public partial class MainViewModel : ViewModelBase
                 var newTextbox = mainView?.GetLogicalDescendants()
                     .OfType<TextBox>()
                     .FirstOrDefault(ic => (ic.DataContext as FlattenedNoteViewModel)?.FlattenedNote.OriginalNote == newNote);
+                if (newTextbox != null)
+                    newTextbox.Focusable = true;
                 newTextbox?.Focus();
             });
         }

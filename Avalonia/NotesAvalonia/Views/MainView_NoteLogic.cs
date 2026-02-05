@@ -44,6 +44,8 @@ public partial class MainView : UserControl
                     var previousTextbox = this.GetLogicalDescendants()
                         .OfType<TextBox>()
                         .FirstOrDefault(tb => (tb.DataContext as FlattenedNoteViewModel)?.FlattenedNote.OriginalNote == previousNote);
+                    if (previousTextbox != null)
+                        previousTextbox.Focusable = true;
                     previousTextbox?.Focus();
                     if (previousTextbox != null)
                         previousTextbox.CaretIndex = previousTextbox.Text?.Length ?? 0;
@@ -77,9 +79,17 @@ public partial class MainView : UserControl
 
             unsavedChanges = true;
 
-            Dispatcher.UIThread.Post(() =>
+            Task.Run(() =>
             {
-                this.GetLogicalDescendants().OfType<TextBox>().First(x => x.DataContext is FlattenedNoteViewModel nvm && nvm.FlattenedNote == flattenedNewNote).Focus();
+                Dispatcher.UIThread.Post(() =>
+                {
+                    var newTextbox = this.GetLogicalDescendants().OfType<TextBox>().First(x => x.DataContext is FlattenedNoteViewModel nvm && nvm.FlattenedNote.OriginalNote == newNote);
+                    if (newTextbox != null)
+                    {
+                        newTextbox.Focusable = true;
+                        newTextbox.Focus();
+                    }
+                });
             });
         }
     }
