@@ -2,6 +2,7 @@
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Security;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.LogicalTree;
 using Avalonia.Threading;
@@ -100,6 +101,20 @@ public partial class MainViewModel : ViewModelBase
         ReFlatten();
         if (mainView != null)
             mainView.unsavedChanges = true;
+    }
+
+    [RelayCommand]
+    public void ExportItemToClipboard(FlattenedNoteViewModel flattenedNoteVM)
+    {
+        var topLevel = TopLevel.GetTopLevel(mainView);
+        if (topLevel != null)
+        {
+            var exportText = flattenedNoteVM.FlattenedNote.OriginalNote.RecursiveSubNotes()
+                .Select(n =>
+                    (n.Item1 == 0 ? "" : Enumerable.Repeat("-", n.Item1).Aggregate((a, b) => a + b) + " ") + n.Item2.Text)
+                .Aggregate((a, b) => a + "\n" + b);
+            topLevel.Clipboard?.SetTextAsync(exportText);
+        }
     }
 
     [RelayCommand]
