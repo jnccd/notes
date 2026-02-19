@@ -111,7 +111,7 @@ public partial class MainView : UserControl
         var ogDraggedToNoteParentIndex = ogDraggedToNoteParent.SubNotes.IndexOf(ogDraggedToNote);
         var draggedToNoteFlattenedIndex = draggedToFlattenedNote == null ? -1 : flattenedNotes.IndexOf(draggedToFlattenedNote);
 
-        if (ogDraggedNote.RecursiveSubnotes().FirstOrDefault(n => n == ogDraggedToNote) != null)
+        if (ogDraggedNote.RecursiveSubNotes().FirstOrDefault(n => n.Item2 == ogDraggedToNote).Item2 != null)
             return; // Can't move a note into one of its own subnotes
 
         Debug.WriteLine($"NoteContainer_OnDrop reorder! ogDraggedNote{ogDraggedNote} ogDraggedNoteParent{ogDraggedNoteParent} ogDraggedToNote{ogDraggedToNote} ogDraggedToNote{ogDraggedToNote} ogDraggedToNoteParent{ogDraggedToNoteParent} ogDraggedToNoteParentIndex{ogDraggedToNoteParentIndex} draggedToNoteFlattenedIndex{draggedToNoteFlattenedIndex}");

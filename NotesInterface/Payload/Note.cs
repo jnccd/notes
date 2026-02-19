@@ -22,13 +22,13 @@ public class Note
         Text = " "
     };
 
-    public List<Note> RecursiveSubnotes()
+    public List<(int, Note)> RecursiveSubNotes(int depth = 0)
     {
-        List<Note> result = [];
-        result.Add(this);
+        List<(int, Note)> result = [];
+        result.Add((depth, this));
         foreach (var note in this.SubNotes)
         {
-            result.AddRange(note.RecursiveSubnotes());
+            result.AddRange(note.RecursiveSubNotes(depth + 1));
         }
         return result;
     }

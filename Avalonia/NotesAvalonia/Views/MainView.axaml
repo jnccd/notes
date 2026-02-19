@@ -207,7 +207,10 @@
                                             Path="/Assets/meatballs.svg" />
                                         <Button.Flyout>
                                             <MenuFlyout>
-                                                <MenuItem Header="UwU" />
+                                                <MenuItem
+                                                    Command="{Binding #Root.((vm:MainViewModel)DataContext).ExportItemToClipboardCommand}"
+                                                    CommandParameter="{Binding .}"
+                                                    Header="Export to Clipboard" />
                                                 <MenuItem
                                                     Command="{Binding #Root.((vm:MainViewModel)DataContext).RemoveItemCommand}"
                                                     CommandParameter="{Binding .}"
