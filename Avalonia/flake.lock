@@ -6,11 +6,11 @@
         "utils": "utils"
       },
       "locked": {
-        "lastModified": 1771595473,
-        "narHash": "sha256-n0dCq1RO03DBAsbfr75ZtxrV2rhQcxDXyItTGd6se2Y=",
+        "lastModified": 1771600018,
+        "narHash": "sha256-dSyf/QvcHo/I+ALvw1VEkyssl5HorlaF26b/8PRKmmI=",
         "owner": "jnccd",
         "repo": "nix-utils",
-        "rev": "0a8651108014901bf80fd3afb09d7296df804ba5",
+        "rev": "2529f0fc4e38c7c0340dd69e80f44635fc1b9d60",
         "type": "github"
       },
       "original": {

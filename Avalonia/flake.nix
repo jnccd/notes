@@ -12,7 +12,8 @@
       (system: {
         devShells.default = inputs.jnccd-utils.lib.createDotnetAndroidDevShell {
           inherit system nixpkgs;
-          dotnetVersion = "10.0";
+          dotnetVersion = "9.0";
+          androidSdkVersions = [ "34" "35" ];
         };
       }));
 }
