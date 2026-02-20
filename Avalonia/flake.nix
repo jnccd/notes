@@ -10,7 +10,7 @@
   outputs = { self, nixpkgs, ... }@inputs:
     (inputs.numtide-utils.lib.eachSystem [ "x86_64-linux" "aarch64-linux" ]
       (system: {
-        devShells.default = inputs.jnccd-utils.lib.createDotnetAndroidDevShell {
+        devShells.default = inputs.jnccd-utils.lib.mkUnfrozenDotnetShell {
           inherit system nixpkgs;
           dotnetVersion = "9.0";
           androidSdkVersions = [ "34" "35" ];
