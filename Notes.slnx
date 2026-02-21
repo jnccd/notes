@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="NotesAvalonia.Android/NotesAvalonia.Android.csproj" />
+  <Project Path="NotesAvalonia.Desktop/NotesAvalonia.Desktop.csproj" />
+  <Project Path="NotesAvalonia/NotesAvalonia.csproj" />
+  <Project Path="NotesInterface/NotesInterface.csproj" />
+  <Project Path="NotesServer/NotesServer.csproj" />
+</Solution>

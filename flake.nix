@@ -1,12 +1,10 @@
-# nix develop . --experimental-features 'nix-command flakes'
-# nix develop --experimental-features 'nix-command flakes' --command bash -c "bash update_and_start.sh"
-# export NIXPKGS_ALLOW_INSECURE=1 && nix develop --impure --experimental-features 'nix-command flakes' --command bash -c "bash update_and_start.sh"
 {
   description = "Nix Shell Wrapper";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-25.05";
-    flake-utils.url = "github:numtide/flake-utils";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
+    numtide-utils.url = "github:numtide/flake-utils";
+    jnccd-utils.url = "github:jnccd/nix-utils";
   };
 
   outputs = { self, nixpkgs, flake-utils }:
@@ -15,7 +13,13 @@
       in {
         devShells = rec {
           service = import ./shell.nix { inherit pkgs; };
-          default = service;
+          gui-dev = inputs.jnccd-utils.lib.mkUnfrozenDotnetShell {
+            inherit system nixpkgs;
+            dotnetVersion = "9.0";
+            androidSdkVersions = [ "34" "35" ];
+          };
+
+          default = gui-dev;
         };
       });
 }
