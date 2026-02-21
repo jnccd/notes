@@ -7,8 +7,8 @@
     jnccd-utils.url = "github:jnccd/nix-utils";
   };
 
-  outputs = { self, nixpkgs, flake-utils }:
-    flake-utils.lib.eachDefaultSystem (system:
+  outputs = { self, nixpkgs }@inputs:
+    inputs.numtide-utils.lib.eachDefaultSystem (system:
       let pkgs = import nixpkgs { inherit system; };
       in {
         devShells = rec {
