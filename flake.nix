@@ -13,13 +13,13 @@
       in {
         devShells = rec {
           service = import ./shell.nix { inherit pkgs; };
-          gui-dev = inputs.jnccd-utils.lib.mkUnfrozenDotnetShell {
+          gui = inputs.jnccd-utils.lib.mkUnfrozenDotnetShell {
             inherit system nixpkgs;
             dotnetVersion = "9.0";
             androidSdkVersions = [ "34" "35" ];
           };
 
-          default = gui-dev;
+          default = gui;
         };
       });
 }
