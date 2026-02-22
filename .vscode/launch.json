@@ -14,7 +14,7 @@
             "name": "C#: NotesAvalonia.Desktop Debug",
             "type": "dotnet",
             "request": "launch",
-            "projectPath": "${workspaceFolder}/Avalonia/NotesAvalonia.Desktop/NotesAvalonia.Desktop.csproj"
+            "projectPath": "${workspaceFolder}/NotesAvalonia.Desktop/NotesAvalonia.Desktop.csproj"
         }
     ]
 }
