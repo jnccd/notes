@@ -121,7 +121,7 @@ public partial class MainView : UserControl
         var server = viewModel?.LoginServerUri;
         try
         {
-            var keyCloakAddress = Communicator.GetKeyCloakAddress(server, new System.Net.Http.HttpClient());
+            var keyCloakAddress = Communicator.GetKeyCloakAddress(server!, new System.Net.Http.HttpClient());
             Process.Start(new ProcessStartInfo
             {
                 FileName = keyCloakAddress.KeycloakRealmUrl + "/account",
