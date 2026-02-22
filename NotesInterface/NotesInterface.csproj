@@ -14,5 +14,9 @@
     </PackageReference>
     <PackageReference Include="Newtonsoft.Json" />
   </ItemGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="..\EzKeycloak\EzKeycloak.csproj" />
+  </ItemGroup>
 
 </Project>

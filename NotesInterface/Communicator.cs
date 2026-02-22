@@ -1,7 +1,9 @@
-﻿using Newtonsoft.Json;
+﻿using EzKeycloak;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -21,32 +23,39 @@ namespace Notes.Interface
     }
     public class Communicator : IDisposable
     {
-        readonly public string serverUri;
-        public readonly string serverUsername;
+        readonly object lockject = new object();
         readonly Action<CommsState>? stateChanged;
         public int RequestLoopInterval { get; set; } = 1000;
 
         readonly CancellationTokenSource serverToken = new();
         public Task? ServerTask { get => serverTask; private set { } }
         Task? serverTask;
-        HttpClient client;
-        readonly object lockject;
 
-        public Communicator(string serverUri, string serverUsername, string serverPassword, Action<CommsState>? stateChanged = null)
+        string serverUri;
+        KeyCloakHttpClient client;
+
+        public Communicator(string serverUri, string serverUsername, string? initialKeyCloakRefreshToken, Action<string> keyCloakRefreshTokenChanged, Action<CommsState>? stateChanged = null)
         {
-            lockject = new object();
-
             this.serverUri = serverUri;
-            this.serverUsername = serverUsername;
             this.stateChanged = stateChanged;
+            var httpClient = new HttpClient();
+            client = new(GetKeyCloakAddress(serverUri, httpClient), keyCloakRefreshTokenChanged, initialKeyCloakRefreshToken, httpClient);
+        }
 
-            HttpClientHandler handler = new();
-            handler.ClientCertificateOptions = ClientCertificateOption.Manual;
-            handler.ServerCertificateCustomValidationCallback += (sender, cert, chain, sslPolicyErrors) => true;
-            client = new HttpClient(handler);
-            client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue(
-                    "Basic",
-                    $"{Convert.ToBase64String(Encoding.UTF8.GetBytes($"{serverUsername}:{serverPassword}"))}");
+        public static KeyCloakAddress GetKeyCloakAddress(string serverUri, HttpClient httpClient)
+        {
+            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, $"{serverUri}/keycloak");
+            request.Headers.Add("accept", "*/*");
+            HttpResponseMessage response = httpClient.SendAsync(request).Result;
+            response.EnsureSuccessStatusCode();
+            string responseBody = response.Content.ReadAsStringAsync().Result;
+            KeyCloakAddress? keyCloakAddress = JsonConvert.DeserializeObject<KeyCloakAddress>(responseBody);
+            return keyCloakAddress!;
+        }
+
+        public void DoNewLogIn(string username, string password)
+        {
+            client.LogIn(username, password);
         }
 
         public void StartRequestLoop(Action<string, Payload?> receivedEvent)
@@ -100,7 +109,8 @@ namespace Notes.Interface
             try
             {
                 stateChanged?.Invoke(CommsState.Working);
-                using var response = client.PostAsync(serverUri, new StringContent(s, Encoding.UTF8, "application/json")).Result;
+                var httpContent = new StringContent(s, Encoding.UTF8, "application/json");
+                using var response = client.PostAsync(serverUri + "/notes", httpContent).Result;
                 stateChanged?.Invoke(response.StatusCode != HttpStatusCode.GatewayTimeout ? CommsState.Connected : CommsState.Disconnected);
 
                 Logger.WriteLine(response.StatusCode);
@@ -120,7 +130,7 @@ namespace Notes.Interface
             try
             {
                 stateChanged?.Invoke(CommsState.Working);
-                receivedText = client.GetStringAsync(serverUri).Result;
+                receivedText = client.GetStringAsync(serverUri + "/notes").Result;
 
                 StringBuilder sb = new StringBuilder(receivedText);
                 sb.Replace("\\\n", "");
@@ -150,7 +160,7 @@ namespace Notes.Interface
             catch (Exception e)
             {
                 receivedText = "";
-                Logger.WriteLine(e, LogLevel.Error);
+                //Logger.WriteLine(e, LogLevel.Error);
                 stateChanged?.Invoke(CommsState.Disconnected);
             }
 

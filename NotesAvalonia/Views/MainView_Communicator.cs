@@ -20,20 +20,25 @@ namespace NotesAvalonia.Views;
 
 public partial class MainView : UserControl
 {
-    public Communicator? communicator = null;
+    public Communicator? communicator { get; private set; } = null;
     DateTime lastSaveTime = DateTime.MinValue;
     public bool unsavedChanges = false;
 
-    private void InitCommunicatorBasedOnConfig()
+    private void InitCommunicatorBasedOnConfig(string? password = null)
     {
-        if (Config.Data.ServerUri != null && Config.Data.ServerUsername != null && Config.Data.ServerPassword != null)
+        if (Config.Data.ServerUri != null && Config.Data.Username != null)
         {
             if (communicator != null)
                 communicator.Dispose();
             communicator = new Communicator(
                 Config.Data.ServerUri,
-                Config.Data.ServerUsername,
-                Config.Data.ServerPassword, (CommsState state) =>
+                Config.Data.Username,
+                Config.Data.KeycloakRefreshToken, (string newKeycloakRefreshToken) =>
+                {
+                    Config.Data.KeycloakRefreshToken = newKeycloakRefreshToken;
+                    Config.Save();
+                },
+                (CommsState state) =>
                 {
                     Dispatcher.UIThread.Post(() =>
                     {
@@ -51,10 +56,12 @@ public partial class MainView : UserControl
                             connectionBar.Fill = Avalonia.Media.Brushes.Red;
                         }
                         if (viewModel != null)
-                            viewModel.ConnectionState = state == CommsState.Disconnected ? "Disconnected" : $"Connected to {Config.Data.ServerUsername}@{Config.Data.ServerUri.Split("//").Last()}";
+                            viewModel.ConnectionState = state == CommsState.Disconnected ? "Disconnected" : $"Connected to {Config.Data.Username}@{Config.Data.ServerUri.Split("//").Last()}";
                     });
                 }
             );
+            if (password != null)
+                communicator.DoNewLogIn(Config.Data.Username, password);
             communicator.RequestLoopInterval = 5000;
             communicator.StartRequestLoop(OnPayloadReceived);
         }
@@ -86,24 +93,45 @@ public partial class MainView : UserControl
         if (viewModel != null)
             viewModel.AddDebugText($"LoginButton_PointerPressed");
         var parent = (sender as Button)?.Parent;
-        var hostBox = parent?.GetLogicalDescendants()
-            .OfType<TextBox>()
-            .FirstOrDefault(x => x.Name == "UrlTextBox");
-        var usernameBox = parent?.GetLogicalDescendants()
-            .OfType<TextBox>()
-            .FirstOrDefault(x => x.Name == "UsernameTextBox");
-        var passwordBox = parent?.GetLogicalDescendants()
-            .OfType<TextBox>()
-            .FirstOrDefault(x => x.Name == "PasswordTextBox");
-        if (string.IsNullOrWhiteSpace(hostBox?.Text) || string.IsNullOrWhiteSpace(usernameBox?.Text) || string.IsNullOrWhiteSpace(passwordBox?.Text))
+        var server = viewModel?.LoginServerUri;
+        var username = viewModel?.LoginServerUsername;
+        var password = viewModel?.LoginPassword;
+        if (string.IsNullOrWhiteSpace(server) || string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
+        {
+            ShowPopup("Login Error", "Please fill in all fields.");
             return;
+        }
 
-        Config.Data.ServerUri = hostBox.Text;
-        Config.Data.ServerUsername = usernameBox.Text;
-        Config.Data.ServerPassword = passwordBox.Text;
+        Config.Data.ServerUri = server;
+        Config.Data.Username = username;
+        try
+        {
+            InitCommunicatorBasedOnConfig(password);
+        }
+        catch (Exception ex)
+        {
+            ShowPopup("Login Error", ex.ToString());
+        }
         Config.Save();
+    }
 
-        InitCommunicatorBasedOnConfig();
+    private void RegisterButton_Click(object? sender, RoutedEventArgs e)
+    {
+        var parent = (sender as Button)?.Parent;
+        var server = viewModel?.LoginServerUri;
+        try
+        {
+            var keyCloakAddress = Communicator.GetKeyCloakAddress(server, new System.Net.Http.HttpClient());
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = keyCloakAddress.KeycloakRealmUrl + "/account",
+                UseShellExecute = true
+            });
+        }
+        catch (Exception ex)
+        {
+            ShowPopup("Registration Error", ex.Message);
+        }
     }
 
     void OnPayloadReceived(string receivedText, Payload? payload)

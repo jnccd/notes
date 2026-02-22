@@ -1,20 +1,14 @@
 using System;
-using System.Collections.Generic;
+using System.Data;
 using System.Diagnostics;
 using System.Linq;
-using System.Threading.Tasks;
+using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.Shapes;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.LogicalTree;
-using Avalonia.Threading;
 using Avalonia.VisualTree;
-using Notes.Interface;
-using NotesAvalonia.Configuration;
-using NotesAvalonia.Helpers;
 using NotesAvalonia.ViewModels;
-using CommsState = Notes.Interface.CommsState;
 
 namespace NotesAvalonia.Views;
 
@@ -28,7 +22,14 @@ public partial class MainView : UserControl
         InitializeComponent();
         Loaded += MainView_Loaded;
 
-        InitCommunicatorBasedOnConfig();
+        try
+        {
+            InitCommunicatorBasedOnConfig();
+        }
+        catch (Exception ex)
+        {
+            ShowPopup("Initialization Error", $"Failed to initialize communicator: {ex.ToString()}");
+        }
 
         // Set platform ui scale
         var layoutTransformControl = this.GetLogicalDescendants()
@@ -38,6 +39,51 @@ public partial class MainView : UserControl
             layoutTransformControl.LayoutTransform = new Avalonia.Media.ScaleTransform(Globals.LayoutScale, Globals.LayoutScale);
 
         Handle_AndroidCompat_On_Constructor();
+    }
+
+    void ShowPopup(string title, string message)
+    {
+        // Create a new window
+        var button = new Button
+        {
+            Content = "OK",
+            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+            Margin = new Thickness(0, 10, 0, 0),
+        };
+        var popupWindow = new Window
+        {
+            Title = title,
+            Content = new StackPanel
+            {
+                Margin = new Thickness(10),
+                Children =
+                {
+                    new TextBlock
+                    {
+                        Text = message,
+                        TextWrapping = Avalonia.Media.TextWrapping.Wrap,
+                        HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+                        VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
+                    },
+                    button
+                }
+            },
+            Width = 400,
+            Height = 150,
+            Padding = new Thickness(10)
+        };
+        button.AddHandler(
+            InputElement.KeyDownEvent,
+            () =>
+            {
+                popupWindow.Close();
+            },
+            RoutingStrategies.Tunnel | RoutingStrategies.Bubble
+        );
+
+        var window = this.GetVisualRoot() as Window;
+        if (window != null)
+            popupWindow.ShowDialog(window);
     }
 
     private void MainView_Loaded(object? sender, RoutedEventArgs e)

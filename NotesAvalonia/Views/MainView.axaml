@@ -75,14 +75,21 @@
                                     <TextBox
                                         Name="PasswordTextBox"
                                         PasswordChar="•"
-                                        Text=""
+                                        Text="{Binding LoginPassword}"
                                         Watermark="Password" />
 
-                                    <Button
-                                        Name="LoginButton"
-                                        HorizontalAlignment="Right"
-                                        Click="LoginButton_Click"
-                                        Content="Login" />
+                                    <StackPanel Orientation="Horizontal" Spacing="5">
+                                        <Button
+                                            Name="RegisterButton"
+                                            HorizontalAlignment="Right"
+                                            Click="RegisterButton_Click"
+                                            Content="Register" />
+                                        <Button
+                                            Name="LoginButton"
+                                            HorizontalAlignment="Right"
+                                            Click="LoginButton_Click"
+                                            Content="Login" />
+                                    </StackPanel>
                                 </StackPanel>
                             </Flyout>
                         </Button.Flyout>

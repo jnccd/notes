@@ -53,14 +53,11 @@ public partial class MainViewModel : ViewModelBase
     }
     public string? LoginServerUsername
     {
-        get { return Config.Data.ServerUsername; }
-        set { Config.Data.ServerUsername = value; SetProperty(ref Config.Data.ServerUsername, value); }
+        get { return Config.Data.Username; }
+        set { Config.Data.Username = value; SetProperty(ref Config.Data.Username, value); }
     }
-    public string? LoginServerPassword
-    {
-        get { return Config.Data.ServerPassword; }
-        set { Config.Data.ServerPassword = value; SetProperty(ref Config.Data.ServerPassword, value); }
-    }
+    [ObservableProperty]
+    private string _loginPassword = "";
 
     public ObservableCollection<FlattenedNoteViewModel> FlattenedNotes { get; } = new();
 

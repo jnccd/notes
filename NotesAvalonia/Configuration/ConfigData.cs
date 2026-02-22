@@ -17,8 +17,8 @@ namespace NotesAvalonia.Configuration
 
         // Server
         public string? ServerUri;
-        public string? ServerUsername;
-        public string? ServerPassword;
+        public string? Username;
+        public string? KeycloakRefreshToken;
 
         // Notes payload
         public DateTime SaveTime;

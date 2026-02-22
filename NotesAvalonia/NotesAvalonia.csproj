@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\NotesInterface\NotesInterface.csproj" />
+    <ProjectReference Include="..\NotesInterface\NotesInterface.csproj" />
   </ItemGroup>
   
   <ItemGroup>

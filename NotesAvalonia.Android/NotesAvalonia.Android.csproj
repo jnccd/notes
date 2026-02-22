@@ -25,6 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\NotesInterface\NotesInterface.csproj" />
     <ProjectReference Include="..\NotesAvalonia\NotesAvalonia.csproj" />
   </ItemGroup>
 </Project>
