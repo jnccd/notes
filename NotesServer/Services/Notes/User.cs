@@ -8,7 +8,6 @@ public class User
 {
     public Guid Id { get; set; }
     public string Username { get; private set; }
-    public string PasswordHash { get; private set; }
 
     // Ef Core doesnt support recursive jsonb, so I serialize manually
     [NotMapped]
@@ -23,12 +22,11 @@ public class User
         }
     }
 
-    private User() { Username = ""; PasswordHash = ""; }
-    public User(string username, string password)
+    private User() { Username = ""; }
+    public User(string username)
     {
         Id = Guid.NewGuid();
         Username = username;
-        PasswordHash = password.GetStringHash();
         NotesPayload = new();
     }
 }

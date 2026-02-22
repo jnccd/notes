@@ -1,5 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using EzKeycloak;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using Notes.Interface;
 using NotesServer.Services.BasicAuth;
 using NotesServer.Services.Notes;
@@ -10,46 +12,38 @@ public static class NotesEndpoints
 {
     public static void RegisterNotesEndpoints(this IEndpointRouteBuilder routes, IServiceProvider services)
     {
-        routes.MapGet("/hewwo", (
-            [FromServices] IBasicAuthService auth,
-            [FromServices] PersistenceService persistence) =>
+        routes.MapGet("/keycloak", (
+           IOptions<AuthOptions> authOptions) =>
         {
-            return Results.Extensions.Html(@$"<!doctype html>
-                <html>
-                    <head>
-                        <title>Hewwo</title>
-                        <style>
-                            body {{font-family: sans-serif;}}
-                        </style>
-                    </head>
-                    <body>
-                        <h1>Hewwo Wowld :3</h1>
-                        <h3>I know these users:</h3>
-                        {persistence.Users?.Select(x => $"<p>{x.Username}</p>").Combine("\n")}
-                    </body>
-                </html>");
+            return Results.Ok(new KeyCloakAddress
+            {
+                KeycloakRealmUrl = authOptions.Value.KeycloakRealmUrl,
+                KeycloakClient = authOptions.Value.KeycloakClient
+            });
         });
 
         routes.MapGet("/notes", (
-            [FromServices] IBasicAuthService auth,
+            [FromServices] AuthService auth,
             [FromHeader(Name = "Authorization")] string? authTokenHeader,
+            IHttpClientFactory httpClientFactory,
             HttpRequest request) =>
         {
-            return auth?.GetUser(authTokenHeader, u =>
+            return auth?.GetUser(authTokenHeader, httpClientFactory.CreateClient(), u =>
             {
                 return Results.Text(u?.NotesPayload?.ToString(), contentType: "application/json");
             });
         });
 
         routes.MapPost("/notes", async (
-            [FromServices] IBasicAuthService auth,
+            [FromServices] AuthService auth,
             [FromServices] PersistenceService persistence,
             [FromHeader(Name = "Authorization"), Required] string? authTokenHeader,
             //[FromBody, Required] Payload? bodyPayload,
+            IHttpClientFactory httpClientFactory,
             HttpRequest request) =>
         {
             User? u;
-            if ((u = auth?.GetUser(authTokenHeader)) == null)
+            if ((u = auth?.GetUser(authTokenHeader, httpClientFactory.CreateClient())) == null)
                 return Results.Unauthorized();
 
             using StreamReader bodyStream = new(request.BodyReader.AsStream());

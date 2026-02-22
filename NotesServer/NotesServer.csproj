@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\NotesInterface\NotesInterface.csproj" />
+    <ProjectReference Include="..\EzKeycloak\EzKeycloak.csproj" />
   </ItemGroup>
 
 </Project>

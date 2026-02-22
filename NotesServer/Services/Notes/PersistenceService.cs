@@ -22,18 +22,7 @@ public class PersistenceService : IDisposable
         }
     }
 
-    public PersistenceService(IConfiguration config)
-    {
-        // Init users
-        foreach (string userDef in config["NOTES_USERS"]?.Split(' ') ?? [])
-        {
-            string[] userDefSplit = userDef.Split(':');
-            var newUser = new User(userDefSplit[0], userDefSplit[1]);
-            if (!db.Users.Any(x => x.Username == newUser.Username))
-                db.Users.Add(newUser);
-        }
-        db.SaveChanges();
-    }
+    public PersistenceService() { }
 
     public bool Exists() => db.Users.Any();
     public void Save() => db.SaveChanges();

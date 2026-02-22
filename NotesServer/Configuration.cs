@@ -11,6 +11,8 @@ namespace NotesServer;
 
 public static class Configuration
 {
+    public static readonly string GeneralHttpClientName = "GeneralClient";
+
     [AttributeUsage(AttributeTargets.Interface | AttributeTargets.Class)]
     public class RegisterImplementation(ServiceRegisterType serviceRegisterType, Type serviceType) : Attribute
     {
@@ -44,8 +46,13 @@ public static class Configuration
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen(c => c.UseOneOfForPolymorphism());
 
-        // Options
-        builder.Configuration.GetSection(nameof(BasicAuthOptions)).Bind(new BasicAuthOptions());
+        // Other
+        builder.Services.AddHttpClient();
+        builder.Services.AddOptions<AuthOptions>().Configure((authOption) =>
+        {
+            authOption.KeycloakClient = builder.Configuration["KEYCLOAK_CLIENT_ID"];
+            authOption.KeycloakRealmUrl = builder.Configuration["KEYCLOAK_REALM_URL"];
+        });
     }
 
     public static void ConfigureWebhost(this WebApplicationBuilder builder)
