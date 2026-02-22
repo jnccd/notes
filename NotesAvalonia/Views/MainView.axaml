@@ -74,6 +74,7 @@
                                         Watermark="Username" />
                                     <TextBox
                                         Name="PasswordTextBox"
+                                        KeyDown="PasswordTextBox_KeyDown"
                                         PasswordChar="•"
                                         Text="{Binding LoginPassword}"
                                         Watermark="Password" />
@@ -81,9 +82,20 @@
                                     <StackPanel Orientation="Horizontal" Spacing="5">
                                         <Button
                                             Name="RegisterButton"
-                                            HorizontalAlignment="Right"
+                                            HorizontalAlignment="Left"
+                                            Background="Transparent"
                                             Click="RegisterButton_Click"
-                                            Content="Register" />
+                                            Content="Register">
+                                            <TextBlock
+                                                Foreground="#1A58C4"
+                                                Text="Register"
+                                                TextDecorations="Underline" />
+                                        </Button>
+                                        <Border
+                                            Width="110"
+                                            Height="1"
+                                            HorizontalAlignment="Stretch"
+                                            Background="Transparent" />
                                         <Button
                                             Name="LoginButton"
                                             HorizontalAlignment="Right"

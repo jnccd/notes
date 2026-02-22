@@ -88,6 +88,14 @@ public partial class MainView : UserControl
             });
     }
 
+    private void PasswordTextBox_KeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter)
+        {
+            LoginButton_Click(sender, e);
+        }
+    }
+
     private void LoginButton_Click(object? sender, RoutedEventArgs e)
     {
         if (viewModel != null)

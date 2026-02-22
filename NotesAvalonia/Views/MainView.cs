@@ -57,7 +57,7 @@ public partial class MainView : UserControl
         var popupWindow = new Window
         {
             Title = title,
-            CanResize = false,
+            //CanResize = false,
             Content = new StackPanel
             {
                 Margin = new Thickness(10),
