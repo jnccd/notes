@@ -49,10 +49,15 @@ public partial class MainView : UserControl
             Content = "OK",
             HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
             Margin = new Thickness(0, 10, 0, 0),
+            HorizontalContentAlignment = Avalonia.Layout.HorizontalAlignment.Center, // Centers text horizontally
+            VerticalContentAlignment = Avalonia.Layout.VerticalAlignment.Center,     // Centers text vertically
+            Width = 120,
+            Height = 30
         };
         var popupWindow = new Window
         {
             Title = title,
+            CanResize = false,
             Content = new StackPanel
             {
                 Margin = new Thickness(10),
@@ -69,17 +74,10 @@ public partial class MainView : UserControl
                 }
             },
             Width = 400,
-            Height = 150,
+            Height = 115,
             Padding = new Thickness(10)
         };
-        button.AddHandler(
-            InputElement.KeyDownEvent,
-            () =>
-            {
-                popupWindow.Close();
-            },
-            RoutingStrategies.Tunnel | RoutingStrategies.Bubble
-        );
+        button.Click += (s, e) => popupWindow.Close();
 
         var window = this.GetVisualRoot() as Window;
         if (window != null)
@@ -89,6 +87,10 @@ public partial class MainView : UserControl
     private void MainView_Loaded(object? sender, RoutedEventArgs e)
     {
         Debug.WriteLine("MainView loaded!");
+#if DEBUG
+        var window = this.GetVisualRoot() as Window;
+        window?.AttachDevTools();
+#endif
         Handle_Communicator_On_MainView_Loaded(sender, e);
 
         // Handler
