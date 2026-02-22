@@ -7,7 +7,7 @@ using static NotesServer.Configuration;
 namespace NotesServer.Services.BasicAuth;
 
 [RegisterImplementation(ServiceRegisterType.Singleton, typeof(AuthService))]
-public class AuthService(IOptions<AuthOptions> options, PersistenceService persistence)
+public class AuthService(IOptions<AuthOptions> options, LoggerService logger, PersistenceService persistence)
 {
     readonly bool writeLogs = options.Value.WriteLogs;
     readonly bool give404 = options.Value.Give404;
@@ -23,11 +23,10 @@ public class AuthService(IOptions<AuthOptions> options, PersistenceService persi
 
     public User? GetUser(string? authTokenHeader, HttpClient httpClient)
     {
-        Console.WriteLine($"[Auth] Attempting to authenticate with token: {authTokenHeader?.Split(" ")[1]} on {options.Value.KeycloakRealmUrl}");
         if (!EzKeycloak.EzKeycloak.IsTokenValid(httpClient, options.Value.KeycloakRealmUrl ?? "", authTokenHeader?.Split(" ")[1] ?? "", out var userInfo))
         {
             if (writeLogs)
-                Debug.WriteLine($"[Auth] Invalid token: {authTokenHeader}");
+                logger.WriteLine($"[Auth] Invalid token: {authTokenHeader}");
             return null;
         }
 
