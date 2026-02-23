@@ -18,7 +18,7 @@ public static class EzKeycloak
         }
         request.Content = new StringContent(Content);
         request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded");
-        HttpResponseMessage response = client.Send(request);
+        HttpResponseMessage response = client.SendAsync(request).Result;
         if (!response.IsSuccessStatusCode) return null;
         string responseBody = response.Content.ReadAsStringAsync().Result;
         LoginResponse? loginResponse = JsonSerializer.Deserialize<LoginResponse>(responseBody);
