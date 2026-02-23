@@ -19,12 +19,10 @@ namespace NotesAvalonia.Android
         public static void Init(Context context)
         {
             var workRequest = PeriodicWorkRequest.Builder.From<WidgetUpdateWorker>(TimeSpan.FromMinutes(30)).Build();
-#pragma warning disable CS8604 // Possible null reference argument.
             WorkManager.GetInstance(context).EnqueueUniquePeriodicWork(
                 "WidgetUpdateWork",
-                ExistingPeriodicWorkPolicy.Keep,
+                ExistingPeriodicWorkPolicy.Keep!,
                 workRequest);
-#pragma warning restore CS8604 // Possible null reference argument.
         }
 
         public override Result DoWork()
@@ -32,8 +30,8 @@ namespace NotesAvalonia.Android
             try
             {
                 var communicator = new Communicator(
-                    Config.Data.ServerUri,
-                    Config.Data.Username,
+                    Config.Data.ServerUri!,
+                    Config.Data.Username!,
                     Config.Data.KeycloakRefreshToken, (string newKeycloakRefreshToken) =>
                     {
                         Config.Data.KeycloakRefreshToken = newKeycloakRefreshToken;

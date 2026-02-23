@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Avalonia.Logging;
+using Newtonsoft.Json;
 using System;
 using System.Collections;
 using System.IO;
@@ -10,7 +11,7 @@ namespace NotesAvalonia.Configuration
     public static class Config
     {
         static readonly object lockject = new object();
-        public static readonly string PersonalPath = OperatingSystem.IsWindows() ? Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location) + Path.DirectorySeparatorChar : Path.GetDirectoryName(Environment.GetFolderPath(Environment.SpecialFolder.Personal)) + Path.DirectorySeparatorChar + "NotesAvalonia" + Path.DirectorySeparatorChar;
+        public static readonly string PersonalPath = Notes.Interface.Logger.PersonalPath;
         static readonly string configPath = PersonalPath + "config.json";
         static readonly string configBackupPath = PersonalPath + "config_backup.json";
         public static bool UnsavedChanges = false;

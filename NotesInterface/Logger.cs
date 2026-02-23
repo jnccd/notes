@@ -18,6 +18,9 @@ namespace Notes.Interface
     /// </summary>
     public static class Logger
     {
+        public static readonly string PersonalPath = OperatingSystem.IsWindows() ? Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location) + Path.DirectorySeparatorChar : Path.GetDirectoryName(Environment.GetFolderPath(Environment.SpecialFolder.Personal)) + Path.DirectorySeparatorChar + "NotesAvalonia" + Path.DirectorySeparatorChar;
+        static readonly string logFilePath = PersonalPath + "log.txt";
+
         // One line static constructor
         static Logger() => ConfigureLogger();
 
@@ -30,7 +33,7 @@ namespace Notes.Interface
             StackTrace st = new(true);
             var logger = LogManager.GetLogger(st.GetFrames().ElementAt(1).GetMethod()?.DeclaringType);
 
-            if (level  == LogLevel.Debug)
+            if (level == LogLevel.Debug)
                 logger.Debug(o);
             else if (level == LogLevel.Info)
                 logger.Info(o);
@@ -71,9 +74,9 @@ namespace Notes.Interface
                         <conversionPattern value=""%date [%thread] %-5level %logger [%property{{NDC}}] - %message%newline"" />
                     </layout>
                 </appender>" : "") +
-                (logToFile ? @"
+                (logToFile ? $@"
                 <appender name=""FileAppender"" type=""log4net.Appender.RollingFileAppender"">
-                    <file value=""log.txt"" />
+                    <file value=""{logFilePath}"" />
                     <lockingModel type=""log4net.Appender.FileAppender+MinimalLock"" />
                     <appendToFile value=""true"" />
                     <rollingStyle value=""Size"" />

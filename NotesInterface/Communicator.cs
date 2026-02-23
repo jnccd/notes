@@ -163,7 +163,7 @@ namespace Notes.Interface
             catch (Exception e)
             {
                 receivedText = "";
-                //Logger.WriteLine(e, LogLevel.Error);
+                Logger.WriteLine(e, LogLevel.Error);
                 stateChanged?.Invoke(CommsState.Disconnected);
             }
 
