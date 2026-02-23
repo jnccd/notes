@@ -1,4 +1,4 @@
-﻿namespace NotesServer.Services.BasicAuth;
+﻿namespace NotesServer.Services.Auth;
 
 public class AuthOptions()
 {

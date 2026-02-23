@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Options;
 using Notes.Interface;
 using NotesServer.Services;
-using NotesServer.Services.BasicAuth;
+using NotesServer.Services.Auth;
 using System.Net;
 using System.Reflection;
 using System.Security.Cryptography.X509Certificates;

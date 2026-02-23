@@ -3,7 +3,7 @@ using EzKeycloak;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Notes.Interface;
-using NotesServer.Services.BasicAuth;
+using NotesServer.Services.Auth;
 using NotesServer.Services.Notes;
 
 namespace NotesServer;

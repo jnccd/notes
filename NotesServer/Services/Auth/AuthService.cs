@@ -4,7 +4,7 @@ using Microsoft.Extensions.Options;
 using NotesServer.Services.Notes;
 using static NotesServer.Configuration;
 
-namespace NotesServer.Services.BasicAuth;
+namespace NotesServer.Services.Auth;
 
 [RegisterImplementation(ServiceRegisterType.Singleton, typeof(AuthService))]
 public class AuthService(IOptions<AuthOptions> options, LoggerService logger, PersistenceService persistence)
