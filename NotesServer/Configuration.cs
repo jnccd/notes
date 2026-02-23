@@ -50,6 +50,7 @@ public static class Configuration
         builder.Services.AddHttpClient();
         builder.Services.AddOptions<AuthOptions>().Configure((authOption) =>
         {
+            authOption.WriteLogs = true;
             authOption.KeycloakClient = builder.Configuration["KEYCLOAK_CLIENT_ID"];
             authOption.KeycloakRealmUrl = builder.Configuration["KEYCLOAK_REALM_URL"];
         });
