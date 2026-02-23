@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Linq;
 using Android.App;
 using Android.Appwidget;
@@ -12,8 +13,6 @@ namespace NotesAvalonia.Android
 {
     public class WidgetUpdateWorker : Worker
     {
-        public static Communicator? communicator = null;
-
         public WidgetUpdateWorker(Context context, WorkerParameters workerParams)
             : base(context, workerParams) { }
 
@@ -26,62 +25,52 @@ namespace NotesAvalonia.Android
                 ExistingPeriodicWorkPolicy.Keep,
                 workRequest);
 #pragma warning restore CS8604 // Possible null reference argument.
-
-            try
-            {
-                if (communicator != null)
-                    communicator.Dispose();
-                // if (Config.Data.ServerUri != null && Config.Data.Username != null && Config.Data.ServerPassword != null)
-                //     communicator = new Communicator(
-                //         Config.Data.ServerUri,
-                //         Config.Data.Username,
-                //         Config.Data.ServerPassword, (CommsState state) =>
-                //         {
-
-                //         }
-                //     );
-            }
-            catch (Exception e)
-            {
-                Console.Error.WriteLine("Error while creating communicator");
-                Console.Error.WriteLine(e);
-            }
         }
 
         public override Result DoWork()
         {
             try
             {
-                // Fetch data (HTTP call or compute)
-                if (communicator != null)
-                {
-                    var payload = communicator.ReqPayload();
-                    var virtualRootNote = new Note() { SubNotes = payload?.Notes ?? [] };
-                    var flattenedNotes = virtualRootNote.Flatten();
-                    var dataToShow = flattenedNotes.Count > 1 ?
-                        flattenedNotes
-                            .Select(x =>
-                                Enumerable
-                                    .Repeat("  ", (int)x.Depth)
-                                    .Aggregate((x, y) => x + y)
-                                + " " +
-                                (x.OriginalNote.Expanded ? "▼" : "▶") +
-                                (x.OriginalNote.Done ?
-                                    x.OriginalNote.Text.Select(x => x + "" + (char)822).Aggregate((x, y) => x + y) : // Cross through if done
-                                    x.OriginalNote.Text))
-                            .Aggregate((x, y) => x + "\n" + y)
-                        : "No notes available.";
+                var communicator = new Communicator(
+                    Config.Data.ServerUri,
+                    Config.Data.Username,
+                    Config.Data.KeycloakRefreshToken, (string newKeycloakRefreshToken) =>
+                    {
+                        Config.Data.KeycloakRefreshToken = newKeycloakRefreshToken;
+                        Config.Save();
+                    },
+                    (CommsState state) => { }
+                );
 
-                    // Save to SharedPreferences
-                    WidgetDataRepository.SaveData(ApplicationContext, dataToShow);
-                    WidgetDataRepository.RequestUpdate(ApplicationContext);
-                }
+                var payload = communicator.ReqPayload();
+                var virtualRootNote = new Note() { SubNotes = payload?.Notes ?? [] };
+                var flattenedNotes = virtualRootNote.Flatten();
+                var dataToShow = flattenedNotes.Count > 1 ?
+                    flattenedNotes
+                        .Select(x =>
+                            Enumerable
+                                .Repeat("  ", (int)x.Depth)
+                                .Aggregate((x, y) => x + y)
+                            + " " +
+                            (x.OriginalNote.Expanded ? "▼" : "▶") +
+                            (x.OriginalNote.Done ?
+                                x.OriginalNote.Text.Select(x => x + "" + (char)822).Aggregate((x, y) => x + y) : // Cross through if done
+                                x.OriginalNote.Text))
+                        .Aggregate((x, y) => x + "\n" + y)
+                    : "No notes available.";
+
+                // Save to SharedPreferences
+                WidgetDataRepository.SaveData(ApplicationContext, dataToShow);
+                WidgetDataRepository.RequestUpdate(ApplicationContext);
+
+                communicator.Dispose();
 
                 return Result.InvokeSuccess();
             }
-            catch
+            catch (Exception ex)
             {
-                return Result.InvokeRetry();
+                File.AppendAllText(Path.Combine(Config.PersonalPath, "logs.txt"), DateTime.Now.ToString() + $": Failed to update widget {ex}\n");
+                return Result.InvokeFailure();
             }
         }
     }

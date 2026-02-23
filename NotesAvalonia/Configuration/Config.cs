@@ -10,9 +10,9 @@ namespace NotesAvalonia.Configuration
     public static class Config
     {
         static readonly object lockject = new object();
-        static readonly string personalPath = Globals.IsDesktop ? Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location) + Path.DirectorySeparatorChar : Path.GetDirectoryName(Environment.GetFolderPath(Environment.SpecialFolder.Personal)) + Path.DirectorySeparatorChar;
-        static readonly string configPath = personalPath + "config.json";
-        static readonly string configBackupPath = personalPath + "config_backup.json";
+        public static readonly string PersonalPath = OperatingSystem.IsWindows() ? Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location) + Path.DirectorySeparatorChar : Path.GetDirectoryName(Environment.GetFolderPath(Environment.SpecialFolder.Personal)) + Path.DirectorySeparatorChar + "NotesAvalonia" + Path.DirectorySeparatorChar;
+        static readonly string configPath = PersonalPath + "config.json";
+        static readonly string configBackupPath = PersonalPath + "config_backup.json";
         public static bool UnsavedChanges = false;
         public static ConfigData Data
         {

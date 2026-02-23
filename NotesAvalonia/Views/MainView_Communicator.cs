@@ -150,7 +150,7 @@ public partial class MainView : UserControl
     {
         try
         {
-            var lines = File.ReadAllLines("log.txt");
+            var lines = File.ReadAllLines(Config.PersonalPath + "log.txt");
             lines.Reverse();
             ShowPopup("Logs", string.Join(Environment.NewLine, lines));
         }
