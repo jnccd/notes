@@ -22,7 +22,7 @@ public static class NotesEndpoints
             });
         });
 
-        routes.MapGet("/notes", (
+        routes.MapGet("/", (
             [FromServices] AuthService auth,
             [FromHeader(Name = "Authorization")] string? authTokenHeader,
             IHttpClientFactory httpClientFactory,
@@ -30,11 +30,11 @@ public static class NotesEndpoints
         {
             return auth?.GetUser(authTokenHeader, httpClientFactory.CreateClient(), u =>
             {
-                return Results.Text(u?.NotesPayload?.ToString(), contentType: "application/json");
+                return Results.Text(u.NotesPayload?.ToString(), contentType: "application/json");
             });
         });
 
-        routes.MapPost("/notes", async (
+        routes.MapPost("/", async (
             [FromServices] AuthService auth,
             [FromServices] PersistenceService persistence,
             [FromHeader(Name = "Authorization"), Required] string? authTokenHeader,
@@ -42,9 +42,10 @@ public static class NotesEndpoints
             IHttpClientFactory httpClientFactory,
             HttpRequest request) =>
         {
-            User? u;
-            if ((u = auth?.GetUser(authTokenHeader, httpClientFactory.CreateClient())) == null)
-                return Results.Unauthorized();
+            Result<User> userResult = auth.GetUser(authTokenHeader, httpClientFactory.CreateClient());
+            if (!userResult.IsSuccess)
+                return userResult.HttpResult;
+            User? u = userResult.Value;
 
             using StreamReader bodyStream = new(request.BodyReader.AsStream());
             string body = await bodyStream.ReadToEndAsync();
