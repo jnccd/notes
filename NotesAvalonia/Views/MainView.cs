@@ -54,25 +54,31 @@ public partial class MainView : UserControl
             Width = 120,
             Height = 30
         };
+        var textBlock = new TextBlock
+        {
+            Text = message,
+            TextWrapping = Avalonia.Media.TextWrapping.Wrap,
+            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
+        };
+        var grid = new Grid
+        {
+            Margin = new Thickness(10),
+            RowDefinitions =
+            {
+                new RowDefinition { Height = GridLength.Star },
+                new RowDefinition { Height = new GridLength(40) },
+            }
+        };
+        grid.Children.Add(message.Length > 1000 ? new ScrollViewer { Content = textBlock, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Stretch } : textBlock);
+        grid.Children.Add(button);
+        Grid.SetRow(grid.Children[0], 0);
+        Grid.SetRow(grid.Children[1], 1);
         var popupWindow = new Window
         {
             Title = title,
             //CanResize = false,
-            Content = new StackPanel
-            {
-                Margin = new Thickness(10),
-                Children =
-                {
-                    new TextBlock
-                    {
-                        Text = message,
-                        TextWrapping = Avalonia.Media.TextWrapping.Wrap,
-                        HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
-                        VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
-                    },
-                    button
-                }
-            },
+            Content = grid,
             Width = 400,
             Height = 115,
             Padding = new Thickness(10)
