@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -140,6 +141,12 @@ public partial class MainView : UserControl
         {
             ShowPopup("Registration Error", ex.Message);
         }
+    }
+    private void ShowLogsTextBlock_Click(object? sender, RoutedEventArgs e)
+    {
+        var lines = File.ReadAllLines("log.txt");
+        lines.Reverse();
+        ShowPopup("Logs", string.Join(Environment.NewLine, lines));
     }
 
     void OnPayloadReceived(string receivedText, Payload? payload)

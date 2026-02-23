@@ -63,7 +63,19 @@
                                     Width="250"
                                     Margin="5,2"
                                     Spacing="3">
-                                    <TextBlock Text="Connect" />
+                                    <StackPanel Orientation="Horizontal" Spacing="5">
+                                        <TextBlock Text="Connect" />
+                                        <Border
+                                            Width="130"
+                                            Height="1"
+                                            HorizontalAlignment="Stretch"
+                                            Background="Transparent" />
+                                        <TextBlock
+                                            FontSize="9"
+                                            Foreground="#1A58C4"
+                                            Tapped="ShowLogsTextBlock_Click"
+                                            Text="Show Logs" />
+                                    </StackPanel>
                                     <TextBox
                                         Name="UrlTextBox"
                                         Text="{Binding LoginServerUri}"
