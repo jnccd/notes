@@ -23,6 +23,7 @@ public class AuthService(IOptions<AuthOptions> options, LoggerService logger, Pe
 
     public User? GetUser(string? authTokenHeader, HttpClient httpClient)
     {
+        logger.WriteLine($"[Auth] token: {authTokenHeader}");
         if (!EzKeycloak.EzKeycloak.IsTokenValid(httpClient, options.Value.KeycloakRealmUrl ?? "", authTokenHeader?.Split(" ")[1] ?? "", out var userInfo))
         {
             if (writeLogs)
