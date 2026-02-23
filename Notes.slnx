@@ -1,4 +1,5 @@
 <Solution>
+  <Project Path="EzKeycloak/EzKeycloak.csproj" />
   <Project Path="NotesAvalonia.Android/NotesAvalonia.Android.csproj" />
   <Project Path="NotesAvalonia.Desktop/NotesAvalonia.Desktop.csproj" />
   <Project Path="NotesAvalonia/NotesAvalonia.csproj" />
