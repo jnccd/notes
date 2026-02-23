@@ -85,9 +85,13 @@ public partial class MainView : UserControl
         };
         button.Click += (s, e) => popupWindow.Close();
 
-        var window = this.GetVisualRoot() as Window;
-        if (window != null)
-            popupWindow.ShowDialog(window);
+        if (Globals.IsDesktop)
+        {
+            var window = this.GetVisualRoot() as Window;
+            if (window != null)
+                popupWindow.ShowDialog(window);
+        }
+        else popupWindow.Show();
     }
 
     private void MainView_Loaded(object? sender, RoutedEventArgs e)

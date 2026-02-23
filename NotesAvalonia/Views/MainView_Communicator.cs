@@ -99,29 +99,33 @@ public partial class MainView : UserControl
 
     private void LoginButton_Click(object? sender, RoutedEventArgs e)
     {
-        if (viewModel != null)
-            viewModel.AddDebugText($"LoginButton_PointerPressed");
-        var parent = (sender as Button)?.Parent;
-        var server = viewModel?.LoginServerUri;
-        var username = viewModel?.LoginServerUsername;
-        var password = viewModel?.LoginPassword;
-        if (string.IsNullOrWhiteSpace(server) || string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
-        {
-            ShowPopup("Login Error", "Please fill in all fields.");
-            return;
-        }
-
-        Config.Data.ServerUri = server;
-        Config.Data.Username = username;
         try
         {
+            if (viewModel != null)
+                viewModel.AddDebugText($"LoginButton_PointerPressed");
+            var parent = (sender as Button)?.Parent;
+            var server = viewModel?.LoginServerUri;
+            var username = viewModel?.LoginServerUsername;
+            var password = viewModel?.LoginPassword;
+            if (string.IsNullOrWhiteSpace(server) || string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
+            {
+                ShowPopup("Login Error", "Please fill in all fields.");
+                return;
+            }
+
+            Config.Data.ServerUri = server;
+            Config.Data.Username = username;
+
             InitCommunicatorBasedOnConfig(password);
+
+            Config.Save();
         }
         catch (Exception ex)
         {
-            ShowPopup("Login Error", ex.ToString());
+            if (viewModel != null)
+                viewModel.AddDebugText(ex.ToString());
+            try { ShowPopup("Unknown Login Error", ex.ToString()); } catch { }
         }
-        Config.Save();
     }
 
     private void RegisterButton_Click(object? sender, RoutedEventArgs e)
@@ -152,7 +156,9 @@ public partial class MainView : UserControl
         }
         catch (Exception ex)
         {
-            ShowPopup("Error Showing Logs", "Could not read log file: " + ex.Message);
+            if (viewModel != null)
+                viewModel.AddDebugText(ex.ToString());
+            try { ShowPopup("Error Showing Logs", "Could not read log file: " + ex.Message); } catch { }
         }
     }
 

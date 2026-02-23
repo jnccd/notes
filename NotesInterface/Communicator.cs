@@ -34,11 +34,14 @@ namespace Notes.Interface
         string serverUri;
         KeyCloakHttpClient client;
 
-        public Communicator(string serverUri, string serverUsername, string? initialKeyCloakRefreshToken, Action<string> keyCloakRefreshTokenChanged, Action<CommsState>? stateChanged = null)
+        public Communicator(string serverUri, string serverUsername, string? initialKeyCloakRefreshToken, Action<string> keyCloakRefreshTokenChanged, Action<CommsState>? stateChanged = null, HttpClient? httpClient = null)
         {
             this.serverUri = serverUri;
             this.stateChanged = stateChanged;
-            var httpClient = new HttpClient();
+            HttpClientHandler handler = new();
+            handler.ClientCertificateOptions = ClientCertificateOption.Manual;
+            handler.ServerCertificateCustomValidationCallback += (sender, cert, chain, sslPolicyErrors) => true;
+            httpClient ??= new HttpClient(handler);
             client = new(GetKeyCloakAddress(serverUri, httpClient), keyCloakRefreshTokenChanged, initialKeyCloakRefreshToken, httpClient);
         }
 
@@ -110,7 +113,7 @@ namespace Notes.Interface
             {
                 stateChanged?.Invoke(CommsState.Working);
                 var httpContent = new StringContent(s, Encoding.UTF8, "application/json");
-                using var response = client.PostAsync(serverUri + "/notes", httpContent).Result;
+                using var response = client.PostAsync(serverUri, httpContent).Result;
                 stateChanged?.Invoke(response.StatusCode != HttpStatusCode.GatewayTimeout ? CommsState.Connected : CommsState.Disconnected);
 
                 Logger.WriteLine(response.StatusCode);
@@ -130,7 +133,7 @@ namespace Notes.Interface
             try
             {
                 stateChanged?.Invoke(CommsState.Working);
-                receivedText = client.GetStringAsync(serverUri + "/notes").Result;
+                receivedText = client.GetStringAsync(serverUri).Result;
 
                 StringBuilder sb = new StringBuilder(receivedText);
                 sb.Replace("\\\n", "");

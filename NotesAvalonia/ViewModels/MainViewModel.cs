@@ -72,7 +72,7 @@ public partial class MainViewModel : ViewModelBase
         DebugText = DebugText
             .Split('\n')
             .Append(text)
-            .TakeLast(Globals.IsDesktop ? 4 : 16)
+            .TakeLast(Globals.IsDesktop ? 4 : 32)
             .Aggregate((a, b) => a + "\n" + b);
     }
 

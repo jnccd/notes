@@ -258,7 +258,8 @@
                     Grid.Row="2"
                     HorizontalAlignment="Center"
                     FontSize="4"
-                    Text="{Binding DebugText}" />
+                    Text="{Binding DebugText}"
+                    TextWrapping="Wrap" />
             </Grid>
         </Border>
 
