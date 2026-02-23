@@ -144,9 +144,16 @@ public partial class MainView : UserControl
     }
     private void ShowLogsTextBlock_Click(object? sender, RoutedEventArgs e)
     {
-        var lines = File.ReadAllLines("log.txt");
-        lines.Reverse();
-        ShowPopup("Logs", string.Join(Environment.NewLine, lines));
+        try
+        {
+            var lines = File.ReadAllLines("log.txt");
+            lines.Reverse();
+            ShowPopup("Logs", string.Join(Environment.NewLine, lines));
+        }
+        catch (Exception ex)
+        {
+            ShowPopup("Error Showing Logs", "Could not read log file: " + ex.Message);
+        }
     }
 
     void OnPayloadReceived(string receivedText, Payload? payload)
