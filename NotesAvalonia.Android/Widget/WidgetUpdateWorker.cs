@@ -31,15 +31,15 @@ namespace NotesAvalonia.Android
             {
                 if (communicator != null)
                     communicator.Dispose();
-                if (Config.Data.ServerUri != null && Config.Data.Username != null && Config.Data.ServerPassword != null)
-                    communicator = new Communicator(
-                        Config.Data.ServerUri,
-                        Config.Data.Username,
-                        Config.Data.ServerPassword, (CommsState state) =>
-                        {
+                // if (Config.Data.ServerUri != null && Config.Data.Username != null && Config.Data.ServerPassword != null)
+                //     communicator = new Communicator(
+                //         Config.Data.ServerUri,
+                //         Config.Data.Username,
+                //         Config.Data.ServerPassword, (CommsState state) =>
+                //         {
 
-                        }
-                    );
+                //         }
+                //     );
             }
             catch (Exception e)
             {
