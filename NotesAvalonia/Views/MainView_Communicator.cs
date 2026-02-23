@@ -124,7 +124,7 @@ public partial class MainView : UserControl
         {
             if (viewModel != null)
                 viewModel.AddDebugText(ex.ToString());
-            try { ShowPopup("Unknown Login Error", ex.ToString()); } catch { }
+            ShowPopup("Unknown Login Error", ex.ToString());
         }
     }
 
@@ -158,7 +158,7 @@ public partial class MainView : UserControl
         {
             if (viewModel != null)
                 viewModel.AddDebugText(ex.ToString());
-            try { ShowPopup("Error Showing Logs", "Could not read log file: " + ex.Message); } catch { }
+            ShowPopup("Error Showing Logs", "Could not read log file: " + ex.Message);
         }
     }
 

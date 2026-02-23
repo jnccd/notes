@@ -43,55 +43,59 @@ public partial class MainView : UserControl
 
     void ShowPopup(string title, string message)
     {
-        // Create a new window
-        var button = new Button
+        try
         {
-            Content = "OK",
-            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
-            Margin = new Thickness(0, 10, 0, 0),
-            HorizontalContentAlignment = Avalonia.Layout.HorizontalAlignment.Center, // Centers text horizontally
-            VerticalContentAlignment = Avalonia.Layout.VerticalAlignment.Center,     // Centers text vertically
-            Width = 120,
-            Height = 30
-        };
-        var textBlock = new TextBlock
-        {
-            Text = message,
-            TextWrapping = Avalonia.Media.TextWrapping.Wrap,
-            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
-            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
-        };
-        var grid = new Grid
-        {
-            Margin = new Thickness(10),
-            RowDefinitions =
+            // Create a new window
+            var button = new Button
+            {
+                Content = "OK",
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+                Margin = new Thickness(0, 10, 0, 0),
+                HorizontalContentAlignment = Avalonia.Layout.HorizontalAlignment.Center, // Centers text horizontally
+                VerticalContentAlignment = Avalonia.Layout.VerticalAlignment.Center,     // Centers text vertically
+                Width = 120,
+                Height = 30
+            };
+            var textBlock = new TextBlock
+            {
+                Text = message,
+                TextWrapping = Avalonia.Media.TextWrapping.Wrap,
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
+            };
+            var grid = new Grid
+            {
+                Margin = new Thickness(10),
+                RowDefinitions =
             {
                 new RowDefinition { Height = GridLength.Star },
                 new RowDefinition { Height = new GridLength(40) },
             }
-        };
-        grid.Children.Add(message.Length > 1000 ? new ScrollViewer { Content = textBlock, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Stretch } : textBlock);
-        grid.Children.Add(button);
-        Grid.SetRow(grid.Children[0], 0);
-        Grid.SetRow(grid.Children[1], 1);
-        var popupWindow = new Window
-        {
-            Title = title,
-            //CanResize = false,
-            Content = grid,
-            Width = 400,
-            Height = 115,
-            Padding = new Thickness(10)
-        };
-        button.Click += (s, e) => popupWindow.Close();
+            };
+            grid.Children.Add(message.Length > 1000 ? new ScrollViewer { Content = textBlock, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Stretch } : textBlock);
+            grid.Children.Add(button);
+            Grid.SetRow(grid.Children[0], 0);
+            Grid.SetRow(grid.Children[1], 1);
+            var popupWindow = new Window
+            {
+                Title = title,
+                //CanResize = false,
+                Content = grid,
+                Width = 400,
+                Height = 115,
+                Padding = new Thickness(10)
+            };
+            button.Click += (s, e) => popupWindow.Close();
 
-        if (Globals.IsDesktop)
-        {
             var window = this.GetVisualRoot() as Window;
             if (window != null)
                 popupWindow.ShowDialog(window);
         }
-        else popupWindow.Show();
+        catch (Exception ex)
+        {
+            if (DataContext is MainViewModel model)
+                model.AddDebugText($"Failed to show popup: {ex} {ex.StackTrace}");
+        }
     }
 
     private void MainView_Loaded(object? sender, RoutedEventArgs e)
