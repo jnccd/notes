@@ -3,7 +3,7 @@ using System;
 using System.Diagnostics;
 using System.Globalization;
 
-namespace NotesAvalonia.Helpers;
+namespace NotesAvalonia.Converters;
 
 public class AddMultiplyConverter : IValueConverter
 {

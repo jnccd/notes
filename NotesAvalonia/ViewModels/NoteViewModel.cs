@@ -2,6 +2,7 @@
 using System.ComponentModel;
 using System.Linq;
 using Avalonia.Controls;
+using Avalonia.Layout;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Notes.Interface;
 

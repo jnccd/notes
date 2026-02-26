@@ -3,8 +3,8 @@
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls"
+    xmlns:converters="clr-namespace:NotesAvalonia.Converters;assembly=NotesAvalonia"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:helpers="clr-namespace:NotesAvalonia.Helpers;assembly=NotesAvalonia"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:vm="using:NotesAvalonia.ViewModels"
     Padding="0"
@@ -13,8 +13,12 @@
     x:DataType="vm:MainViewModel"
     mc:Ignorable="d">
     <UserControl.Resources>
-        <helpers:ExpandCollapseConverter x:Key="ExpandCollapseConverter" />
-        <helpers:AddMultiplyConverter x:Key="AddMultiplyConverter" />
+        <converters:NegationConverter x:Key="NegationConverter" />
+        <converters:AddMultiplyConverter x:Key="AddMultiplyConverter" />
+        <converters:ExpandCollapseConverter x:Key="ExpandCollapseConverter" />
+        <converters:TextBoxDoneGridAlignmentConverter x:Key="TextBoxDoneGridAlignmentConverter" />
+        <converters:TextBoxDoneRectangleFillConverter x:Key="TextBoxDoneRectangleFillConverter" />
+        <converters:TextBoxDoneOpacityConverter x:Key="TextBoxDoneOpacityConverter" />
     </UserControl.Resources>
 
     <Design.DataContext>
@@ -211,17 +215,29 @@
                                         </CheckBox.RenderTransform>
                                     </CheckBox>
 
-                                    <TextBox
-                                        Grid.Column="4"
-                                        MinHeight="0"
-                                        Margin="0"
-                                        Padding="2,5"
-                                        Background="Transparent"
-                                        BorderThickness="0"
-                                        FontSize="13"
-                                        KeyDown="TextBox_KeyDown"
-                                        Text="{Binding Text}"
-                                        TextWrapping="Wrap" />
+                                    <Grid Grid.Column="4" HorizontalAlignment="{Binding Done, Converter={StaticResource TextBoxDoneGridAlignmentConverter}}">
+                                        <TextBox
+                                            MinHeight="0"
+                                            Margin="0"
+                                            Padding="2,5"
+                                            Background="Transparent"
+                                            BorderThickness="0"
+                                            FontSize="13"
+                                            IsHitTestVisible="{Binding Done, Converter={StaticResource NegationConverter}}"
+                                            KeyDown="TextBox_KeyDown"
+                                            Opacity="{Binding Done, Converter={StaticResource TextBoxDoneOpacityConverter}}"
+                                            Text="{Binding Text}"
+                                            TextWrapping="Wrap" />
+                                        <Rectangle
+                                            Height="1"
+                                            Fill="{Binding Done, Converter={StaticResource TextBoxDoneRectangleFillConverter}}"
+                                            IsHitTestVisible="false"
+                                            ZIndex="1">
+                                            <Rectangle.RenderTransform>
+                                                <TranslateTransform X="0" Y="0" />
+                                            </Rectangle.RenderTransform>
+                                        </Rectangle>
+                                    </Grid>
 
                                     <Button
                                         Grid.Column="5"
