@@ -33,16 +33,16 @@ namespace Notes.Interface
 
         string serverUri;
         KeyCloakHttpClient client;
+        KeyCloakAddress keyCloakAddress;
+        HttpClient? _httpClient;
 
-        public Communicator(string serverUri, string serverUsername, string? initialKeyCloakRefreshToken, Action<string> keyCloakRefreshTokenChanged, Action<CommsState>? stateChanged = null, HttpClient? httpClient = null)
+        public Communicator(string serverUri, string? initialKeyCloakRefreshToken, Action<string> keyCloakRefreshTokenChanged, Action<CommsState>? stateChanged = null, HttpClient? httpClient = null)
         {
             this.serverUri = serverUri;
             this.stateChanged = stateChanged;
-            HttpClientHandler handler = new();
-            handler.ClientCertificateOptions = ClientCertificateOption.Manual;
-            handler.ServerCertificateCustomValidationCallback += (sender, cert, chain, sslPolicyErrors) => true;
-            httpClient ??= new HttpClient(handler);
-            client = new(GetKeyCloakAddress(serverUri, httpClient), keyCloakRefreshTokenChanged, initialKeyCloakRefreshToken, httpClient);
+            _httpClient = httpClient ?? new HttpClient();
+            keyCloakAddress = GetKeyCloakAddress(serverUri, _httpClient);
+            client = new(keyCloakAddress, keyCloakRefreshTokenChanged, initialKeyCloakRefreshToken, httpClient);
         }
 
         public static KeyCloakAddress GetKeyCloakAddress(string serverUri, HttpClient httpClient)
@@ -54,6 +54,12 @@ namespace Notes.Interface
             string responseBody = response.Content.ReadAsStringAsync().Result;
             KeyCloakAddress? keyCloakAddress = JsonConvert.DeserializeObject<KeyCloakAddress>(responseBody);
             return keyCloakAddress!;
+        }
+
+        public string GetSeparateSessionRefreshToken(string username, string password)
+        {
+            var res = EzKeycloak.EzKeycloak.LoginToCloak(_httpClient!, keyCloakAddress.KeycloakRealmUrl!, keyCloakAddress.KeycloakClient!, username, password);
+            return res!.refresh_token!;
         }
 
         public void DoNewLogIn(string username, string password)

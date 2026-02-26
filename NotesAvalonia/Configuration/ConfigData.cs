@@ -19,6 +19,7 @@ namespace NotesAvalonia.Configuration
         public string? ServerUri;
         public string? Username;
         public string? KeycloakRefreshToken;
+        public string? KeycloakRefreshTokenForAndroidWidget;
 
         // Notes payload
         public DateTime SaveTime;

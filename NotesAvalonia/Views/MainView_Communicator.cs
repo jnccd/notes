@@ -13,6 +13,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.LogicalTree;
 using Avalonia.Threading;
+using EzKeycloak;
 using Notes.Interface;
 using NotesAvalonia.Configuration;
 using NotesAvalonia.ViewModels;
@@ -33,7 +34,6 @@ public partial class MainView : UserControl
                 communicator.Dispose();
             communicator = new Communicator(
                 Config.Data.ServerUri,
-                Config.Data.Username,
                 Config.Data.KeycloakRefreshToken, (string newKeycloakRefreshToken) =>
                 {
                     Config.Data.KeycloakRefreshToken = newKeycloakRefreshToken;
@@ -62,7 +62,10 @@ public partial class MainView : UserControl
                 }
             );
             if (password != null)
+            {
                 communicator.DoNewLogIn(Config.Data.Username, password);
+                Config.Data.KeycloakRefreshTokenForAndroidWidget = communicator.GetSeparateSessionRefreshToken(Config.Data.Username, password);
+            }
             communicator.RequestLoopInterval = 5000;
             communicator.StartRequestLoop(OnPayloadReceived);
         }
