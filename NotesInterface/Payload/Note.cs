@@ -11,6 +11,7 @@ public enum NotePriority
 
 public class Note
 {
+    public Guid Id { get; set; } = Guid.NewGuid();
     public bool Done { get; set; } = false;
     public string Text { get; set; } = "";
     public bool Expanded { get; set; } = false;
@@ -19,7 +20,7 @@ public class Note
 
     public static Note EmptyNote() => new Note()
     {
-        Text = " "
+        Text = ""
     };
 
     public List<(int, Note)> RecursiveSubNotes(int depth = 0)
