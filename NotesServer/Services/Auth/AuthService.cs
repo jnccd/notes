@@ -29,15 +29,25 @@ public class AuthService(IOptions<AuthOptions> options, LoggerService logger, Pe
                 logger.WriteLine($"[Auth] Invalid token: {authTokenHeader}");
             return new Result<User>(Results.BadRequest($"Invalid token {authTokenHeader}"));
         }
-        if (!EzKeycloak.EzKeycloak.IsTokenValid(httpClient, options.Value.KeycloakRealmUrl ?? "", authTokenHeader?.Split(" ")[1] ?? "", out var userInfo))
+        EzKeycloak.UserinfoResponse? userInfo;
+        try
+        {
+            if (!EzKeycloak.EzKeycloak.IsTokenValid(httpClient, options.Value.KeycloakRealmUrl ?? "", authTokenHeader?.Split(" ")[1] ?? "", out userInfo))
+            {
+                if (writeLogs)
+                    logger.WriteLine($"[Auth] Invalid token: {authTokenHeader}");
+                return new Result<User>(Results.Unauthorized());
+            }
+        }
+        catch (Exception ex)
         {
             if (writeLogs)
-                logger.WriteLine($"[Auth] Invalid token: {authTokenHeader}");
+                logger.WriteLine($"[Auth] Token check for {authTokenHeader} failed: {ex}");
             return new Result<User>(Results.Unauthorized());
         }
 
         var notesUser = persistence.Users?.FirstOrDefault(u => u.Username == userInfo?.preferred_username);
-        if (notesUser == null) persistence.Users?.Append(notesUser = new(userInfo?.preferred_username ?? "unknown"));
+        if (notesUser == null && userInfo?.preferred_username != null) persistence.Users?.Append(notesUser = new(userInfo?.preferred_username ?? "unknown"));
         if (notesUser == null) return new Result<User>(give404 ? Results.NotFound() : new AuthReqResult());
         return new Result<User>(notesUser);
     }
