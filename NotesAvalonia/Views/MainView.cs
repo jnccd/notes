@@ -41,61 +41,115 @@ public partial class MainView : UserControl
         Handle_AndroidCompat_On_Constructor();
     }
 
-    void ShowPopup(string title, string message)
+    public void ShowPopup(string title, string message)
     {
         try
         {
-            // Create a new window
-            var button = new Button
+            if (Globals.IsDesktop)
             {
-                Content = "OK",
-                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
-                Margin = new Thickness(0, 10, 0, 0),
-                HorizontalContentAlignment = Avalonia.Layout.HorizontalAlignment.Center, // Centers text horizontally
-                VerticalContentAlignment = Avalonia.Layout.VerticalAlignment.Center,     // Centers text vertically
-                Width = 120,
-                Height = 30
-            };
-            var textBlock = new TextBlock
-            {
-                Text = message,
-                TextWrapping = Avalonia.Media.TextWrapping.Wrap,
-                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
-                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
-            };
-            var grid = new Grid
-            {
-                Margin = new Thickness(10),
-                RowDefinitions =
-            {
-                new RowDefinition { Height = GridLength.Star },
-                new RowDefinition { Height = new GridLength(40) },
+                ShowPopupWindow(title, message);
             }
-            };
-            grid.Children.Add(message.Length > 1000 ? new ScrollViewer { Content = textBlock, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Stretch } : textBlock);
-            grid.Children.Add(button);
-            Grid.SetRow(grid.Children[0], 0);
-            Grid.SetRow(grid.Children[1], 1);
-            var popupWindow = new Window
+            else
             {
-                Title = title,
-                //CanResize = false,
-                Content = grid,
-                Width = 400,
-                Height = 115,
-                Padding = new Thickness(10)
-            };
-            button.Click += (s, e) => popupWindow.Close();
-
-            var window = this.GetVisualRoot() as Window;
-            if (window != null)
-                popupWindow.ShowDialog(window);
+                ShowPopupFlyout(title, message);
+            }
         }
         catch (Exception ex)
         {
             if (DataContext is MainViewModel model)
                 model.AddDebugText($"Failed to show popup: {ex} {ex.StackTrace}");
         }
+    }
+    private void ShowPopupWindow(string title, string message)
+    {
+        var button = new Button
+        {
+            Content = "OK",
+            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+            Margin = new Thickness(0, 10, 0, 0),
+            HorizontalContentAlignment = Avalonia.Layout.HorizontalAlignment.Center, // Centers text horizontally
+            VerticalContentAlignment = Avalonia.Layout.VerticalAlignment.Center,     // Centers text vertically
+            Width = 120,
+            Height = 30
+        };
+        var textBlock = new TextBlock
+        {
+            Text = message,
+            TextWrapping = Avalonia.Media.TextWrapping.Wrap,
+            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
+        };
+        var grid = new Grid
+        {
+            Margin = new Thickness(10),
+            RowDefinitions =
+            {
+                new RowDefinition { Height = GridLength.Star },
+                new RowDefinition { Height = new GridLength(40) },
+            }
+        };
+        grid.Children.Add(message.Length > 1000 ? new ScrollViewer { Content = textBlock, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Stretch } : textBlock);
+        grid.Children.Add(button);
+        Grid.SetRow(grid.Children[0], 0);
+        Grid.SetRow(grid.Children[1], 1);
+        var popupWindow = new Window
+        {
+            Title = title,
+            //CanResize = false,
+            Content = grid,
+            Width = 400,
+            Height = 115,
+            Padding = new Thickness(10)
+        };
+        button.Click += (s, e) => popupWindow.Close();
+
+        var window = this.GetVisualRoot() as Window;
+        if (window != null)
+            popupWindow.ShowDialog(window);
+    }
+    private void ShowPopupFlyout(string title, string message)
+    {
+        var titleBlock = new TextBlock
+        {
+            Text = title,
+            FontSize = 18,
+            TextWrapping = Avalonia.Media.TextWrapping.Wrap,
+            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left,
+            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Top
+        };
+        var contentBlock = new TextBlock
+        {
+            Text = message,
+            TextWrapping = Avalonia.Media.TextWrapping.Wrap,
+            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch,
+            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Stretch
+        };
+        var grid = new Grid
+        {
+            Margin = new Thickness(10),
+            RowDefinitions =
+                {
+                    new RowDefinition { Height = GridLength.Star },
+                    new RowDefinition { Height = GridLength.Star },
+                },
+            RowSpacing = 4,
+            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Stretch,
+            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch
+        };
+        grid.Children.Add(titleBlock);
+        grid.Children.Add(message.Length > 1000 ? new ScrollViewer { Content = contentBlock, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Stretch } : contentBlock);
+        Grid.SetRow(grid.Children[0], 0);
+        Grid.SetRow(grid.Children[1], 1);
+
+        var flyout = new Flyout
+        {
+            Content = grid,
+            Placement = PlacementMode.Center,
+            ShowMode = FlyoutShowMode.Transient,
+        };
+        var flyoutOrigin = this.FindControl<Border>("WindowBorder");
+        Flyout.SetAttachedFlyout(flyoutOrigin!, flyout);
+        flyout.ShowAt(flyoutOrigin!);
     }
 
     private void MainView_Loaded(object? sender, RoutedEventArgs e)
