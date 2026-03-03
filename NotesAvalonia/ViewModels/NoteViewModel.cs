@@ -68,16 +68,21 @@ public partial class FlattenedNoteViewModel : ViewModelBase
 
     public uint Depth => FlattenedNote.Depth;
 
-    public string NumRecursiveChildren
+    public string NumRecursiveTodoChildren
     {
         get
         {
-            var childCount = FlattenedNote.OriginalNote.RecursiveSubNotes().Count(x => x.Item2 != FlattenedNote.OriginalNote && !string.IsNullOrWhiteSpace(x.Item2.Text));
+            var children = FlattenedNote.OriginalNote.RecursiveSubNotes().Where(x => x.Item2 != FlattenedNote.OriginalNote && !string.IsNullOrWhiteSpace(x.Item2.Text));
+            var undoneChildren = children.Where(x => !x.Item2.Done);
+
+            var childCount = children.Count();
+            var undoneChildCount = undoneChildren.Count();
+
             if (childCount <= 0 || FlattenedNote.OriginalNote.Expanded)
                 return "";
-            if (childCount >= 10)
+            if (undoneChildCount >= 10)
                 return "✹";
-            return childCount.ToString();
+            return undoneChildCount.ToString();
         }
     }
 

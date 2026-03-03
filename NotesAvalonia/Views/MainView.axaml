@@ -187,7 +187,7 @@
                                             <TextBlock
                                                 FontSize="10"
                                                 Foreground="#1d8eeb"
-                                                Text="{Binding NumRecursiveChildren}"
+                                                Text="{Binding NumRecursiveTodoChildren}"
                                                 ZIndex="10">
                                                 <TextBlock.RenderTransform>
                                                     <TranslateTransform X="6" Y="-23" />
