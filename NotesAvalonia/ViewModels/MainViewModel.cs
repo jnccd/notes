@@ -93,8 +93,9 @@ public partial class MainViewModel : ViewModelBase
         var ogToDeleteFlattenedNote = toDeleteFlattenedNote.FlattenedNote.OriginalNote;
         var ogToDeleteFlattenedNoteParent = toDeleteFlattenedNote.FlattenedNote.Parent!.OriginalNote;
         ogToDeleteFlattenedNoteParent.SubNotes.Remove(ogToDeleteFlattenedNote);
+        if (ogToDeleteFlattenedNoteParent.SubNotes.Count == 0)
+            ogToDeleteFlattenedNoteParent.Expanded = false;
 
-        FlattenedNotes.Remove(toDeleteFlattenedNote);
         ReFlatten();
         if (mainView != null)
             mainView.unsavedChanges = true;
@@ -109,6 +110,28 @@ public partial class MainViewModel : ViewModelBase
             var exportText = flattenedNoteVM.FlattenedNote.OriginalNote.SubtreeToStyledString();
             topLevel.Clipboard?.SetTextAsync(exportText);
         }
+    }
+
+    [RelayCommand]
+    public void RemoveDoneSubnotes(FlattenedNoteViewModel flattenedNoteVM)
+    {
+        var doneSubNotes = flattenedNoteVM.FlattenedNote.OriginalNote.RecursiveSubNotes()
+            .Where(x => x.Note.Done);
+        foreach (var toDeleteSubNote in doneSubNotes)
+        {
+            if (toDeleteSubNote.Parent != null)
+                toDeleteSubNote.Parent.SubNotes.Remove(toDeleteSubNote.Note);
+        }
+        foreach (var toDeleteSubNotesParent in doneSubNotes.Where(x => x.Parent != null))
+        {
+            var parent = toDeleteSubNotesParent.Parent;
+            if (parent != null && parent.SubNotes.Count == 0)
+                parent.Expanded = false;
+        }
+
+        ReFlatten();
+        if (mainView != null)
+            mainView.unsavedChanges = true;
     }
 
     [RelayCommand]

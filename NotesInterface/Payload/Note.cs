@@ -25,13 +25,13 @@ public class Note
         Text = ""
     };
 
-    public List<(int Depth, Note Note)> RecursiveSubNotes(int depth = 0)
+    public List<(int Depth, Note Note, Note? Parent)> RecursiveSubNotes(int depth = 0, Note? parent = null)
     {
-        List<(int, Note)> result = [];
-        result.Add((depth, this));
+        List<(int, Note, Note?)> result = [];
+        result.Add((depth, this, parent));
         foreach (var note in this.SubNotes)
         {
-            result.AddRange(note.RecursiveSubNotes(depth + 1));
+            result.AddRange(note.RecursiveSubNotes(depth + 1, this));
         }
         return result;
     }
