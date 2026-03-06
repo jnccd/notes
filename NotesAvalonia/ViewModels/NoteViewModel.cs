@@ -72,8 +72,8 @@ public partial class FlattenedNoteViewModel : ViewModelBase
     {
         get
         {
-            var children = FlattenedNote.OriginalNote.RecursiveSubNotes().Where(x => x.Item2 != FlattenedNote.OriginalNote && !string.IsNullOrWhiteSpace(x.Item2.Text));
-            var undoneChildren = children.Where(x => !x.Item2.Done);
+            var children = FlattenedNote.OriginalNote.RecursiveSubNotes().Where(x => x.Note != FlattenedNote.OriginalNote && !string.IsNullOrWhiteSpace(x.Note.Text));
+            var undoneChildren = children.Where(x => !x.Note.Done);
 
             var childCount = children.Count();
             var undoneChildCount = undoneChildren.Count();

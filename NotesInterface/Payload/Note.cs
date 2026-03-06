@@ -23,7 +23,7 @@ public class Note
         Text = ""
     };
 
-    public List<(int, Note)> RecursiveSubNotes(int depth = 0)
+    public List<(int Depth, Note Note)> RecursiveSubNotes(int depth = 0)
     {
         List<(int, Note)> result = [];
         result.Add((depth, this));
@@ -32,6 +32,21 @@ public class Note
             result.AddRange(note.RecursiveSubNotes(depth + 1));
         }
         return result;
+    }
+
+    public string SubtreeToString()
+    {
+        return this.RecursiveSubNotes(-1)
+            .Select(x =>
+                Enumerable
+                    .Repeat("  ", (int)x.Depth)
+                    .Aggregate((x, y) => x + y)
+                + " " +
+                (x.Note.Expanded ? "▼" : "▶") +
+                (x.Note.Done ?
+                    x.Note.Text.Select(x => x + "" + (char)822).Aggregate((x, y) => x + y) : // Cross through if done
+                    x.Note.Text))
+            .Aggregate((x, y) => x + "\n" + y);
     }
 
     public List<FlattenedNote> Flatten(uint depth = 0, FlattenedNote? parent = null)

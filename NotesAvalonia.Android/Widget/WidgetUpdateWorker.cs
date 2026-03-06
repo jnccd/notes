@@ -41,20 +41,7 @@ namespace NotesAvalonia.Android
 
                 var payload = communicator.ReqPayload();
                 var virtualRootNote = new Note() { SubNotes = payload?.Notes ?? [] };
-                var flattenedNotes = virtualRootNote.Flatten();
-                var dataToShow = flattenedNotes.Count > 1 ?
-                    flattenedNotes
-                        .Select(x =>
-                            Enumerable
-                                .Repeat("  ", (int)x.Depth)
-                                .Aggregate((x, y) => x + y)
-                            + " " +
-                            (x.OriginalNote.Expanded ? "▼" : "▶") +
-                            (x.OriginalNote.Done ?
-                                x.OriginalNote.Text.Select(x => x + "" + (char)822).Aggregate((x, y) => x + y) : // Cross through if done
-                                x.OriginalNote.Text))
-                        .Aggregate((x, y) => x + "\n" + y)
-                    : "No notes available.";
+                var dataToShow = virtualRootNote.SubtreeToString();
 
                 // Save to SharedPreferences
                 WidgetDataRepository.SaveData(ApplicationContext, dataToShow);

@@ -106,10 +106,7 @@ public partial class MainViewModel : ViewModelBase
         var topLevel = TopLevel.GetTopLevel(mainView);
         if (topLevel != null)
         {
-            var exportText = flattenedNoteVM.FlattenedNote.OriginalNote.RecursiveSubNotes()
-                .Select(n =>
-                    (n.Item1 == 0 ? "" : Enumerable.Repeat("-", n.Item1).Aggregate((a, b) => a + b) + " ") + n.Item2.Text)
-                .Aggregate((a, b) => a + "\n" + b);
+            var exportText = flattenedNoteVM.FlattenedNote.OriginalNote.SubtreeToString();
             topLevel.Clipboard?.SetTextAsync(exportText);
         }
     }
