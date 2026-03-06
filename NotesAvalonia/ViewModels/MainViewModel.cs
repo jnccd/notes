@@ -92,9 +92,7 @@ public partial class MainViewModel : ViewModelBase
     {
         var ogToDeleteFlattenedNote = toDeleteFlattenedNote.FlattenedNote.OriginalNote;
         var ogToDeleteFlattenedNoteParent = toDeleteFlattenedNote.FlattenedNote.Parent!.OriginalNote;
-        ogToDeleteFlattenedNoteParent.SubNotes.Remove(ogToDeleteFlattenedNote);
-        if (ogToDeleteFlattenedNoteParent.SubNotes.Count == 0)
-            ogToDeleteFlattenedNoteParent.Expanded = false;
+        ogToDeleteFlattenedNote.DeleteFrom(ogToDeleteFlattenedNoteParent);
 
         ReFlatten();
         if (mainView != null)
@@ -119,14 +117,7 @@ public partial class MainViewModel : ViewModelBase
             .Where(x => x.Note.Done);
         foreach (var toDeleteSubNote in doneSubNotes)
         {
-            if (toDeleteSubNote.Parent != null)
-                toDeleteSubNote.Parent.SubNotes.Remove(toDeleteSubNote.Note);
-        }
-        foreach (var toDeleteSubNotesParent in doneSubNotes.Where(x => x.Parent != null))
-        {
-            var parent = toDeleteSubNotesParent.Parent;
-            if (parent != null && parent.SubNotes.Count == 0)
-                parent.Expanded = false;
+            toDeleteSubNote.Note.DeleteFrom(toDeleteSubNote.Parent);
         }
 
         ReFlatten();

@@ -32,7 +32,7 @@ public partial class MainView : UserControl
                 return;
 
             var noteIndex = parentNote?.SubNotes.IndexOf(note!);
-            parentNote?.SubNotes.Remove(note!);
+            note!.DeleteFrom(parentNote);
             viewModel?.ReFlatten();
             unsavedChanges = true;
 

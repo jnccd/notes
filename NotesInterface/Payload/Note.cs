@@ -36,6 +36,16 @@ public class Note
         return result;
     }
 
+    public void DeleteFrom(Note? Parent)
+    {
+        if (Parent != null)
+        {
+            Parent.SubNotes.Remove(this);
+            if (Parent.SubNotes.Count == 0)
+                Parent.Expanded = false;
+        }
+    }
+
     public string SubtreeToStyledString()
     {
         return this.RecursiveSubNotes()
