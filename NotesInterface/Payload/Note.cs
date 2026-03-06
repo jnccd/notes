@@ -1,3 +1,5 @@
+using Microsoft.VisualBasic;
+
 namespace Notes.Interface;
 
 public enum NotePriority
@@ -34,18 +36,22 @@ public class Note
         return result;
     }
 
-    public string SubtreeToString()
+    public string SubtreeToStyledString()
     {
-        return this.RecursiveSubNotes(-1)
+        return this.RecursiveSubNotes()
             .Select(x =>
-                Enumerable
-                    .Repeat("  ", (int)x.Depth)
-                    .Aggregate((x, y) => x + y)
-                + " " +
-                (x.Note.Expanded ? "▼" : "▶") +
-                (x.Note.Done ?
+            {
+                var depthPadding = x.Depth <= 0 ? "" :
+                    Enumerable
+                        .Repeat("  ", x.Depth)
+                        .Aggregate((x, y) => x + y);
+                var expandedSymbol = x.Note.Expanded ? "▼" : "▶";
+                var noteText = x.Note.Done ?
                     x.Note.Text.Select(x => x + "" + (char)822).Aggregate((x, y) => x + y) : // Cross through if done
-                    x.Note.Text))
+                    x.Note.Text;
+
+                return depthPadding + expandedSymbol + noteText;
+            })
             .Aggregate((x, y) => x + "\n" + y);
     }
 

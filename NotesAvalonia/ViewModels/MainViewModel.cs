@@ -106,7 +106,7 @@ public partial class MainViewModel : ViewModelBase
         var topLevel = TopLevel.GetTopLevel(mainView);
         if (topLevel != null)
         {
-            var exportText = flattenedNoteVM.FlattenedNote.OriginalNote.SubtreeToString();
+            var exportText = flattenedNoteVM.FlattenedNote.OriginalNote.SubtreeToStyledString();
             topLevel.Clipboard?.SetTextAsync(exportText);
         }
     }

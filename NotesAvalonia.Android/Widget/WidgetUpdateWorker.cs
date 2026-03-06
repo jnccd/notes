@@ -41,7 +41,7 @@ namespace NotesAvalonia.Android
 
                 var payload = communicator.ReqPayload();
                 var virtualRootNote = new Note() { SubNotes = payload?.Notes ?? [] };
-                var dataToShow = virtualRootNote.SubtreeToString();
+                var dataToShow = virtualRootNote.SubtreeToStyledString();
 
                 // Save to SharedPreferences
                 WidgetDataRepository.SaveData(ApplicationContext, dataToShow);
