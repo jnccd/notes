@@ -258,10 +258,11 @@
                                                     Command="{Binding #Root.((vm:MainViewModel)DataContext).ExportItemToClipboardCommand}"
                                                     CommandParameter="{Binding .}"
                                                     Header="Export to Clipboard" />
+                                                <Separator />
                                                 <MenuItem
                                                     Command="{Binding #Root.((vm:MainViewModel)DataContext).RemoveDoneSubnotesCommand}"
                                                     CommandParameter="{Binding .}"
-                                                    Header="Remove Done Subnotes" />
+                                                    Header="Delete Done Subnotes" />
                                                 <MenuItem
                                                     Command="{Binding #Root.((vm:MainViewModel)DataContext).RemoveItemCommand}"
                                                     CommandParameter="{Binding .}"
