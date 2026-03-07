@@ -50,19 +50,15 @@ public class MainActivity : AvaloniaMainActivity<CrossPlatformAvaloniaApp>
     void UpdateWidget()
     {
         var app = (CrossPlatformAvaloniaApp)Avalonia.Application.Current!;
-        var dataToShow = app.MainViewModel.FlattenedNotes.Count > 0 ?
-        app.MainViewModel.FlattenedNotes
-            .Select(x =>
-                Enumerable
-                    .Repeat("  ", (int)x.Depth)
-                    .Aggregate((x, y) => x + y)
-                + " " +
-                (x.Expanded ? "▼" : "▶") +
-                (x.Done ?
-                    x.Text.Select(x => x + "" + (char)822).Aggregate((x, y) => x + y) : // Cross through if done
-                    x.Text))
-            .Aggregate((x, y) => x + "\n" + y)
-        : "No notes available.";
+        if (app.MainViewModel.VirtualRoot == null || app.MainViewModel.VirtualRoot.SubNotes.Count == 0)
+            return;
+
+        var dataToShow = app.MainViewModel.VirtualRoot.SubtreeToStyledString() // TODO: Add a way to filter virtual root in data instead of string representation and unify
+                .Split('\n')
+                .Skip(1)
+                .Select(x => x[2..])
+                .Aggregate((x, y) => x + "\n" + y);
+
         WidgetDataRepository.SaveData(this, dataToShow);
         WidgetDataRepository.RequestUpdate(this);
     }

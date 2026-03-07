@@ -41,7 +41,11 @@ namespace NotesAvalonia.Android
 
                 var payload = communicator.ReqPayload();
                 var virtualRootNote = new Note() { SubNotes = payload?.Notes ?? [] };
-                var dataToShow = virtualRootNote.SubtreeToStyledString();
+                var dataToShow = virtualRootNote.SubtreeToStyledString() // TODO: Add a way to filter virtual root in data instead of string representation and unify
+                    .Split('\n')
+                    .Skip(1)
+                    .Select(x => x[2..])
+                    .Aggregate((x, y) => x + "\n" + y);
 
                 // Save to SharedPreferences
                 WidgetDataRepository.SaveData(ApplicationContext, dataToShow);

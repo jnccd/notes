@@ -16,7 +16,7 @@ namespace NotesAvalonia.ViewModels;
 
 public partial class MainViewModel : ViewModelBase
 {
-    public Note VirtualRoot { get; set; } = new();
+    public Note VirtualRoot { get; private set; } = new();
     public MainViewModel()
     {
 
