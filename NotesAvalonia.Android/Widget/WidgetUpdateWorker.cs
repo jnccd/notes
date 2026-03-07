@@ -57,10 +57,7 @@ namespace NotesAvalonia.Android
             }
             catch (Exception ex)
             {
-                try { new AndroidX.Work.Logger.LogcatLogger(6).Error("Failed to update widget", $"{ex}\n"); } catch { }
-                try { Java.Util.Logging.Logger.Global.Log(Java.Util.Logging.Level.Severe, DateTime.Now.ToString() + $": Failed to update widget {ex}\n"); } catch { }
                 try { Notes.Interface.Logger.WriteLine(DateTime.Now.ToString() + $": Failed to update widget {ex}\n"); } catch { }
-                try { File.AppendAllText(Path.Combine(Config.PersonalPath, "logs.txt"), DateTime.Now.ToString() + $": Failed to update widget {ex}\n"); } catch { }
                 return Result.InvokeFailure();
             }
         }
