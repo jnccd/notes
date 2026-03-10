@@ -240,7 +240,7 @@
                                             </Rectangle.RenderTransform>
                                         </Rectangle>
                                         <Rectangle
-                                            Height="24"
+                                            HorizontalAlignment="Stretch"
                                             Fill="#242424"
                                             IsHitTestVisible="{Binding NotTemporarilyUnHidden}"
                                             IsVisible="{Binding Hidden}"

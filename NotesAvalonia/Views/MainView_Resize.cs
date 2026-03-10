@@ -36,7 +36,7 @@ public partial class MainView : UserControl
         dragWindowPosSauce = window.Position;
         dragWindowSizeSauce = new Point(window.Width, window.Height);
 
-        var borderSize = 16;
+        var borderSize = 12;
 
         if (dragPointerSauce.X >= window.Width - borderSize && dragPointerSauce.Y >= window.Height - borderSize)
             dragType = DragType.ResizeBottomRight;

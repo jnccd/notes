@@ -120,10 +120,16 @@ public partial class MainViewModel : ViewModelBase
     public void ToggleNoteSubtreeHidden(FlattenedNoteViewModel flattenedNoteVM)
     {
         var recursiveSubnotesResult = flattenedNoteVM.FlattenedNote.OriginalNote.RecursiveSubNotes();
+        foreach (var snResult in recursiveSubnotesResult)
+        {
+            snResult.Note.Hidden = !snResult.Note.Hidden;
+        }
+
+        // Notify UI
         var subtreeFlattenedNotesVM = FlattenedNoteVMs.Where(x => recursiveSubnotesResult.Any(y => x.FlattenedNote.OriginalNote.Id == y.Note.Id));
         foreach (var fnvm in subtreeFlattenedNotesVM)
         {
-            fnvm.Hidden = !fnvm.Hidden;
+            fnvm.Hidden = fnvm.FlattenedNote.OriginalNote.Hidden;
         }
     }
 
