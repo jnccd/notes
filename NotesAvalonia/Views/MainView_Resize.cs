@@ -36,18 +36,20 @@ public partial class MainView : UserControl
         dragWindowPosSauce = window.Position;
         dragWindowSizeSauce = new Point(window.Width, window.Height);
 
-        if (dragPointerSauce.X >= window.Width - 16 && dragPointerSauce.Y >= window.Height - 16)
+        var borderSize = 16;
+
+        if (dragPointerSauce.X >= window.Width - borderSize && dragPointerSauce.Y >= window.Height - borderSize)
             dragType = DragType.ResizeBottomRight;
-        else if (dragPointerSauce.X <= 16 && dragPointerSauce.Y >= window.Height - 16)
+        else if (dragPointerSauce.X <= borderSize && dragPointerSauce.Y >= window.Height - borderSize)
             dragType = DragType.ResizeBottomLeft;
-        else if (dragPointerSauce.X >= window.Width - 16 && dragPointerSauce.Y <= 16)
+        else if (dragPointerSauce.X >= window.Width - borderSize && dragPointerSauce.Y <= borderSize)
             dragType = DragType.ResizeTopRight;
-        else if (dragPointerSauce.X <= 16 && dragPointerSauce.Y <= 16)
+        else if (dragPointerSauce.X <= borderSize && dragPointerSauce.Y <= borderSize)
             dragType = DragType.ResizeTopLeft;
         else
             dragType = DragType.Normal;
 
-        isChangingSizeOrPos = true;
+        isChangingSizeOrPos = dragPointerSauce.X <= borderSize || dragPointerSauce.Y <= borderSize || dragPointerSauce.X >= window.Width - borderSize || dragPointerSauce.X >= window.Height - borderSize;
     }
 
     private void WindowBorder_PointerReleased(object? sender, PointerReleasedEventArgs e)
