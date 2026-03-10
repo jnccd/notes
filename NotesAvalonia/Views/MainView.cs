@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Shapes;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.LogicalTree;
@@ -163,6 +164,11 @@ public partial class MainView : UserControl
 
         // Handler
         this.AddHandler(
+            InputElement.PointerPressedEvent,
+            MainView_PointerPressed,
+            RoutingStrategies.Tunnel | RoutingStrategies.Bubble
+        );
+        this.AddHandler(
             InputElement.PointerReleasedEvent,
             MainView_PointerReleased,
             RoutingStrategies.Tunnel | RoutingStrategies.Bubble
@@ -186,10 +192,31 @@ public partial class MainView : UserControl
         Handle_Reordering_On_MainView_PointerReleased(sender, e);
     }
 
+    private void MainView_PointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        var model = DataContext as MainViewModel;
+        if (model != null)
+            model.AddDebugText($"MainView_PointerPressed: LeftButtonPressed={e.Properties.IsLeftButtonPressed}, Pressure={e.Properties.Pressure} {e.GetPosition(sender as ItemsControl)}");
+        Debug.WriteLine($"MainView_PointerPressed: LeftButtonPressed={e.Properties.IsLeftButtonPressed}, Pressure={e.Properties.Pressure} {e.GetPosition(sender as ItemsControl)}");
+
+        foreach (var fnvm in viewModel?.FlattenedNotes ?? [])
+        {
+            fnvm.NotTemporarilyUnHidden = true;
+        }
+    }
+
     private void Border_ContextMenu_Close_Click(object? sender, RoutedEventArgs e)
     {
         SaveConfig();
         var window = this.GetVisualRoot() as Window;
         window?.Close();
+    }
+
+    private void Note_Spoiler_Rectangle_Click(object? sender, RoutedEventArgs e)
+    {
+        e.Handled = true;
+        var rect = sender as Rectangle;
+        var nvm = rect!.DataContext as FlattenedNoteViewModel;
+        nvm!.NotTemporarilyUnHidden = false;
     }
 }

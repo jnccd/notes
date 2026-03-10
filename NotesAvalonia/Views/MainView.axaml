@@ -13,6 +13,8 @@
     x:DataType="vm:MainViewModel"
     mc:Ignorable="d">
     <UserControl.Resources>
+        <converters:AndConverter x:Key="AndConverter" />
+        <converters:EitherOrConverter x:Key="EitherOrConverter" />
         <converters:NegationConverter x:Key="NegationConverter" />
         <converters:AddMultiplyConverter x:Key="AddMultiplyConverter" />
         <converters:ExpandCollapseConverter x:Key="ExpandCollapseConverter" />
@@ -237,6 +239,18 @@
                                                 <TranslateTransform X="0" Y="0" />
                                             </Rectangle.RenderTransform>
                                         </Rectangle>
+                                        <Rectangle
+                                            Height="24"
+                                            Fill="#242424"
+                                            IsHitTestVisible="{Binding NotTemporarilyUnHidden}"
+                                            IsVisible="{Binding Hidden}"
+                                            Opacity="{Binding NotTemporarilyUnHidden, Converter={StaticResource EitherOrConverter}, ConverterParameter='1|0,3'}}"
+                                            PointerPressed="Note_Spoiler_Rectangle_Click"
+                                            ZIndex="2">
+                                            <Rectangle.RenderTransform>
+                                                <TranslateTransform X="0" Y="0" />
+                                            </Rectangle.RenderTransform>
+                                        </Rectangle>
                                     </Grid>
 
                                     <Button
@@ -258,6 +272,11 @@
                                                     Command="{Binding #Root.((vm:MainViewModel)DataContext).ExportItemToClipboardCommand}"
                                                     CommandParameter="{Binding .}"
                                                     Header="Export to Clipboard" />
+                                                <Separator />
+                                                <MenuItem
+                                                    Command="{Binding #Root.((vm:MainViewModel)DataContext).ToggleNoteHiddenCommand}"
+                                                    CommandParameter="{Binding .}"
+                                                    Header="Toggle Hidden" />
                                                 <Separator />
                                                 <MenuItem
                                                     Command="{Binding #Root.((vm:MainViewModel)DataContext).RemoveDoneSubnotesCommand}"

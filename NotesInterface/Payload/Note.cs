@@ -17,6 +17,7 @@ public class Note
     public bool Done { get; set; } = false;
     public string Text { get; set; } = "";
     public bool Expanded { get; set; } = false;
+    public bool Hidden { get; set; } = false;
     public List<Note> SubNotes { get; set; } = new();
     public NotePriority Prio { get; set; } = NotePriority.Meduim;
 

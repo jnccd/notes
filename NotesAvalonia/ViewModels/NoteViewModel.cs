@@ -99,6 +99,21 @@ public partial class FlattenedNoteViewModel : ViewModelBase
         }
     }
 
+    private bool _hidden;
+    public bool Hidden
+    {
+        get { return FlattenedNote.OriginalNote.Hidden; }
+        set
+        {
+            FlattenedNote.OriginalNote.Hidden = value;
+            if (mainView != null)
+                mainView.unsavedChanges = true;
+            SetProperty(ref _hidden, value);
+        }
+    }
+    [ObservableProperty]
+    private bool _notTemporarilyUnHidden = true;
+
     private bool _expanded;
     public bool Expanded
     {

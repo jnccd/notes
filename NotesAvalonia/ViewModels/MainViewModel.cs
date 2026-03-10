@@ -111,6 +111,12 @@ public partial class MainViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    public void ToggleNoteHidden(FlattenedNoteViewModel flattenedNoteVM)
+    {
+        flattenedNoteVM.Hidden = !flattenedNoteVM.Hidden;
+    }
+
+    [RelayCommand]
     public void RemoveDoneSubnotes(FlattenedNoteViewModel flattenedNoteVM)
     {
         var doneSubNotes = flattenedNoteVM.FlattenedNote.OriginalNote.RecursiveSubNotes()
