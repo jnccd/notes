@@ -11,7 +11,7 @@ namespace NotesServer.Services.Notes;
 public class PersistenceService : IDisposable
 {
     readonly NotesDbContext db = new();
-    public IEnumerable<User> Users
+    public DbSet<User> Users
     {
         get
         {

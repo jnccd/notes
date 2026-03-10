@@ -46,8 +46,12 @@ public class AuthService(IOptions<AuthOptions> options, LoggerService logger, Pe
             return new Result<User>(Results.Unauthorized());
         }
 
-        var notesUser = persistence.Users?.FirstOrDefault(u => u.Username == userInfo?.preferred_username);
-        if (notesUser == null && userInfo?.preferred_username != null) persistence.Users?.Append(notesUser = new(userInfo?.preferred_username ?? "unknown"));
+        var notesUser = persistence.Users?.FirstOrDefault(u => userInfo != null && u.Username == userInfo.preferred_username);
+        if (notesUser == null && userInfo?.preferred_username != null)
+        {
+            persistence.Users?.Add(notesUser = new(userInfo?.preferred_username ?? "unknown"));
+            persistence.Save();
+        }
         if (notesUser == null) return new Result<User>(give404 ? Results.NotFound() : new AuthReqResult());
         return new Result<User>(notesUser);
     }
