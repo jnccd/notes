@@ -2,13 +2,16 @@
 using System.Linq;
 using System.Net.Http;
 using Android.App;
+using Android.Content;
 using Android.Content.PM;
 using Android.OS;
+using Android.Net;
 using Android.Views;
 using Android.Widget;
 using AndroidX.Work;
 using Avalonia;
 using Avalonia.Android;
+using Uri = Android.Net.Uri;
 
 namespace NotesAvalonia.Android;
 
@@ -33,6 +36,16 @@ public class MainActivity : AvaloniaMainActivity<CrossPlatformAvaloniaApp>
     {
         base.OnResume();
         UpdateWidget();
+
+        // Add url open action
+        var app = (CrossPlatformAvaloniaApp)Avalonia.Application.Current!;
+        var mainView = ViewModels.ViewModelBase.MainView;
+        mainView!.OpenUrlActionsOnSystem.Clear();
+        mainView!.OpenUrlActionsOnSystem.Add(new(true, (url) =>
+        {
+            var intent = new Intent(Intent.ActionView, Uri.Parse(url));
+            StartActivity(intent);
+        }));
     }
 
     override protected void OnPause()
@@ -53,7 +66,7 @@ public class MainActivity : AvaloniaMainActivity<CrossPlatformAvaloniaApp>
         if (app.MainViewModel.VirtualRoot == null || app.MainViewModel.VirtualRoot.SubNotes.Count == 0)
             return;
 
-        var dataToShow = app.MainViewModel.VirtualRoot.SubtreeToStyledString() // TODO: Add a way to filter virtual root in data instead of string representation and unify
+        var dataToShow = app.MainViewModel.VirtualRoot.SubtreeToStyledString() // TODO: Add a way to filter virtual root in data instead of string representation, and unify
                 .Split('\n')
                 .Skip(1)
                 .Select(x => x[2..])

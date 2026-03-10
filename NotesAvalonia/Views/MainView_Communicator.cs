@@ -20,11 +20,28 @@ using NotesAvalonia.ViewModels;
 
 namespace NotesAvalonia.Views;
 
+public record OpenUrlActionOnSystem(bool IsCurrentOperatingSystem, Action<string> OpenUrl);
+
 public partial class MainView : UserControl
 {
     public Communicator? communicator { get; private set; } = null;
     DateTime lastSaveTime = DateTime.MinValue;
     public bool unsavedChanges = false;
+    public List<OpenUrlActionOnSystem> OpenUrlActionsOnSystem { get; private set; } = [
+        new(OperatingSystem.IsWindows(), (url) =>
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = url,
+                UseShellExecute = true
+            })),
+        new(OperatingSystem.IsLinux(), (url) =>
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "xdg-open",
+                Arguments = url,
+                UseShellExecute = true
+            }))
+    ];
 
     private void InitCommunicatorBasedOnConfig(string? password = null)
     {
@@ -133,16 +150,22 @@ public partial class MainView : UserControl
 
     private void RegisterButton_Click(object? sender, RoutedEventArgs e)
     {
-        var parent = (sender as Button)?.Parent;
-        var server = viewModel?.LoginServerUri;
         try
         {
+            var server = viewModel?.LoginServerUri;
             var keyCloakAddress = Communicator.GetKeyCloakAddress(server!, new System.Net.Http.HttpClient());
-            Process.Start(new ProcessStartInfo
+            var url = keyCloakAddress.KeycloakRealmUrl + "/account";
+
+            var action = OpenUrlActionsOnSystem.FirstOrDefault(x => x.IsCurrentOperatingSystem);
+
+            if (action != null)
             {
-                FileName = keyCloakAddress.KeycloakRealmUrl + "/account",
-                UseShellExecute = true
-            });
+                action.OpenUrl(url);
+            }
+            else
+            {
+                ShowPopup("Platform not supported", "This platform cant show links :(\nPlease open " + url);
+            }
         }
         catch (Exception ex)
         {
