@@ -69,13 +69,13 @@ public partial class MainView : UserControl
 
             var insertBefore = tb.CaretIndex == 0;
             var insertionIndex = ogParent!.SubNotes.IndexOf(ogNote) + (insertBefore ? 0 : 1);
-            var flattenedInsertionIndex = viewModel!.FlattenedNotes.ToList().FindIndex(x => x.FlattenedNote == nvm!.FlattenedNote) + (insertBefore ? 0 : 1);
+            var flattenedInsertionIndex = viewModel!.FlattenedNoteVMs.ToList().FindIndex(x => x.FlattenedNote == nvm!.FlattenedNote) + (insertBefore ? 0 : 1);
 
             var newNote = Note.EmptyNote();
             var flattenedNewNote = newNote.Flatten(depth: nvm!.FlattenedNote.Depth, parent: nvm!.FlattenedNote.Parent).First();
 
             ogParent.SubNotes.Insert(insertionIndex, newNote);
-            viewModel?.FlattenedNotes.Insert(flattenedInsertionIndex, new FlattenedNoteViewModel(flattenedNewNote) { });
+            viewModel?.FlattenedNoteVMs.Insert(flattenedInsertionIndex, new FlattenedNoteViewModel(flattenedNewNote) { });
 
             unsavedChanges = true;
 

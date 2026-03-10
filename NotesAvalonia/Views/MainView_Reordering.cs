@@ -88,7 +88,7 @@ public partial class MainView : UserControl
 
             if (draggedFlattenedNote != null)
             {
-                var flattenedNotes = model!.FlattenedNotes;
+                var flattenedNotes = model!.FlattenedNoteVMs;
 
                 var presenterElem = sender as Grid;
                 var draggedToFlattenedNote = presenterElem?.DataContext as FlattenedNoteViewModel;
@@ -102,7 +102,7 @@ public partial class MainView : UserControl
     void MoveNoteFromTo(FlattenedNoteViewModel draggedFlattenedNote, FlattenedNoteViewModel draggedToFlattenedNote)
     {
         var model = DataContext as MainViewModel;
-        var flattenedNotes = model!.FlattenedNotes;
+        var flattenedNotes = model!.FlattenedNoteVMs;
 
         var ogDraggedNote = draggedFlattenedNote.FlattenedNote.OriginalNote;
         var ogDraggedNoteParent = draggedFlattenedNote.FlattenedNote.Parent!.OriginalNote;

@@ -138,7 +138,7 @@
                     Name="RootScrollViewer"
                     Grid.Row="1"
                     ScrollChanged="ScrollViewer_ScrollChanged">
-                    <ItemsControl ItemsSource="{Binding FlattenedNotes}">
+                    <ItemsControl ItemsSource="{Binding FlattenedNoteVMs}">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
                                 <VirtualizingStackPanel />
@@ -277,6 +277,10 @@
                                                     Command="{Binding #Root.((vm:MainViewModel)DataContext).ToggleNoteHiddenCommand}"
                                                     CommandParameter="{Binding .}"
                                                     Header="Toggle Hidden" />
+                                                <MenuItem
+                                                    Command="{Binding #Root.((vm:MainViewModel)DataContext).ToggleNoteSubtreeHiddenCommand}"
+                                                    CommandParameter="{Binding .}"
+                                                    Header="Toggle Subtree Hidden" />
                                                 <Separator />
                                                 <MenuItem
                                                     Command="{Binding #Root.((vm:MainViewModel)DataContext).RemoveDoneSubnotesCommand}"

@@ -199,7 +199,7 @@ public partial class MainView : UserControl
             model.AddDebugText($"MainView_PointerPressed: LeftButtonPressed={e.Properties.IsLeftButtonPressed}, Pressure={e.Properties.Pressure} {e.GetPosition(sender as ItemsControl)}");
         Debug.WriteLine($"MainView_PointerPressed: LeftButtonPressed={e.Properties.IsLeftButtonPressed}, Pressure={e.Properties.Pressure} {e.GetPosition(sender as ItemsControl)}");
 
-        foreach (var fnvm in viewModel?.FlattenedNotes ?? [])
+        foreach (var fnvm in viewModel?.FlattenedNoteVMs ?? [])
         {
             fnvm.NotTemporarilyUnHidden = true;
         }

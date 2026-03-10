@@ -35,11 +35,11 @@ public partial class MainViewModel : ViewModelBase
     public void ReFlatten()
     {
         var flattenedNotes = VirtualRoot.Flatten().Skip(1); // Skip virtual root
-        FlattenedNotes.Clear();
+        FlattenedNoteVMs.Clear();
         var newFlattenedNvms = flattenedNotes
                 .Select(n => new FlattenedNoteViewModel(n));
         foreach (var fnvm in newFlattenedNvms)
-            FlattenedNotes.Add(fnvm);
+            FlattenedNoteVMs.Add(fnvm);
     }
 
     // Login flyout bindings
@@ -59,7 +59,7 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty]
     private string _loginPassword = "";
 
-    public ObservableCollection<FlattenedNoteViewModel> FlattenedNotes { get; } = new();
+    public ObservableCollection<FlattenedNoteViewModel> FlattenedNoteVMs { get; } = new();
 
     [ObservableProperty]
     private string _connectionState = "Disconnected";
@@ -114,6 +114,17 @@ public partial class MainViewModel : ViewModelBase
     public void ToggleNoteHidden(FlattenedNoteViewModel flattenedNoteVM)
     {
         flattenedNoteVM.Hidden = !flattenedNoteVM.Hidden;
+    }
+
+    [RelayCommand]
+    public void ToggleNoteSubtreeHidden(FlattenedNoteViewModel flattenedNoteVM)
+    {
+        var recursiveSubnotesResult = flattenedNoteVM.FlattenedNote.OriginalNote.RecursiveSubNotes();
+        var subtreeFlattenedNotesVM = FlattenedNoteVMs.Where(x => recursiveSubnotesResult.Any(y => x.FlattenedNote.OriginalNote.Id == y.Note.Id));
+        foreach (var fnvm in subtreeFlattenedNotesVM)
+        {
+            fnvm.Hidden = !fnvm.Hidden;
+        }
     }
 
     [RelayCommand]
