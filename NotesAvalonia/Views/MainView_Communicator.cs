@@ -92,21 +92,21 @@ public partial class MainView : UserControl
     {
         LoadConfig();
 
-        Payload GetNewPayload() => new(Config.Data.SaveTime, Config.Data.Notes);
+        Payload GetNewPayload() => new(Config.Data.CurrentUsersNotePayload()?.SaveTime ?? DateTime.Now, Config.Data.CurrentUsersNotePayload()?.Notes ?? []);
         Task.Run(() =>
+        {
+            Thread.CurrentThread.Name = "Autosave Thread";
+            while (true)
             {
-                Thread.CurrentThread.Name = "Autosave Thread";
-                while (true)
+                Task.Delay(500).Wait();
+                if (unsavedChanges)
                 {
-                    Task.Delay(500).Wait();
-                    if (unsavedChanges)
-                    {
-                        unsavedChanges = false;
-                        SaveConfig();
-                        communicator?.SendString(GetNewPayload().ToString());
-                    }
+                    unsavedChanges = false;
+                    SaveConfig();
+                    communicator?.SendString(GetNewPayload().ToString());
                 }
-            });
+            }
+        });
     }
 
     private void PasswordTextBox_KeyDown(object? sender, KeyEventArgs e)
@@ -197,11 +197,12 @@ public partial class MainView : UserControl
         {
             validPayload = payload != null &&
                 payload.Checksum == payload.GenerateChecksum() &&
-                Config.Data.SaveTime < payload.SaveTime;
+                (Config.Data.CurrentUsersNotePayload == null ||
+                    Config.Data.CurrentUsersNotePayload()?.SaveTime < payload.SaveTime);
 
             if (validPayload)
             {
-                Config.Data.Notes = payload!.Notes;
+                Config.Data.CurrentUsersNotePayload()?.Notes = payload!.Notes;
             }
         }
 
@@ -228,7 +229,7 @@ public partial class MainView : UserControl
             }
 
             if (updateSaveTime)
-                Config.Data.SaveTime = DateTime.Now;
+                Config.Data.CurrentUsersNotePayload()?.SaveTime = DateTime.Now;
 
             Config.Save();
 
@@ -241,7 +242,9 @@ public partial class MainView : UserControl
         {
             if (viewModel == null)
                 return;
-            viewModel.LoadNew(Config.Data.Notes);
+            if (Config.Data.CurrentUsersNotePayload()?.Notes == null || Config.Data.CurrentUsersNotePayload()?.Notes.Count == 0)
+                Config.Data.CurrentUsersNotePayload()?.Notes = [Note.EmptyNote()];
+            viewModel.LoadNew(Config.Data.CurrentUsersNotePayload()?.Notes ?? [Note.EmptyNote()]);
         }
     }
 }
