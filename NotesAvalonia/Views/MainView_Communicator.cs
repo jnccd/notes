@@ -153,6 +153,8 @@ public partial class MainView : UserControl
         try
         {
             var server = viewModel?.LoginServerUri;
+            if (string.IsNullOrWhiteSpace(server))
+                throw new Exception("You need to set the Connect URL of the note server first!");
             var keyCloakAddress = Communicator.GetKeyCloakAddress(server!, new System.Net.Http.HttpClient());
             var url = keyCloakAddress.KeycloakRealmUrl + "/account";
 
