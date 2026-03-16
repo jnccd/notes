@@ -82,6 +82,10 @@ public class Note
     {
         return obj is Note n && n.Id == this.Id;
     }
+    public override int GetHashCode()
+    {
+        return Id.GetHashCode();
+    }
 }
 
 public class FlattenedNote
