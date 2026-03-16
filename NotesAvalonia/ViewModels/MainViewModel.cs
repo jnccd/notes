@@ -17,6 +17,8 @@ namespace NotesAvalonia.ViewModels;
 public partial class MainViewModel : ViewModelBase
 {
     public Note VirtualRoot { get; private set; } = new();
+    public Note? FocusedNote { get; private set; } = null;
+
     public MainViewModel()
     {
 
@@ -34,7 +36,12 @@ public partial class MainViewModel : ViewModelBase
 
     public void ReFlatten()
     {
-        var flattenedNotes = VirtualRoot.Flatten().Skip(1); // Skip virtual root
+        IEnumerable<FlattenedNote> flattenedNotes;
+        if (FocusedNote == null)
+            flattenedNotes = VirtualRoot.Flatten().Skip(1); // Skip virtual root
+        else
+            flattenedNotes = FocusedNote.Flatten(1);
+
         FlattenedNoteVMs.Clear();
         var newFlattenedNvms = flattenedNotes
                 .Select(n => new FlattenedNoteViewModel(n));
@@ -108,6 +115,17 @@ public partial class MainViewModel : ViewModelBase
             var exportText = flattenedNoteVM.FlattenedNote.OriginalNote.SubtreeToStyledString();
             topLevel.Clipboard?.SetTextAsync(exportText);
         }
+    }
+
+    [RelayCommand]
+    public void FocusNote(FlattenedNoteViewModel flattenedNoteVM)
+    {
+        if (FocusedNote == flattenedNoteVM.FlattenedNote.OriginalNote)
+            FocusedNote = null;
+        else
+            FocusedNote = flattenedNoteVM.FlattenedNote.OriginalNote;
+
+        ReFlatten();
     }
 
     [RelayCommand]

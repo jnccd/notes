@@ -78,6 +78,10 @@ public class Note
             }
         return result;
     }
+    public override bool Equals(object? obj)
+    {
+        return obj is Note n && n.Id == this.Id;
+    }
 }
 
 public class FlattenedNote

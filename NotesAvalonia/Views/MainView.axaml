@@ -274,9 +274,9 @@
                                                     Header="Export to Clipboard" />
                                                 <Separator />
                                                 <MenuItem
-                                                    Command="{Binding #Root.((vm:MainViewModel)DataContext).ExportItemToClipboardCommand}"
+                                                    Command="{Binding #Root.((vm:MainViewModel)DataContext).FocusNoteCommand}"
                                                     CommandParameter="{Binding .}"
-                                                    Header="Export to Clipboard" />
+                                                    Header="Focus Note" />
                                                 <Separator />
                                                 <MenuItem
                                                     Command="{Binding #Root.((vm:MainViewModel)DataContext).ToggleNoteHiddenCommand}"
