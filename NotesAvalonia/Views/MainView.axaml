@@ -274,6 +274,11 @@
                                                     Header="Export to Clipboard" />
                                                 <Separator />
                                                 <MenuItem
+                                                    Command="{Binding #Root.((vm:MainViewModel)DataContext).ExportItemToClipboardCommand}"
+                                                    CommandParameter="{Binding .}"
+                                                    Header="Export to Clipboard" />
+                                                <Separator />
+                                                <MenuItem
                                                     Command="{Binding #Root.((vm:MainViewModel)DataContext).ToggleNoteHiddenCommand}"
                                                     CommandParameter="{Binding .}"
                                                     Header="Toggle Hidden" />
@@ -285,10 +290,12 @@
                                                 <MenuItem
                                                     Command="{Binding #Root.((vm:MainViewModel)DataContext).RemoveDoneSubnotesCommand}"
                                                     CommandParameter="{Binding .}"
+                                                    Foreground="Red"
                                                     Header="Delete Done Subnotes" />
                                                 <MenuItem
                                                     Command="{Binding #Root.((vm:MainViewModel)DataContext).RemoveItemCommand}"
                                                     CommandParameter="{Binding .}"
+                                                    Foreground="Red"
                                                     Header="Delete" />
                                             </MenuFlyout>
                                         </Button.Flyout>
