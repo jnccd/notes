@@ -56,7 +56,7 @@ public partial class MainView : UserControl
                     Config.Data.KeycloakRefreshToken = newKeycloakRefreshToken;
                     Config.Save();
                 },
-                (CommsState state) =>
+                stateChanged: state =>
                 {
                     Dispatcher.UIThread.Post(() =>
                     {
@@ -75,6 +75,13 @@ public partial class MainView : UserControl
                         }
                         if (viewModel != null)
                             viewModel.ConnectionState = state == CommsState.Disconnected ? "Disconnected" : $"Connected to {Config.Data.Username}@{Config.Data.ServerUri.Split("//").Last()}";
+                    });
+                },
+                onPayloadRequestError: e =>
+                {
+                    Dispatcher.UIThread.Invoke(() =>
+                    {
+                        popupManager?.Show("Error Connecting to Server!", e.Message);
                     });
                 }
             );
@@ -129,7 +136,7 @@ public partial class MainView : UserControl
             var password = viewModel?.LoginPassword;
             if (string.IsNullOrWhiteSpace(server) || string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
             {
-                ShowPopup("Login Error", "Please fill in all fields.");
+                popupManager?.Show("Login Error", "Please fill in all fields.");
                 return;
             }
 
@@ -144,7 +151,7 @@ public partial class MainView : UserControl
         {
             if (viewModel != null)
                 viewModel.AddDebugText(ex.ToString());
-            ShowPopup("Unknown Login Error", ex.ToString());
+            popupManager?.Show("Login Error", ex.Message);
         }
     }
 
@@ -166,12 +173,12 @@ public partial class MainView : UserControl
             }
             else
             {
-                ShowPopup("Platform not supported", "This platform cant show links :(\nPlease open " + url);
+                popupManager?.Show("Platform not supported", "This platform cant show links :(\nPlease open " + url);
             }
         }
         catch (Exception ex)
         {
-            ShowPopup("Registration Error", ex.Message);
+            popupManager?.Show("Registration Error", ex.Message);
         }
     }
     private void ShowLogsTextBlock_Click(object? sender, RoutedEventArgs e)
@@ -180,13 +187,13 @@ public partial class MainView : UserControl
         {
             var lines = File.ReadAllLines(Config.PersonalPath + "log.txt");
             lines.Reverse();
-            ShowPopup("Logs", string.Join(Environment.NewLine, lines));
+            popupManager?.Show("Logs", string.Join(Environment.NewLine, lines));
         }
         catch (Exception ex)
         {
             if (viewModel != null)
                 viewModel.AddDebugText(ex.ToString());
-            ShowPopup("Error Showing Logs", "Could not read log file: " + ex.Message);
+            popupManager?.Show("Error Showing Logs", "Could not read log file: " + ex.Message);
         }
     }
 

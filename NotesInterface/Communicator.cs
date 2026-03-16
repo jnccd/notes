@@ -25,6 +25,7 @@ namespace Notes.Interface
     {
         readonly object lockject = new object();
         readonly Action<CommsState>? stateChanged;
+        readonly Action<Exception>? onPayloadRequestError;
         public int RequestLoopInterval { get; set; } = 1000;
 
         readonly CancellationTokenSource serverToken = new();
@@ -36,10 +37,11 @@ namespace Notes.Interface
         KeyCloakAddress keyCloakAddress;
         HttpClient? _httpClient;
 
-        public Communicator(string serverUri, string? initialKeyCloakRefreshToken, Action<string> keyCloakRefreshTokenChanged, Action<CommsState>? stateChanged = null, HttpClient? httpClient = null)
+        public Communicator(string serverUri, string? initialKeyCloakRefreshToken, Action<string> keyCloakRefreshTokenChanged, Action<CommsState>? stateChanged = null, HttpClient? httpClient = null, Action<Exception>? onPayloadRequestError = null)
         {
             this.serverUri = serverUri;
             this.stateChanged = stateChanged;
+            this.onPayloadRequestError = onPayloadRequestError;
             _httpClient = httpClient ?? new HttpClient();
             keyCloakAddress = GetKeyCloakAddress(serverUri, _httpClient);
             client = new(keyCloakAddress, keyCloakRefreshTokenChanged, initialKeyCloakRefreshToken, httpClient);
@@ -169,7 +171,11 @@ namespace Notes.Interface
             catch (Exception e)
             {
                 receivedText = "";
-                Logger.WriteLine(e, LogLevel.Error);
+
+                if (onPayloadRequestError != null)
+                    onPayloadRequestError(e);
+                else
+                    Logger.WriteLine(e, LogLevel.Error);
                 stateChanged?.Invoke(CommsState.Disconnected);
             }
 
