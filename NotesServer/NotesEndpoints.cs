@@ -10,6 +10,8 @@ namespace NotesServer;
 
 public static class NotesEndpoints
 {
+    static HttpClient httpClient = new();
+
     public static void RegisterNotesEndpoints(this IEndpointRouteBuilder routes, IServiceProvider services)
     {
         routes.MapGet("/keycloak", (
@@ -25,10 +27,9 @@ public static class NotesEndpoints
         routes.MapGet("/", (
             [FromServices] AuthService auth,
             [FromHeader(Name = "Authorization")] string? authTokenHeader,
-            IHttpClientFactory httpClientFactory,
             HttpRequest request) =>
         {
-            return auth?.GetUser(authTokenHeader, httpClientFactory.CreateClient(), u =>
+            return auth?.GetUser(authTokenHeader, httpClient, u =>
             {
                 return Results.Text(u.NotesPayload?.ToString(), contentType: "application/json");
             });
@@ -39,10 +40,9 @@ public static class NotesEndpoints
             [FromServices] PersistenceService persistence,
             [FromHeader(Name = "Authorization"), Required] string? authTokenHeader,
             //[FromBody, Required] Payload? bodyPayload,
-            IHttpClientFactory httpClientFactory,
             HttpRequest request) =>
         {
-            Result<User> userResult = auth.GetUser(authTokenHeader, httpClientFactory.CreateClient());
+            Result<User> userResult = auth.GetUser(authTokenHeader, httpClient);
             if (!userResult.IsSuccess)
                 return userResult.HttpResult;
             User? u = userResult.Value;
