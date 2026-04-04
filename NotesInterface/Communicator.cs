@@ -124,6 +124,12 @@ namespace Notes.Interface
                 using var response = client.PostAsync(serverUri, httpContent).Result;
                 stateChanged?.Invoke(response.StatusCode != HttpStatusCode.GatewayTimeout ? CommsState.Connected : CommsState.Disconnected);
 
+                if (!response.IsSuccessStatusCode)
+                {
+                    string errorContent = response.Content.ReadAsStringAsync().Result;
+                    onPayloadRequestError?.Invoke(new Exception($"{response.StatusCode}: {errorContent}"));
+                }
+
                 Logger.WriteLine(response.StatusCode);
                 //Logger.WriteLine(response.Content.ReadAsStringAsync().Result);
             }
