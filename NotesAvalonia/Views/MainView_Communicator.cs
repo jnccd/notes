@@ -81,7 +81,7 @@ public partial class MainView : UserControl
                 {
                     Dispatcher.UIThread.Invoke(() =>
                     {
-                        popupManager?.Show("Error Connecting to Server!", e.Message);
+                        popupManager?.Show("Error Connecting to Server!", e.Message, TakeFocus: false);
                     });
                 }
             );

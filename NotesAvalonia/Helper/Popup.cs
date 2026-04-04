@@ -13,13 +13,13 @@ public class Popup(Action<Exception>? OnError, Window? OriginWindow, Control? Fl
     Window? currentWindow;
     Flyout? currentFlyout;
 
-    public void Show(string title, string message, bool AlwaysAsFlyout = false)
+    public void Show(string title, string message, bool AlwaysAsFlyout = false, bool TakeFocus = true)
     {
         try
         {
             if (Globals.IsDesktop && !AlwaysAsFlyout)
             {
-                ShowPopupWindow(title, message);
+                ShowPopupWindow(title, message, TakeFocus);
             }
             else
             {
@@ -32,7 +32,7 @@ public class Popup(Action<Exception>? OnError, Window? OriginWindow, Control? Fl
         }
     }
 
-    private void ShowPopupWindow(string title, string message)
+    private void ShowPopupWindow(string title, string message, bool TakeFocus = true)
     {
         var button = new Button
         {
@@ -77,6 +77,7 @@ public class Popup(Action<Exception>? OnError, Window? OriginWindow, Control? Fl
         };
         button.Click += (s, e) => currentWindow.Close();
 
+        currentWindow.ShowActivated = TakeFocus;
         currentWindow.Show(OriginWindow!);
     }
 
