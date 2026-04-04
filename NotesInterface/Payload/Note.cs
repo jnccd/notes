@@ -1,4 +1,5 @@
-using Microsoft.VisualBasic;
+using System.Web;
+using Newtonsoft.Json;
 
 namespace Notes.Interface;
 
@@ -6,7 +7,7 @@ public enum NotePriority
 {
     VeryHigh,
     High,
-    Meduim,
+    Medium,
     Low,
     VeryLow
 }
@@ -15,11 +16,20 @@ public class Note
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     public bool Done { get; set; } = false;
-    public string Text { get; set; } = "";
+    public string Text { get; set; } = ""; // Should be URL encoded so that the json parser is not interrupted by special characters 
+    [JsonIgnore]
+    public string DecodedText
+    {
+        get
+        {
+            return HttpUtility.UrlDecode(Text) ?? "";
+        }
+        set { Text = HttpUtility.UrlEncode(value); }
+    } // Should be URL encoded so that the json parser is not interrupted by special characters 
     public bool Expanded { get; set; } = false;
     public bool Hidden { get; set; } = false;
     public List<Note> SubNotes { get; set; } = new();
-    public NotePriority Prio { get; set; } = NotePriority.Meduim;
+    public NotePriority Prio { get; set; } = NotePriority.Medium;
 
     public static Note EmptyNote() => new Note()
     {
@@ -58,8 +68,8 @@ public class Note
                         .Aggregate((x, y) => x + y);
                 var expandedSymbol = x.Note.Expanded ? "▼" : "▶";
                 var noteText = x.Note.Done ?
-                    x.Note.Text.Select(x => x + "" + (char)822).Aggregate((x, y) => x + y) : // Cross through if done
-                    x.Note.Text;
+                    x.Note.DecodedText.Select(x => x + "" + (char)822).Aggregate((x, y) => x + y) : // Cross through if done
+                    x.Note.DecodedText;
 
                 return depthPadding + expandedSymbol + noteText;
             })

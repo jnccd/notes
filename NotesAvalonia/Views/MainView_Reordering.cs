@@ -84,7 +84,7 @@ public partial class MainView : UserControl
         if (e.Data.Contains(CustomDragData.Format))
         {
             FlattenedNoteViewModel? draggedFlattenedNote = e.Data.Get(CustomDragData.Format) as FlattenedNoteViewModel;
-            Debug.WriteLine($"NoteContainer_OnDrop: {draggedFlattenedNote?.FlattenedNote.OriginalNote.Text}");
+            Debug.WriteLine($"NoteContainer_OnDrop: {draggedFlattenedNote?.FlattenedNote.OriginalNote.DecodedText}");
 
             if (draggedFlattenedNote != null)
             {

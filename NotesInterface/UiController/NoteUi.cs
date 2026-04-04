@@ -105,7 +105,7 @@ namespace Notes.Interface.UiController
 
             if (Note.Expanded && SubNotes.Count == 0)
                 AddSubNoteBefore(new Note(), parentWindow, rootLayout, createNoteUiElement, 0);
-            else if (!Note.Expanded && SubNotes.Count == 1 && string.IsNullOrWhiteSpace(SubNotes[0].Note.Text))
+            else if (!Note.Expanded && SubNotes.Count == 1 && string.IsNullOrWhiteSpace(SubNotes[0].Note.DecodedText))
                 RemoveSubNoteAt(0);
 
             parentWindow.Relayout();

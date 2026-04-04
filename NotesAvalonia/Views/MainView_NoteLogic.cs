@@ -28,7 +28,7 @@ public partial class MainView : UserControl
             var note = nvm?.FlattenedNote.OriginalNote;
             var parentNote = nvm?.FlattenedNote.Parent?.OriginalNote;
 
-            if (note?.SubNotes.Count > 0 || !string.IsNullOrWhiteSpace(note?.Text))
+            if (note?.SubNotes.Count > 0 || !string.IsNullOrWhiteSpace(note?.DecodedText))
                 return;
 
             var noteIndex = parentNote?.SubNotes.IndexOf(note!);

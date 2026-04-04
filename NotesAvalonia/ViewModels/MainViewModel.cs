@@ -190,7 +190,7 @@ public partial class MainViewModel : ViewModelBase
         }
         if (!item.Expanded)
         {
-            item.FlattenedNote.OriginalNote.SubNotes.RemoveAll(x => string.IsNullOrWhiteSpace(x.Text));
+            item.FlattenedNote.OriginalNote.SubNotes.RemoveAll(x => string.IsNullOrWhiteSpace(x.DecodedText));
             if (mainView != null)
                 mainView.unsavedChanges = true;
         }

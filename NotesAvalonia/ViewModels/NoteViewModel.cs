@@ -1,6 +1,7 @@
 ﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
+using System.Web;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -19,7 +20,7 @@ public partial class NoteViewModel : ViewModelBase
 
         Done = item.Done;
         Expanded = item.Expanded;
-        Text = item.Text;
+        Text = item.DecodedText;
 
         SubNotes = new ObservableCollection<NoteViewModel>(
             item.SubNotes.Select(n => new NoteViewModel(n))
@@ -72,7 +73,7 @@ public partial class FlattenedNoteViewModel : ViewModelBase
     {
         get
         {
-            var children = FlattenedNote.OriginalNote.RecursiveSubNotes().Where(x => x.Note != FlattenedNote.OriginalNote && !string.IsNullOrWhiteSpace(x.Note.Text));
+            var children = FlattenedNote.OriginalNote.RecursiveSubNotes().Where(x => x.Note != FlattenedNote.OriginalNote && !string.IsNullOrWhiteSpace(x.Note.DecodedText));
             var undoneChildren = children.Where(x => !x.Note.Done);
 
             var childCount = children.Count();
@@ -130,10 +131,10 @@ public partial class FlattenedNoteViewModel : ViewModelBase
     private string _text = "";
     public string Text
     {
-        get { return FlattenedNote.OriginalNote.Text ?? ""; }
+        get { return FlattenedNote.OriginalNote.DecodedText ?? ""; }
         set
         {
-            FlattenedNote.OriginalNote.Text = value;
+            FlattenedNote.OriginalNote.DecodedText = value;
             if (mainView != null)
                 mainView.unsavedChanges = true;
             SetProperty(ref _text, value);
