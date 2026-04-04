@@ -51,12 +51,12 @@ public static class NotesEndpoints
             string body = await bodyStream.ReadToEndAsync();
             Payload? bodyPayload = Payload.Parse(body);
 
-            bool[] checks = [bodyPayload != null,
-                (bodyPayload?.SaveTime > u?.NotesPayload?.SaveTime || u?.NotesPayload == null),
-                bodyPayload?.SaveTime <= DateTime.Now.AddSeconds(3),
-                bodyPayload?.Checksum == bodyPayload?.GenerateChecksum()
+            (bool checkSuccessful, string errorMessage)[] checks = [(bodyPayload != null, "Payload could not be parsed"),
+                (bodyPayload?.SaveTime > u?.NotesPayload?.SaveTime || u?.NotesPayload == null, "SaveTime is not newer"),
+                (bodyPayload?.SaveTime <= DateTime.Now.AddSeconds(3), "SaveTime is too old"),
+                (bodyPayload?.Checksum == bodyPayload?.GenerateChecksum(), "Checksum does not match")
             ];
-            if (checks.All(x => x))
+            if (checks.All(x => x.checkSuccessful))
             {
                 Logger.WriteLine($"Checksum check okay, writing for {u?.Username}");
 
@@ -66,10 +66,8 @@ public static class NotesEndpoints
             }
             else
             {
-                Logger.WriteLine($"Invalid post req received " +
-                    checks.Select(x => x.ToString()).Aggregate((x, y) => x + ", " + y));
-                return Results.BadRequest("Invalid Payload " +
-                    checks.Select(x => x.ToString()).Aggregate((x, y) => x + ", " + y));
+                Logger.WriteLine($"Invalid post req received {checks.Select(x => x.ToString()).Aggregate((x, y) => x + ", " + y)} {checks.Where(x => !x.checkSuccessful).Select(x => x.errorMessage).Aggregate((x, y) => x + ", " + y)}");
+                return Results.BadRequest($"Invalid Payload: {checks.FirstOrDefault(x => !x.checkSuccessful).errorMessage}");
             }
 
             return Results.Ok("Pog");
