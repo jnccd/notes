@@ -465,3 +465,5 @@ $RECYCLE.BIN/
 !.vscode/extensions.json
 
 logcat.txt
+
+**.lscache
