@@ -1,0 +1,54 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NotesAvalonia.Desktop", "NotesAvalonia.Desktop\NotesAvalonia.Desktop.csproj", "{446A88FC-9C1E-3657-54F2-2F0ABF0F02D4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NotesInterface", "NotesInterface\NotesInterface.csproj", "{99B16047-313B-5475-5E5D-1B383E6EEF5D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EzKeycloak", "EzKeycloak\EzKeycloak.csproj", "{7C28673E-FF0B-D74A-A1E4-E72C88F33080}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NotesAvalonia", "NotesAvalonia\NotesAvalonia.csproj", "{6ED87BD1-00C9-D479-AFA9-AB4D6D941C07}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NotesAvalonia.Android", "NotesAvalonia.Android\NotesAvalonia.Android.csproj", "{A265AB76-F9B2-115D-9592-94833B1F302B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NotesServer", "NotesServer\NotesServer.csproj", "{D3F67B22-9D3D-02E2-DE8C-AAC9DBD5EED2}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{446A88FC-9C1E-3657-54F2-2F0ABF0F02D4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{446A88FC-9C1E-3657-54F2-2F0ABF0F02D4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{446A88FC-9C1E-3657-54F2-2F0ABF0F02D4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{446A88FC-9C1E-3657-54F2-2F0ABF0F02D4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{99B16047-313B-5475-5E5D-1B383E6EEF5D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{99B16047-313B-5475-5E5D-1B383E6EEF5D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{99B16047-313B-5475-5E5D-1B383E6EEF5D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{99B16047-313B-5475-5E5D-1B383E6EEF5D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7C28673E-FF0B-D74A-A1E4-E72C88F33080}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7C28673E-FF0B-D74A-A1E4-E72C88F33080}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7C28673E-FF0B-D74A-A1E4-E72C88F33080}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7C28673E-FF0B-D74A-A1E4-E72C88F33080}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6ED87BD1-00C9-D479-AFA9-AB4D6D941C07}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6ED87BD1-00C9-D479-AFA9-AB4D6D941C07}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6ED87BD1-00C9-D479-AFA9-AB4D6D941C07}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6ED87BD1-00C9-D479-AFA9-AB4D6D941C07}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A265AB76-F9B2-115D-9592-94833B1F302B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A265AB76-F9B2-115D-9592-94833B1F302B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A265AB76-F9B2-115D-9592-94833B1F302B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A265AB76-F9B2-115D-9592-94833B1F302B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D3F67B22-9D3D-02E2-DE8C-AAC9DBD5EED2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D3F67B22-9D3D-02E2-DE8C-AAC9DBD5EED2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D3F67B22-9D3D-02E2-DE8C-AAC9DBD5EED2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D3F67B22-9D3D-02E2-DE8C-AAC9DBD5EED2}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {05719466-2995-48DA-969A-6D50542FC8EA}
+	EndGlobalSection
+EndGlobal

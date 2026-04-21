@@ -6,12 +6,13 @@
   <ItemGroup>
     <!-- Interface packages -->
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.5"/>
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.5" />
     <PackageVersion Include="log4net" Version="2.0.17" />
     <!-- Server packages -->
     <PackageVersion Include="DotNetEnv" Version="3.1.1" />
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="7.0.5" />
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
+    <PackageVersion Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="3.119.2" />
     <PackageVersion Include="Swashbuckle.AspNetCore" Version="6.4.0" />
     <!-- Avalonia packages -->
     <PackageVersion Include="Avalonia" Version="11.3.6" />

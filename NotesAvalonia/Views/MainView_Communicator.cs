@@ -202,14 +202,15 @@ public partial class MainView : UserControl
         bool validPayload = false;
         lock (Config.Data)
         {
+            var currentPayload = Config.Data.CurrentUsersNotePayload();
             validPayload = payload != null &&
                 payload.Checksum == payload.GenerateChecksum() &&
-                (Config.Data.CurrentUsersNotePayload == null ||
-                    Config.Data.CurrentUsersNotePayload()?.SaveTime < payload.SaveTime);
+                (currentPayload == null ||
+                    currentPayload.SaveTime < payload.SaveTime);
 
-            if (validPayload)
+            if (validPayload && currentPayload != null)
             {
-                Config.Data.CurrentUsersNotePayload()?.Notes = payload!.Notes;
+                currentPayload.Notes = payload!.Notes;
             }
         }
 
@@ -235,8 +236,9 @@ public partial class MainView : UserControl
                 Config.Data.Height = window.FrameSize.Value.Height;
             }
 
-            if (updateSaveTime)
-                Config.Data.CurrentUsersNotePayload()?.SaveTime = DateTime.Now;
+            var currentPayload = Config.Data.CurrentUsersNotePayload();
+            if (updateSaveTime && currentPayload != null)
+                currentPayload.SaveTime = DateTime.Now;
 
             Config.Save();
 
@@ -249,9 +251,11 @@ public partial class MainView : UserControl
         {
             if (viewModel == null)
                 return;
-            if (Config.Data.CurrentUsersNotePayload()?.Notes == null || Config.Data.CurrentUsersNotePayload()?.Notes.Count == 0)
-                Config.Data.CurrentUsersNotePayload()?.Notes = [Note.EmptyNote()];
-            viewModel.LoadNew(Config.Data.CurrentUsersNotePayload()?.Notes ?? [Note.EmptyNote()]);
+            var currentPayload = Config.Data.CurrentUsersNotePayload();
+            if (currentPayload != null && (currentPayload.Notes == null || currentPayload.Notes.Count == 0))
+                currentPayload.Notes = [Note.EmptyNote()];
+            if (currentPayload != null)
+                viewModel.LoadNew(currentPayload.Notes ?? [Note.EmptyNote()]);
         }
     }
 }
