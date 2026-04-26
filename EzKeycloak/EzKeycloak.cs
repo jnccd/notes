@@ -2,6 +2,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 
 namespace EzKeycloak;
 
@@ -9,6 +10,11 @@ public class EzKeycloakException(string message) : Exception(message);
 
 public static class EzKeycloak
 {
+    static JsonSerializerOptions jsonOptions = new JsonSerializerOptions
+    {
+        TypeInfoResolver = new DefaultJsonTypeInfoResolver()
+    };
+
     public static LoginResponse? LoginToCloakReq(HttpClient client, HttpRequestMessage request, string Content, (string, string)[]? AdditionalHeaders = null)
     {
         if (AdditionalHeaders != null)
@@ -24,7 +30,7 @@ public static class EzKeycloak
         if (!response.IsSuccessStatusCode)
             throw new EzKeycloakException($"LoginToCloakReq to {request.RequestUri} failed! {response.StatusCode} {response.Content.ReadAsStringAsync().Result}");
         string responseBody = response.Content.ReadAsStringAsync().Result;
-        LoginResponse? loginResponse = JsonSerializer.Deserialize<LoginResponse>(responseBody);
+        LoginResponse? loginResponse = JsonSerializer.Deserialize<LoginResponse>(responseBody, jsonOptions);
         return loginResponse;
     }
     public static UserinfoResponse? UserinfoCloakReq(HttpClient client, HttpRequestMessage request, string? AuthorizationBearer = null)
@@ -34,7 +40,7 @@ public static class EzKeycloak
         if (!response.IsSuccessStatusCode)
             throw new EzKeycloakException($"UserinfoCloakReq to {request.RequestUri} failed! {response.StatusCode} {response.Content.ReadAsStringAsync().Result}");
         string responseBody = response.Content.ReadAsStringAsync().Result;
-        UserinfoResponse? userinfoResponse = JsonSerializer.Deserialize<UserinfoResponse>(responseBody);
+        UserinfoResponse? userinfoResponse = JsonSerializer.Deserialize<UserinfoResponse>(responseBody, jsonOptions);
         return userinfoResponse;
     }
 

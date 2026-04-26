@@ -1,11 +1,17 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 using Notes.Interface;
 
 namespace NotesServer.Services.Notes;
 
 public class User
 {
+    static JsonSerializerOptions jsonOptions = new JsonSerializerOptions
+    {
+        TypeInfoResolver = new DefaultJsonTypeInfoResolver()
+    };
+
     public Guid Id { get; set; }
     public string Username { get; private set; }
 
@@ -14,11 +20,11 @@ public class User
     public Payload? NotesPayload { get; set; }
     public string? NotesPayloadJson
     {
-        get => JsonSerializer.Serialize(NotesPayload);
+        get => JsonSerializer.Serialize(NotesPayload, jsonOptions);
         set
         {
             if (value != null)
-                NotesPayload = JsonSerializer.Deserialize<Payload>(value);
+                NotesPayload = JsonSerializer.Deserialize<Payload>(value, jsonOptions);
         }
     }
 
