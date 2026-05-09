@@ -36,7 +36,7 @@ public class KeyCloakHttpClient(KeyCloakAddress keyCloakAddress, Action<string> 
         if (currentRefreshToken == null)
             return;
 
-        if (DateTime.Now >= accessTokenExpiry)
+        if (DateTime.Now >= accessTokenExpiry || true)
         {
             var res = EzKeycloak.RefreshCloakSession(client, keyCloakAddress!.KeycloakRealmUrl!, keyCloakAddress.KeycloakClient!, currentRefreshToken);
             errorDuringTokenRetrieval = UpdateTokenVars(res);

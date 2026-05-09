@@ -22,8 +22,12 @@ public static class EzKeycloak
         request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded");
         HttpResponseMessage response = client.SendAsync(request).Result;
         if (!response.IsSuccessStatusCode)
+        {
+            Debug.WriteLine($"{DateTime.Now:HH:mm:ss} LoginToCloakReq to {request.RequestUri} failed! {response.StatusCode} {response.Content.ReadAsStringAsync().Result}");
             throw new EzKeycloakException($"LoginToCloakReq to {request.RequestUri} failed! {response.StatusCode} {response.Content.ReadAsStringAsync().Result}");
+        }
         string responseBody = response.Content.ReadAsStringAsync().Result;
+        Debug.WriteLine($"{DateTime.Now:HH:mm:ss} responseBody: {responseBody}");
         LoginResponse? loginResponse = JsonSerializer.Deserialize<LoginResponse>(responseBody);
         return loginResponse;
     }
@@ -45,15 +49,17 @@ public static class EzKeycloak
     }
     public static LoginResponse? LoginToCloak(HttpClient client, string realmUrl, string clientId, string username, string password)
     {
-        Debug.WriteLine($"Attempting to login to Keycloak realm {realmUrl} for client {clientId} with user {username} and password {password}");
+        //Debug.WriteLine($"Attempting to login to Keycloak realm {realmUrl} for client {clientId} with user {username} and password {password}");
         var content = $"client_id={clientId}&grant_type=password&username={WebUtility.UrlEncode(username)}&password={WebUtility.UrlEncode(password)}&scope=openid";
+        Debug.WriteLine($"{DateTime.Now:HH:mm:ss} {realmUrl}/protocol/openid-connect/token POST {content}");
         var res = LoginToCloakReq(client, new HttpRequestMessage(HttpMethod.Post, $"{realmUrl}/protocol/openid-connect/token"), content) ?? throw new EzKeycloakException("Login failed: No response");
         return res;
     }
     public static LoginResponse? RefreshCloakSession(HttpClient client, string realmUrl, string clientId, string refreshToken)
     {
-        Debug.WriteLine($"Attempting to refresh Keycloak session for client {clientId} and refresh token {refreshToken}");
+        //Debug.WriteLine($"Attempting to refresh Keycloak session for client {clientId} and refresh token {refreshToken}");
         var content = $"grant_type=refresh_token&client_id={clientId}&refresh_token={refreshToken}";
+        Debug.WriteLine($"{DateTime.Now:HH:mm:ss} {realmUrl}/protocol/openid-connect/token POST {content}");
         var res = LoginToCloakReq(client, new HttpRequestMessage(HttpMethod.Post, $"{realmUrl}/protocol/openid-connect/token"), content) ?? throw new EzKeycloakException("RefreshCloakSession failed: No response");
         return res;
     }
