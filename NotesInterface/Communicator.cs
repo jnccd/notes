@@ -191,7 +191,7 @@ namespace Notes.Interface
         public void Dispose()
         {
             stateChanged?.Invoke(CommsState.Disconnected);
-            serverToken.Cancel();
+            try { serverToken.Cancel(); } catch { }
             if (serverTask?.Status != TaskStatus.WaitingForActivation)
                 serverTask?.Wait();
             //GC.SuppressFinalize(this);
