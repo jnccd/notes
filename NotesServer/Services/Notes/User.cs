@@ -18,16 +18,16 @@ public class User
     /// Can be used as a primary key.
     /// </summary>
     [Key]
-    public string UserId { get; }
+    public string UserId { get; set; }
     /// <summary>
     /// A unique name the user selected on registration, not guaranteed to be immutable.
     /// </summary>
-    public string UserHandle { get; }
+    public string UserHandle { get; set; }
     /// <summary>
     /// The display name of the user, can be changed by the user at any time, not guaranteed to be unique.
     /// May contain special characters, emojis, etc.
     /// </summary>
-    public string UserDisplayName { get; }
+    public string UserDisplayName { get; set; }
 
     // Ef Core doesnt support recursive jsonb, so I serialize manually
     [NotMapped]
