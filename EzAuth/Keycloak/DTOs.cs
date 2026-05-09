@@ -10,13 +10,8 @@ public record KeyCloakAddress
     public string? KeycloakRealmUrl { get; init; }
     public string? KeycloakClient { get; init; }
 }
-public class LoginResponse : EzAuthLoginTokens
+public class LoginResponse
 {
-    [JsonIgnore]
-    public new string? AccessToken { get { return access_token; } }
-    [JsonIgnore]
-    public new string? RefreshToken { get { return refresh_token; } }
-
     public string? access_token { get; set; }
     public int? expires_in { get; set; }
     public int? refresh_expires_in { get; set; }
@@ -24,16 +19,18 @@ public class LoginResponse : EzAuthLoginTokens
     public string? token_type { get; set; }
     public string? session_state { get; set; }
     public string? scope { get; set; }
-}
-public class UserinfoResponse : EzAuthUserInfo
-{
-    [JsonIgnore]
-    public new string? UserId { get { return preferred_username; } }
-    [JsonIgnore]
-    public new string? UserHandle { get { return preferred_username; } }
-    [JsonIgnore]
-    public new string? UserDisplayName { get { return given_name; } }
 
+    public EzAuthLoginTokens ToEzAuthLoginTokens()
+    {
+        return new EzAuthLoginTokens
+        {
+            AccessToken = access_token,
+            RefreshToken = refresh_token
+        };
+    }
+}
+public class UserinfoResponse
+{
     public string? sub { get; set; }
     public string? name { get; set; }
     public string? preferred_username { get; set; }
@@ -41,4 +38,14 @@ public class UserinfoResponse : EzAuthUserInfo
     public string? family_name { get; set; }
     public string? email { get; set; }
     public bool? email_verified { get; set; }
+
+    public EzAuthUserInfo ToEzAuthUserInfo()
+    {
+        return new EzAuthUserInfo
+        {
+            UserId = preferred_username,
+            UserHandle = preferred_username,
+            UserDisplayName = given_name
+        };
+    }
 }
