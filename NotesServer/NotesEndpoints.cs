@@ -17,10 +17,10 @@ public static class NotesEndpoints
         routes.MapGet("/keycloak", (
            IOptions<AuthOptions> authOptions) =>
         {
-            return Results.Ok(new KeyCloakAddress
+            return Results.Ok(new
             {
-                KeycloakRealmUrl = authOptions.Value.KeycloakRealmUrl,
-                KeycloakClient = authOptions.Value.KeycloakClient
+                authOptions.Value.KeycloakRealmUrl,
+                authOptions.Value.KeycloakClient
             });
         });
 
@@ -58,7 +58,7 @@ public static class NotesEndpoints
             ];
             if (checks.All(x => x.checkSuccessful))
             {
-                Logger.WriteLine($"Checksum check okay, writing for {u?.Username}");
+                Logger.WriteLine($"Checksum check okay, writing for {u?.UserId}");
 
                 if (u != null)
                     u.NotesPayload = bodyPayload;

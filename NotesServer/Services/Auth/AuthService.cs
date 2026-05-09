@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Text;
+using EzAuth.Keycloak;
 using Microsoft.Extensions.Options;
 using NotesServer.Services.Notes;
 using static NotesServer.Configuration;
@@ -29,10 +30,10 @@ public class AuthService(IOptions<AuthOptions> options, LoggerService logger, Pe
                 logger.WriteLine($"[Auth] Invalid token: {authTokenHeader}");
             return new Result<User>(Results.BadRequest($"Invalid token {authTokenHeader}"));
         }
-        EzAuth.UserinfoResponse? userInfo;
+        EzAuthUserInfo? userInfo;
         try
         {
-            if (!EzAuth.EzAuth.IsTokenValid(httpClient, options.Value.KeycloakRealmUrl ?? "", authTokenHeader?.Split(" ")[1] ?? "", out userInfo))
+            if (!EzKeycloak.IsTokenValid(httpClient, options.Value.KeycloakRealmUrl ?? "", authTokenHeader?.Split(" ")[1] ?? "", out userInfo))
             {
                 if (writeLogs)
                     logger.WriteLine($"[Auth] Invalid token: {authTokenHeader}");
@@ -46,10 +47,13 @@ public class AuthService(IOptions<AuthOptions> options, LoggerService logger, Pe
             return new Result<User>(Results.Unauthorized());
         }
 
-        var notesUser = persistence.Users?.FirstOrDefault(u => userInfo != null && u.Username == userInfo.preferred_username);
-        if (notesUser == null && userInfo?.preferred_username != null)
+        var notesUser = persistence.Users?.FirstOrDefault(u => userInfo != null && u.UserId == userInfo.UserId);
+        if (notesUser == null && userInfo?.UserId != null)
         {
-            persistence.Users?.Add(notesUser = new(userInfo?.preferred_username ?? "unknown"));
+            persistence.Users?.Add(notesUser = new(
+                    userInfo?.UserId ?? throw new ArgumentNullException(nameof(userInfo.UserId)),
+                    userInfo?.UserHandle ?? throw new ArgumentNullException(nameof(userInfo.UserHandle)),
+                    userInfo?.UserDisplayName ?? throw new ArgumentNullException(nameof(userInfo.UserDisplayName))));
             persistence.Save();
         }
         if (notesUser == null) return new Result<User>(give404 ? Results.NotFound() : new AuthReqResult());

@@ -3,12 +3,11 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
+using EzAuth.Interfaces;
 
-namespace EzAuth;
+namespace EzAuth.Keycloak;
 
-public class EzAuthException(string message) : Exception(message);
-
-public static class EzAuth
+public class EzKeycloak : EzAuth.Interfaces.IEzAuth
 {
     static JsonSerializerOptions jsonOptions = new JsonSerializerOptions
     {
@@ -44,11 +43,13 @@ public static class EzAuth
         return userinfoResponse;
     }
 
-    public static bool IsTokenValid(HttpClient client, string realmUrl, string accessToken, out UserinfoResponse? userInfo)
+
+    public static bool IsTokenValid(HttpClient client, string realmUrl, string accessToken, out EzAuthUserInfo? userInfo)
     {
-        userInfo = UserinfoCloakReq(client, new HttpRequestMessage(HttpMethod.Get, $"{realmUrl}/protocol/openid-connect/userinfo"), accessToken);
+        userInfo = UserinfoCloakReq(client, new HttpRequestMessage(HttpMethod.Get, $"{realmUrl}/protocol/openid-connect/userinfo"), accessToken) as EzAuthUserInfo;
         return userInfo != null;
     }
+
     public static LoginResponse? LoginToCloak(HttpClient client, string realmUrl, string clientId, string username, string password)
     {
         Debug.WriteLine($"Attempting to login to Keycloak realm {realmUrl} for client {clientId} with user {username} and password {password}");
@@ -56,6 +57,8 @@ public static class EzAuth
         var res = LoginToCloakReq(client, new HttpRequestMessage(HttpMethod.Post, $"{realmUrl}/protocol/openid-connect/token"), content) ?? throw new EzAuthException("Login failed: No response");
         return res;
     }
+    public static EzAuthLoginTokens? Login(HttpClient client, string realmUrl, string clientId, string username, string password) => LoginToCloak(client, realmUrl, clientId, username, password);
+
     public static LoginResponse? RefreshCloakSession(HttpClient client, string realmUrl, string clientId, string refreshToken)
     {
         Debug.WriteLine($"Attempting to refresh Keycloak session for client {clientId} and refresh token {refreshToken}");
@@ -63,4 +66,5 @@ public static class EzAuth
         var res = LoginToCloakReq(client, new HttpRequestMessage(HttpMethod.Post, $"{realmUrl}/protocol/openid-connect/token"), content) ?? throw new EzAuthException("RefreshCloakSession failed: No response");
         return res;
     }
+    public static EzAuthLoginTokens? RefreshSession(HttpClient client, string realmUrl, string clientId, string refreshToken) => RefreshCloakSession(client, realmUrl, clientId, refreshToken);
 }
