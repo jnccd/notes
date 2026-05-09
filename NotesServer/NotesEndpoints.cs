@@ -1,5 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using EzKeycloak;
+using EzAuth;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Notes.Interface;

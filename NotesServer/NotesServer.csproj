@@ -18,8 +18,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\EzAuth\EzAuth.csproj" />
     <ProjectReference Include="..\NotesInterface\NotesInterface.csproj" />
-    <ProjectReference Include="..\EzKeycloak\EzKeycloak.csproj" />
   </ItemGroup>
 
 </Project>

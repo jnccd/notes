@@ -4,11 +4,11 @@ using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 
-namespace EzKeycloak;
+namespace EzAuth;
 
-public class EzKeycloakException(string message) : Exception(message);
+public class EzAuthException(string message) : Exception(message);
 
-public static class EzKeycloak
+public static class EzAuth
 {
     static JsonSerializerOptions jsonOptions = new JsonSerializerOptions
     {
@@ -28,7 +28,7 @@ public static class EzKeycloak
         request.Content.Headers.ContentType = new MediaTypeHeaderValue("application/x-www-form-urlencoded");
         HttpResponseMessage response = client.SendAsync(request).Result;
         if (!response.IsSuccessStatusCode)
-            throw new EzKeycloakException($"LoginToCloakReq to {request.RequestUri} failed! {response.StatusCode} {response.Content.ReadAsStringAsync().Result}");
+            throw new EzAuthException($"LoginToCloakReq to {request.RequestUri} failed! {response.StatusCode} {response.Content.ReadAsStringAsync().Result}");
         string responseBody = response.Content.ReadAsStringAsync().Result;
         LoginResponse? loginResponse = JsonSerializer.Deserialize<LoginResponse>(responseBody, jsonOptions);
         return loginResponse;
@@ -38,7 +38,7 @@ public static class EzKeycloak
         if (AuthorizationBearer != null) request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", AuthorizationBearer);
         HttpResponseMessage response = client.Send(request);
         if (!response.IsSuccessStatusCode)
-            throw new EzKeycloakException($"UserinfoCloakReq to {request.RequestUri} failed! {response.StatusCode} {response.Content.ReadAsStringAsync().Result}");
+            throw new EzAuthException($"UserinfoCloakReq to {request.RequestUri} failed! {response.StatusCode} {response.Content.ReadAsStringAsync().Result}");
         string responseBody = response.Content.ReadAsStringAsync().Result;
         UserinfoResponse? userinfoResponse = JsonSerializer.Deserialize<UserinfoResponse>(responseBody, jsonOptions);
         return userinfoResponse;
@@ -53,14 +53,14 @@ public static class EzKeycloak
     {
         Debug.WriteLine($"Attempting to login to Keycloak realm {realmUrl} for client {clientId} with user {username} and password {password}");
         var content = $"client_id={clientId}&grant_type=password&username={WebUtility.UrlEncode(username)}&password={WebUtility.UrlEncode(password)}&scope=openid";
-        var res = LoginToCloakReq(client, new HttpRequestMessage(HttpMethod.Post, $"{realmUrl}/protocol/openid-connect/token"), content) ?? throw new EzKeycloakException("Login failed: No response");
+        var res = LoginToCloakReq(client, new HttpRequestMessage(HttpMethod.Post, $"{realmUrl}/protocol/openid-connect/token"), content) ?? throw new EzAuthException("Login failed: No response");
         return res;
     }
     public static LoginResponse? RefreshCloakSession(HttpClient client, string realmUrl, string clientId, string refreshToken)
     {
         Debug.WriteLine($"Attempting to refresh Keycloak session for client {clientId} and refresh token {refreshToken}");
         var content = $"grant_type=refresh_token&client_id={clientId}&refresh_token={refreshToken}";
-        var res = LoginToCloakReq(client, new HttpRequestMessage(HttpMethod.Post, $"{realmUrl}/protocol/openid-connect/token"), content) ?? throw new EzKeycloakException("RefreshCloakSession failed: No response");
+        var res = LoginToCloakReq(client, new HttpRequestMessage(HttpMethod.Post, $"{realmUrl}/protocol/openid-connect/token"), content) ?? throw new EzAuthException("RefreshCloakSession failed: No response");
         return res;
     }
 }

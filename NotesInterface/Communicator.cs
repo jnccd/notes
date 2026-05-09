@@ -1,4 +1,4 @@
-﻿using EzKeycloak;
+﻿using EzAuth;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -60,7 +60,7 @@ namespace Notes.Interface
 
         public string GetSeparateSessionRefreshToken(string username, string password)
         {
-            var res = EzKeycloak.EzKeycloak.LoginToCloak(_httpClient!, keyCloakAddress.KeycloakRealmUrl!, keyCloakAddress.KeycloakClient!, username, password);
+            var res = EzAuth.EzAuth.LoginToCloak(_httpClient!, keyCloakAddress.KeycloakRealmUrl!, keyCloakAddress.KeycloakClient!, username, password);
             return res!.refresh_token!;
         }
 

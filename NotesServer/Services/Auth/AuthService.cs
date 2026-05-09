@@ -29,10 +29,10 @@ public class AuthService(IOptions<AuthOptions> options, LoggerService logger, Pe
                 logger.WriteLine($"[Auth] Invalid token: {authTokenHeader}");
             return new Result<User>(Results.BadRequest($"Invalid token {authTokenHeader}"));
         }
-        EzKeycloak.UserinfoResponse? userInfo;
+        EzAuth.UserinfoResponse? userInfo;
         try
         {
-            if (!EzKeycloak.EzKeycloak.IsTokenValid(httpClient, options.Value.KeycloakRealmUrl ?? "", authTokenHeader?.Split(" ")[1] ?? "", out userInfo))
+            if (!EzAuth.EzAuth.IsTokenValid(httpClient, options.Value.KeycloakRealmUrl ?? "", authTokenHeader?.Split(" ")[1] ?? "", out userInfo))
             {
                 if (writeLogs)
                     logger.WriteLine($"[Auth] Invalid token: {authTokenHeader}");

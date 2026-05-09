@@ -6,7 +6,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NotesAvalonia.Desktop", "No
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NotesInterface", "NotesInterface\NotesInterface.csproj", "{99B16047-313B-5475-5E5D-1B383E6EEF5D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EzKeycloak", "EzKeycloak\EzKeycloak.csproj", "{7C28673E-FF0B-D74A-A1E4-E72C88F33080}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EzAuth", "EzAuth\EzAuth.csproj", "{7C28673E-FF0B-D74A-A1E4-E72C88F33080}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NotesAvalonia", "NotesAvalonia\NotesAvalonia.csproj", "{6ED87BD1-00C9-D479-AFA9-AB4D6D941C07}"
 EndProject

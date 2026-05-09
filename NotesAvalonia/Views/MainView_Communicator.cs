@@ -13,7 +13,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.LogicalTree;
 using Avalonia.Threading;
-using EzKeycloak;
+using EzAuth;
 using Notes.Interface;
 using NotesAvalonia.Configuration;
 using NotesAvalonia.ViewModels;
