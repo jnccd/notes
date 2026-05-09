@@ -44,7 +44,7 @@ public class AuthService(IOptions<AuthOptions> options, LoggerService logger, Pe
         {
             if (writeLogs)
                 logger.WriteLine($"[Auth] Token check for {authTokenHeader} failed: {ex}");
-            return new Result<User>(Results.Unauthorized());
+            return new Result<User>(Results.BadRequest($"Token check failed: {ex.Message}"));
         }
 
         var notesUser = persistence.Users?.FirstOrDefault(u => userInfo != null && u.UserId == userInfo.UserId);
