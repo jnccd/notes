@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Text;
+using EzAuth.Interfaces;
 using EzAuth.Keycloak;
 using Microsoft.Extensions.Options;
 using NotesServer.Services.Notes;
