@@ -1,0 +1,3 @@
+[submodule "EzAuth"]
+	path = EzAuth
+	url = https://github.com/jnccd/ez-auth
