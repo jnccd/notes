@@ -20,7 +20,7 @@ public static class NotesEndpoints
         {
             return Results.Ok(new EzAuthAddress
             {
-                RealmUrl = authOptions.Value.AuthBackendClient,
+                RealmUrl = authOptions.Value.AuthBackendRealmUrl,
                 Client = authOptions.Value.AuthBackendClient
             });
         });
