@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using EzAuth;
+using EzAuth.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Notes.Interface;
@@ -17,10 +18,10 @@ public static class NotesEndpoints
         routes.MapGet("/authBackend", (
            IOptions<AuthOptions> authOptions) =>
         {
-            return Results.Ok(new
+            return Results.Ok(new EzAuthAddress
             {
-                authOptions.Value.AuthBackendRealmUrl,
-                authOptions.Value.AuthBackendClient
+                RealmUrl = authOptions.Value.AuthBackendClient,
+                Client = authOptions.Value.AuthBackendClient
             });
         });
 
