@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using EzAuth.Interfaces;
+using EzAuth.Keycloak;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Notes.Interface;
 using NotesServer.Services;
@@ -48,11 +50,12 @@ public static class Configuration
 
         // Other
         builder.Services.AddHttpClient();
+        builder.Services.AddSingleton<IEzAuth>(new EzKeycloak());
         builder.Services.AddOptions<AuthOptions>().Configure((authOption) =>
         {
             authOption.WriteLogs = true;
-            authOption.KeycloakClient = builder.Configuration["KEYCLOAK_CLIENT_ID"];
-            authOption.KeycloakRealmUrl = builder.Configuration["KEYCLOAK_REALM_URL"];
+            authOption.AuthBackendClient = builder.Configuration["AUTH_BACKEND_CLIENT_ID"];
+            authOption.AuthBackendRealmUrl = builder.Configuration["AUTH_BACKEND_REALM_URL"];
         });
     }
 

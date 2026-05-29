@@ -31,9 +31,9 @@ namespace NotesAvalonia.Android
             {
                 var communicator = new Communicator(
                     Config.Data.ServerUri!,
-                    Config.Data.KeycloakRefreshTokenForAndroidWidget, newKeycloakRefreshToken =>
+                    Config.Data.AuthBackendRefreshTokenForAndroidWidget, newAuthBackendRefreshToken =>
                     {
-                        Config.Data.KeycloakRefreshTokenForAndroidWidget = newKeycloakRefreshToken;
+                        Config.Data.AuthBackendRefreshTokenForAndroidWidget = newAuthBackendRefreshToken;
                         Config.Save();
                     },
                     (CommsState state) => { }

@@ -19,8 +19,8 @@ namespace NotesAvalonia.Configuration
         // Server
         public string? ServerUri;
         public string? Username;
-        public string? KeycloakRefreshToken;
-        public string? KeycloakRefreshTokenForAndroidWidget;
+        public string? AuthBackendRefreshToken;
+        public string? AuthBackendRefreshTokenForAndroidWidget;
 
         // Notes payload
         public Dictionary<string, NotePayload> NotePayloadOfUser;

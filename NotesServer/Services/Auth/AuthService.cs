@@ -1,7 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Text;
 using EzAuth.Interfaces;
-using EzAuth.Keycloak;
 using Microsoft.Extensions.Options;
 using NotesServer.Services.Notes;
 using static NotesServer.Configuration;
@@ -9,7 +8,7 @@ using static NotesServer.Configuration;
 namespace NotesServer.Services.Auth;
 
 [RegisterImplementation(ServiceRegisterType.Singleton, typeof(AuthService))]
-public class AuthService(IOptions<AuthOptions> options, LoggerService logger, PersistenceService persistence)
+public class AuthService(IOptions<AuthOptions> options, LoggerService logger, PersistenceService persistence, IEzAuth authBackendService)
 {
     readonly bool writeLogs = options.Value.WriteLogs;
     readonly bool give404 = options.Value.Give404;
@@ -34,7 +33,7 @@ public class AuthService(IOptions<AuthOptions> options, LoggerService logger, Pe
         EzAuthUserInfo? userInfo;
         try
         {
-            if (!EzKeycloak.IsTokenValid(httpClient, options.Value.KeycloakRealmUrl ?? "", authTokenHeader?.Split(" ")[1] ?? "", out userInfo))
+            if (!authBackendService.IsTokenValid(httpClient, options.Value.AuthBackendRealmUrl ?? "", authTokenHeader?.Split(" ")[1] ?? "", out userInfo))
             {
                 if (writeLogs)
                     logger.WriteLine($"[Auth] Invalid token: {authTokenHeader}");

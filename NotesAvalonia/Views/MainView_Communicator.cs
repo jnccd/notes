@@ -51,9 +51,9 @@ public partial class MainView : UserControl
                 communicator.Dispose();
             communicator = new Communicator(
                 Config.Data.ServerUri,
-                Config.Data.KeycloakRefreshToken, (string newKeycloakRefreshToken) =>
+                Config.Data.AuthBackendRefreshToken, (string authBackendRefreshToken) =>
                 {
-                    Config.Data.KeycloakRefreshToken = newKeycloakRefreshToken;
+                    Config.Data.AuthBackendRefreshToken = authBackendRefreshToken;
                     Config.Save();
                 },
                 stateChanged: state =>
@@ -88,7 +88,7 @@ public partial class MainView : UserControl
             if (password != null)
             {
                 communicator.DoNewLogIn(Config.Data.Username, password);
-                Config.Data.KeycloakRefreshTokenForAndroidWidget = communicator.GetSeparateSessionRefreshToken(Config.Data.Username, password);
+                Config.Data.AuthBackendRefreshTokenForAndroidWidget = communicator.GetSeparateSessionRefreshToken(Config.Data.Username, password);
             }
             communicator.RequestLoopInterval = 5000;
             communicator.StartRequestLoop(OnPayloadReceived);
@@ -162,8 +162,8 @@ public partial class MainView : UserControl
             var server = viewModel?.LoginServerUri;
             if (string.IsNullOrWhiteSpace(server))
                 throw new Exception("You need to set the Connect URL of the note server first!");
-            var keyCloakAddress = Communicator.GetKeyCloakAddress(server!, new System.Net.Http.HttpClient());
-            var url = keyCloakAddress.KeycloakRealmUrl + "/account";
+            var authBackendAddress = Communicator.GetAuthBackendAddress(server!, new System.Net.Http.HttpClient());
+            var url = authBackendAddress.RealmUrl + "/account";
 
             var action = OpenUrlActionsOnSystem.FirstOrDefault(x => x.IsCurrentOperatingSystem);
 

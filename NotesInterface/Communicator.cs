@@ -1,4 +1,5 @@
-﻿using EzAuth.Keycloak;
+﻿using EzAuth.Interfaces;
+using EzAuth.Keycloak;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -13,188 +14,190 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Notes.Interface
+namespace Notes.Interface;
+
+public enum CommsState
 {
-    public enum CommsState
+    Disconnected,
+    Connected,
+    Working
+}
+public class Communicator : IDisposable
+{
+    readonly object lockject = new object();
+    readonly Action<CommsState>? stateChanged;
+    readonly Action<Exception>? onPayloadRequestError;
+    public int RequestLoopInterval { get; set; } = 1000;
+
+    readonly CancellationTokenSource serverToken = new();
+    public Task? ServerTask { get => serverTask; private set { } }
+    Task? serverTask;
+
+    string serverUri;
+    IEzAuthHttpClient client;
+    IEzAuth auth;
+    EzAuthAddress authBackendAddress;
+    HttpClient? _httpClient;
+
+    public Communicator(string serverUri, string? initialAuthBackendRefreshToken, Action<string> authBackendRefreshTokenChanged, Action<CommsState>? stateChanged = null, HttpClient? httpClient = null, Action<Exception>? onPayloadRequestError = null)
     {
-        Disconnected,
-        Connected,
-        Working
+        this.serverUri = serverUri;
+        this.stateChanged = stateChanged;
+        this.onPayloadRequestError = onPayloadRequestError;
+        _httpClient = httpClient ?? new HttpClient();
+
+        auth = new EzKeycloak();
+        authBackendAddress = GetAuthBackendAddress(serverUri, _httpClient);
+        client = new KeyCloakHttpClient(authBackendAddress, authBackendRefreshTokenChanged, initialAuthBackendRefreshToken, httpClient);
     }
-    public class Communicator : IDisposable
+
+    public static EzAuthAddress GetAuthBackendAddress(string serverUri, HttpClient httpClient)
     {
-        readonly object lockject = new object();
-        readonly Action<CommsState>? stateChanged;
-        readonly Action<Exception>? onPayloadRequestError;
-        public int RequestLoopInterval { get; set; } = 1000;
+        HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, $"{serverUri}/authBackend");
+        request.Headers.Add("accept", "*/*");
+        HttpResponseMessage response = httpClient.SendAsync(request).Result;
+        response.EnsureSuccessStatusCode();
+        string responseBody = response.Content.ReadAsStringAsync().Result;
+        EzAuthAddress? authBackendAddress = JsonConvert.DeserializeObject<EzAuthAddress>(responseBody);
+        return authBackendAddress!;
+    }
 
-        readonly CancellationTokenSource serverToken = new();
-        public Task? ServerTask { get => serverTask; private set { } }
-        Task? serverTask;
+    public string GetSeparateSessionRefreshToken(string username, string password)
+    {
+        var res = auth.Login(_httpClient!, authBackendAddress.RealmUrl!, authBackendAddress.Client!, username, password);
+        return res!.RefreshToken!;
+    }
 
-        string serverUri;
-        KeyCloakHttpClient client;
-        KeyCloakAddress keyCloakAddress;
-        HttpClient? _httpClient;
+    public void DoNewLogIn(string username, string password)
+    {
+        client.Login(username, password);
+    }
 
-        public Communicator(string serverUri, string? initialKeyCloakRefreshToken, Action<string> keyCloakRefreshTokenChanged, Action<CommsState>? stateChanged = null, HttpClient? httpClient = null, Action<Exception>? onPayloadRequestError = null)
+    public void StartRequestLoop(Action<string, Payload?> receivedEvent)
+    {
+        serverTask = Task.Run(() =>
         {
-            this.serverUri = serverUri;
-            this.stateChanged = stateChanged;
-            this.onPayloadRequestError = onPayloadRequestError;
-            _httpClient = httpClient ?? new HttpClient();
-            keyCloakAddress = GetKeyCloakAddress(serverUri, _httpClient);
-            client = new(keyCloakAddress, keyCloakRefreshTokenChanged, initialKeyCloakRefreshToken, httpClient);
-        }
+            Thread.CurrentThread.Name = "Server Thread";
 
-        public static KeyCloakAddress GetKeyCloakAddress(string serverUri, HttpClient httpClient)
-        {
-            HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, $"{serverUri}/keycloak");
-            request.Headers.Add("accept", "*/*");
-            HttpResponseMessage response = httpClient.SendAsync(request).Result;
-            response.EnsureSuccessStatusCode();
-            string responseBody = response.Content.ReadAsStringAsync().Result;
-            KeyCloakAddress? keyCloakAddress = JsonConvert.DeserializeObject<KeyCloakAddress>(responseBody);
-            return keyCloakAddress!;
-        }
+            string last = "";
 
-        public string GetSeparateSessionRefreshToken(string username, string password)
-        {
-            var res = EzKeycloak.Login(_httpClient!, keyCloakAddress.KeycloakRealmUrl!, keyCloakAddress.KeycloakClient!, username, password);
-            return res!.RefreshToken!;
-        }
-
-        public void DoNewLogIn(string username, string password)
-        {
-            client.Login(username, password);
-        }
-
-        public void StartRequestLoop(Action<string, Payload?> receivedEvent)
-        {
-            serverTask = Task.Run(() =>
+            while (true)
             {
-                Thread.CurrentThread.Name = "Server Thread";
+                if (serverToken.IsCancellationRequested)
+                    break;
 
-                string last = "";
-
-                while (true)
+                try
                 {
-                    if (serverToken.IsCancellationRequested)
-                        break;
-
                     try
                     {
-                        try
+                        var receivedPayload = ReqPayload(out string receivedText);
+
+                        if (receivedText == last)
                         {
-                            var receivedPayload = ReqPayload(out string receivedText);
-
-                            if (receivedText == last)
-                            {
-                                Task.Delay(RequestLoopInterval).Wait();
-                                continue;
-                            }
-
-                            Logger.WriteLine($"Received payload from {serverUri}");
-
-                            receivedEvent(receivedText, receivedPayload);
-
-                            last = receivedText;
                             Task.Delay(RequestLoopInterval).Wait();
+                            continue;
                         }
-                        catch (OperationCanceledException) { break; }
-                    }
-                    catch (Exception e)
-                    {
-                        Debug.WriteLine(e.ToString());
+
+                        Logger.WriteLine($"Received payload from {serverUri}");
+
+                        receivedEvent(receivedText, receivedPayload);
+
+                        last = receivedText;
                         Task.Delay(RequestLoopInterval).Wait();
                     }
+                    catch (OperationCanceledException) { break; }
                 }
-                serverToken.Dispose();
-            }, serverToken.Token);
-        }
-
-        public void SendString(string s)
-        {
-            Logger.WriteLine($"Sending string...");
-
-            try
-            {
-                stateChanged?.Invoke(CommsState.Working);
-                var httpContent = new StringContent(s, Encoding.UTF8, "application/json");
-                using var response = client.PostAsync(serverUri, httpContent).Result;
-                stateChanged?.Invoke(response.StatusCode != HttpStatusCode.GatewayTimeout ? CommsState.Connected : CommsState.Disconnected);
-
-                if (!response.IsSuccessStatusCode)
+                catch (Exception e)
                 {
-                    string errorContent = response.Content.ReadAsStringAsync().Result;
-                    onPayloadRequestError?.Invoke(new Exception($"{response.StatusCode}: {errorContent}"));
-                }
-
-                Logger.WriteLine(response.StatusCode);
-                //Logger.WriteLine(response.Content.ReadAsStringAsync().Result);
-            }
-            catch (Exception e)
-            {
-                Logger.WriteLine(e, LogLevel.Error);
-                stateChanged?.Invoke(CommsState.Disconnected);
-            }
-
-            Logger.WriteLine($"Sent");
-        }
-        public Payload? ReqPayload() => ReqPayload(out string _);
-        public Payload? ReqPayload(out string receivedText)
-        {
-            try
-            {
-                stateChanged?.Invoke(CommsState.Working);
-                receivedText = client.GetStringAsync(serverUri).Result;
-
-                StringBuilder sb = new StringBuilder(receivedText);
-                sb.Replace("\\\n", "");
-                sb.Replace("\\n", "");
-                sb.Replace("\\\"", "\"");
-                sb.Replace("\\\"", "\"");
-                sb.Replace("\r", "");
-                sb.Replace("\n", "");
-                //sb.Replace("\\", "");
-                receivedText = sb.ToString();
-                receivedText = receivedText.Trim('"');
-
-                //logger.WriteLine($"Recived {receivedText} from {serverUri}");
-
-                if (!string.IsNullOrWhiteSpace(receivedText))
-                {
-                    lock (lockject)
-                    {
-                        Payload? receivedPayload = null;
-                        try { receivedPayload = Payload.Parse(receivedText); }
-                        catch (Exception e) { Logger.WriteLine($"Error parsing payload: {e}"); }
-                        stateChanged?.Invoke(CommsState.Connected);
-                        return receivedPayload;
-                    }
+                    Debug.WriteLine(e.ToString());
+                    Task.Delay(RequestLoopInterval).Wait();
                 }
             }
-            catch (Exception e)
-            {
-                receivedText = "";
+            serverToken.Dispose();
+        }, serverToken.Token);
+    }
 
-                if (onPayloadRequestError != null)
-                    onPayloadRequestError(e);
-                else
-                    Logger.WriteLine(e, LogLevel.Error);
-                stateChanged?.Invoke(CommsState.Disconnected);
+    public void SendString(string s)
+    {
+        Logger.WriteLine($"Sending string...");
+
+        try
+        {
+            stateChanged?.Invoke(CommsState.Working);
+            var httpContent = new StringContent(s, Encoding.UTF8, "application/json");
+            using var response = client.PostAsync(serverUri, httpContent).Result;
+            stateChanged?.Invoke(response.StatusCode != HttpStatusCode.GatewayTimeout ? CommsState.Connected : CommsState.Disconnected);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                string errorContent = response.Content.ReadAsStringAsync().Result;
+                onPayloadRequestError?.Invoke(new Exception($"{response.StatusCode}: {errorContent}"));
             }
 
-            return null;
+            Logger.WriteLine(response.StatusCode);
+            //Logger.WriteLine(response.Content.ReadAsStringAsync().Result);
         }
-
-        public void Dispose()
+        catch (Exception e)
         {
+            Logger.WriteLine(e, LogLevel.Error);
             stateChanged?.Invoke(CommsState.Disconnected);
-            try { serverToken.Cancel(); } catch { }
-            if (serverTask?.Status != TaskStatus.WaitingForActivation)
-                serverTask?.Wait();
-            //GC.SuppressFinalize(this);
         }
+
+        Logger.WriteLine($"Sent");
+    }
+    public Payload? ReqPayload() => ReqPayload(out string _);
+    public Payload? ReqPayload(out string receivedText)
+    {
+        try
+        {
+            stateChanged?.Invoke(CommsState.Working);
+            receivedText = client.GetStringAsync(serverUri).Result;
+
+            StringBuilder sb = new StringBuilder(receivedText);
+            sb.Replace("\\\n", "");
+            sb.Replace("\\n", "");
+            sb.Replace("\\\"", "\"");
+            sb.Replace("\\\"", "\"");
+            sb.Replace("\r", "");
+            sb.Replace("\n", "");
+            //sb.Replace("\\", "");
+            receivedText = sb.ToString();
+            receivedText = receivedText.Trim('"');
+
+            //logger.WriteLine($"Recived {receivedText} from {serverUri}");
+
+            if (!string.IsNullOrWhiteSpace(receivedText))
+            {
+                lock (lockject)
+                {
+                    Payload? receivedPayload = null;
+                    try { receivedPayload = Payload.Parse(receivedText); }
+                    catch (Exception e) { Logger.WriteLine($"Error parsing payload: {e}"); }
+                    stateChanged?.Invoke(CommsState.Connected);
+                    return receivedPayload;
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            receivedText = "";
+
+            if (onPayloadRequestError != null)
+                onPayloadRequestError(e);
+            else
+                Logger.WriteLine(e, LogLevel.Error);
+            stateChanged?.Invoke(CommsState.Disconnected);
+        }
+
+        return null;
+    }
+
+    public void Dispose()
+    {
+        stateChanged?.Invoke(CommsState.Disconnected);
+        try { serverToken.Cancel(); } catch { }
+        if (serverTask?.Status != TaskStatus.WaitingForActivation)
+            serverTask?.Wait();
+        //GC.SuppressFinalize(this);
     }
 }

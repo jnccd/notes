@@ -14,13 +14,13 @@ public static class NotesEndpoints
 
     public static void RegisterNotesEndpoints(this IEndpointRouteBuilder routes, IServiceProvider services)
     {
-        routes.MapGet("/keycloak", (
+        routes.MapGet("/authBackend", (
            IOptions<AuthOptions> authOptions) =>
         {
             return Results.Ok(new
             {
-                authOptions.Value.KeycloakRealmUrl,
-                authOptions.Value.KeycloakClient
+                authOptions.Value.AuthBackendRealmUrl,
+                authOptions.Value.AuthBackendClient
             });
         });
 
