@@ -151,7 +151,7 @@ public partial class MainView : UserControl
         {
             if (viewModel != null)
                 viewModel.AddDebugText(ex.ToString());
-            popupManager?.Show("Login Error", ex.Message);
+            popupManager?.Show("Login Error", ex.ToString());
         }
     }
 
