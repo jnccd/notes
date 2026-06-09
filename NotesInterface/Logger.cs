@@ -18,7 +18,7 @@ namespace Notes.Interface
     /// </summary>
     public static class Logger
     {
-        public static readonly string PersonalPath = OperatingSystem.IsWindows() ? Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location) + Path.DirectorySeparatorChar : Path.GetDirectoryName(Environment.GetFolderPath(Environment.SpecialFolder.Personal)) + Path.DirectorySeparatorChar + "NotesAvalonia" + Path.DirectorySeparatorChar;
+        public static readonly string PersonalPath = OperatingSystem.IsWindows() ? Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location) + Path.DirectorySeparatorChar : Path.GetDirectoryName(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)) + Path.DirectorySeparatorChar + "NotesAvalonia" + Path.DirectorySeparatorChar;
         static readonly string logFilePath = PersonalPath + "log.txt";
 
         // One line static constructor
