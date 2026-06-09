@@ -12,6 +12,7 @@
     <PackageVersion Include="DotNetEnv" Version="3.1.1" />
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="7.0.5" />
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
+    <PackageVersion Include="SkiaSharp.NativeAssets.Linux" Version="2.88.9" />
     <PackageVersion Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="3.119.2" />
     <PackageVersion Include="Swashbuckle.AspNetCore" Version="6.4.0" />
     <!-- Avalonia packages -->

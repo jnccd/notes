@@ -26,6 +26,7 @@
     <PackageReference Include="CommunityToolkit.Mvvm" />
     <PackageReference Include="MessageBox.Avalonia" />
     <PackageReference Include="Newtonsoft.Json" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux" />
     <PackageReference Include="Svg.Controls.Avalonia" /> 
   </ItemGroup>
 </Project>

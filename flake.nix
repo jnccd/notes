@@ -21,8 +21,28 @@
       in
       {
         devShells = rec {
-          service = import ./shell.nix { inherit pkgs; };
-          gui = inputs.jnccd-utils.lib.mkUnfrozenDotnetShell {
+          # Deployment
+          service =
+            with pkgs;
+            mkShell {
+              packages = [
+                icu
+                dotnet-sdk_8
+                dotnet-ef
+              ];
+            };
+          desktop = inputs.jnccd-utils.lib.mkUnfrozenDotnetShell {
+            inherit system nixpkgs;
+            dotnetVersion = "9.0";
+            androidSdkVersions = [
+              "34"
+              "35"
+            ];
+            command = "cd notes ; bash ./start_desktop_app.sh";
+          };
+
+          # Dev
+          dev = inputs.jnccd-utils.lib.mkUnfrozenDotnetShell {
             inherit system nixpkgs;
             dotnetVersion = "9.0";
             androidSdkVersions = [
@@ -31,7 +51,7 @@
             ];
           };
 
-          default = gui;
+          default = dev;
         };
       }
     );
