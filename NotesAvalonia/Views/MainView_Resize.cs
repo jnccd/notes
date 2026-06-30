@@ -1,8 +1,10 @@
 using System;
 using System.Diagnostics;
+using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.LogicalTree;
 
 namespace NotesAvalonia.Views;
 
@@ -110,7 +112,15 @@ public partial class MainView : UserControl
         else if (dragType == DragType.Normal)
             window.Position = new PixelPoint((int)(-deltaX), (int)(-deltaY)) + dragWindowPosSauce;
 
+        UpdateInternalUISize(window);
         UpdateClip(window, width, height);
+    }
+
+    private void UpdateInternalUISize(Window window)
+    {
+        var rootBorder = this.GetLogicalDescendants().OfType<Border>().FirstOrDefault(x => x.Name == "WindowBorder");
+        rootBorder!.Width = window.Width * 1.115;
+        rootBorder!.Height = window.Height * 1.115;
     }
 
     private void UpdateClip(Window window, double width, double height)
