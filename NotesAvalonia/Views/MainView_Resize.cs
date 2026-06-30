@@ -118,6 +118,9 @@ public partial class MainView : UserControl
 
     private void UpdateInternalUISize(Window window)
     {
+        if (!OperatingSystem.IsWindows())
+            return;
+
         var rootBorder = this.GetLogicalDescendants().OfType<Border>().FirstOrDefault(x => x.Name == "WindowBorder");
         rootBorder!.Width = window.Width * 1.115;
         rootBorder!.Height = window.Height * 1.115;
