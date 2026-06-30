@@ -1,17 +1,17 @@
 <UserControl
-    x:Class="NotesAvalonia.Views.MainView"
-    xmlns="https://github.com/avaloniaui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:controls="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls"
-    xmlns:converters="clr-namespace:NotesAvalonia.Converters;assembly=NotesAvalonia"
-    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:vm="using:NotesAvalonia.ViewModels"
-    Padding="0"
-    HorizontalAlignment="Stretch"
-    VerticalAlignment="Stretch"
-    x:DataType="vm:MainViewModel"
-    mc:Ignorable="d">
+x:Class="NotesAvalonia.Views.MainView"
+xmlns="https://github.com/avaloniaui"
+xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+xmlns:controls="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls"
+xmlns:converters="clr-namespace:NotesAvalonia.Converters;assembly=NotesAvalonia"
+xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+xmlns:vm="using:NotesAvalonia.ViewModels"
+Padding="0"
+HorizontalAlignment="Stretch"
+VerticalAlignment="Stretch"
+x:DataType="vm:MainViewModel"
+mc:Ignorable="d">
     <UserControl.Resources>
         <converters:AndConverter x:Key="AndConverter" />
         <converters:EitherOrConverter x:Key="EitherOrConverter" />
@@ -25,8 +25,8 @@
 
     <Design.DataContext>
         <!--
-            This only sets the DataContext for the previewer in an IDE,
-            to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs)
+        This only sets the DataContext for the previewer in an IDE,
+        to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs)
         -->
         <vm:MainViewModel />
     </Design.DataContext>
@@ -34,23 +34,23 @@
     <LayoutTransformControl LayoutTransform="scale(1)">
 
         <Border
-            Name="WindowBorder"
-            BorderBrush="#E7DE67"
-            BorderThickness="12"
-            Cursor="SizeAll"
-            PointerMoved="Border_PointerMoved"
-            PointerPressed="WindowBorder_PointerPressed"
-            PointerReleased="WindowBorder_PointerReleased">
+        Name="WindowBorder"
+        BorderBrush="#E7DE67"
+        BorderThickness="12"
+        Cursor="SizeAll"
+        PointerMoved="Border_PointerMoved"
+        PointerPressed="WindowBorder_PointerPressed"
+        PointerReleased="WindowBorder_PointerReleased">
             <Border.ContextMenu>
                 <ContextMenu Cursor="Arrow">
                     <MenuItem Click="Border_ContextMenu_Close_Click" Header="Close" />
                 </ContextMenu>
             </Border.ContextMenu>
             <Grid
-                x:Name="Root"
-                Background="#E7DE67"
-                Cursor="Arrow"
-                RowDefinitions="Auto, *, Auto">
+            x:Name="Root"
+            Background="#E7DE67"
+            Cursor="Arrow"
+            RowDefinitions="Auto, *, Auto">
                 <Grid.RenderTransform>
                     <!--  Fixes border around grid  -->
                     <ScaleTransform ScaleX="1.005" ScaleY="1.005" />
@@ -58,76 +58,75 @@
 
                 <StackPanel Grid.Row="0">
                     <Button
-                        Name="ConnectionButton"
-                        Padding="5,1"
-                        HorizontalAlignment="Center"
-                        Background="Transparent">
+                    Name="ConnectionButton"
+                    Padding="5,1"
+                    HorizontalAlignment="Center"
+                    Background="Transparent">
                         <TextBlock Text="{Binding ConnectionState}" />
                         <Button.Flyout>
                             <Flyout OverlayDismissEventPassThrough="False" ShowMode="Standard">
                                 <StackPanel
-                                    Width="250"
-                                    Margin="5,2"
-                                    Spacing="3">
+                                Width="250"
+                                Margin="5,2"
+                                Spacing="3">
                                     <StackPanel Orientation="Horizontal" Spacing="5">
                                         <TextBlock Text="Connect" />
                                         <Border
-                                            Width="130"
-                                            Height="1"
-                                            HorizontalAlignment="Stretch"
-                                            Background="Transparent" />
+                                        Width="130"
+                                        Height="1"
+                                        HorizontalAlignment="Stretch"
+                                        Background="Transparent" />
                                         <TextBlock
-                                            FontSize="9"
-                                            Foreground="#1A58C4"
-                                            Tapped="ShowLogsTextBlock_Click"
-                                            Text="Show Logs" />
+                                        FontSize="9"
+                                        Foreground="#1A58C4"
+                                        Tapped="ShowLogsTextBlock_Click"
+                                        Text="Show Logs" />
                                     </StackPanel>
                                     <TextBox
-                                        Name="UrlTextBox"
-                                        Text="{Binding LoginServerUri}"
-                                        Watermark="URL" />
+                                    Name="UrlTextBox"
+                                    Text="{Binding LoginServerUri}"
+                                    Watermark="URL" />
                                     <TextBox
-                                        Name="UsernameTextBox"
-                                        Text="{Binding LoginServerUsername}"
-                                        Watermark="Username" />
+                                    Name="UsernameTextBox"
+                                    Text="{Binding LoginServerUsername}"
+                                    Watermark="Username" />
                                     <TextBox
-                                        Name="PasswordTextBox"
-                                        KeyDown="PasswordTextBox_KeyDown"
-                                        PasswordChar="•"
-                                        Text="{Binding LoginPassword}"
-                                        Watermark="Password" />
+                                    Name="PasswordTextBox"
+                                    KeyDown="PasswordTextBox_KeyDown"
+                                    PasswordChar="•"
+                                    Text="{Binding LoginPassword}"
+                                    Watermark="Password" />
 
                                     <StackPanel Orientation="Horizontal" Spacing="5">
                                         <Button
-                                            Name="RegisterButton"
-                                            HorizontalAlignment="Left"
-                                            Background="Transparent"
-                                            Click="RegisterButton_Click"
-                                            Content="Register">
+                                        Name="RegisterButton"
+                                        HorizontalAlignment="Left"
+                                        Background="Transparent"
+                                        Click="RegisterButton_Click">
                                             <TextBlock
-                                                Foreground="#1A58C4"
-                                                Text="Register"
-                                                TextDecorations="Underline" />
+                                            Foreground="#1A58C4"
+                                            Text="Register"
+                                            TextDecorations="Underline" />
                                         </Button>
                                         <Border
-                                            Width="110"
-                                            Height="1"
-                                            HorizontalAlignment="Stretch"
-                                            Background="Transparent" />
+                                        Width="110"
+                                        Height="1"
+                                        HorizontalAlignment="Stretch"
+                                        Background="Transparent" />
                                         <Button
-                                            Name="LoginButton"
-                                            HorizontalAlignment="Right"
-                                            Click="LoginButton_Click"
-                                            Content="Login" />
+                                        Name="LoginButton"
+                                        HorizontalAlignment="Right"
+                                        Click="LoginButton_Click"
+                                        Content="Login" />
                                     </StackPanel>
                                 </StackPanel>
                             </Flyout>
                         </Button.Flyout>
                     </Button>
                     <Rectangle
-                        Name="ConnectionBar"
-                        Height="3"
-                        Fill="Red">
+                    Name="ConnectionBar"
+                    Height="3"
+                    Fill="Red">
                         <Rectangle.RenderTransform>
                             <TranslateTransform X="0" Y="-4" />
                         </Rectangle.RenderTransform>
@@ -135,9 +134,9 @@
                 </StackPanel>
 
                 <ScrollViewer
-                    Name="RootScrollViewer"
-                    Grid.Row="1"
-                    ScrollChanged="ScrollViewer_ScrollChanged">
+                Name="RootScrollViewer"
+                Grid.Row="1"
+                ScrollChanged="ScrollViewer_ScrollChanged">
                     <ItemsControl ItemsSource="{Binding FlattenedNoteVMs}">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
@@ -147,50 +146,50 @@
                         <ItemsControl.ItemTemplate>
                             <DataTemplate DataType="vm:FlattenedNoteViewModel">
                                 <Grid
-                                    Name="NoteContainer"
-                                    ColumnDefinitions="Auto, 24, 24, 24, *, 36"
-                                    DragDrop.AllowDrop="True"
-                                    DragDrop.DragOver="NoteContainer_OnDragOver"
-                                    DragDrop.Drop="NoteContainer_OnDrop">
+                                Name="NoteContainer"
+                                ColumnDefinitions="Auto, 24, 24, 24, *, 36"
+                                DragDrop.AllowDrop="True"
+                                DragDrop.DragOver="NoteContainer_OnDragOver"
+                                DragDrop.Drop="NoteContainer_OnDrop">
 
                                     <Border Grid.Column="0" Width="{Binding Depth, Converter={StaticResource AddMultiplyConverter}, ConverterParameter='-1,20'}" />
 
                                     <Button
-                                        Grid.Column="1"
-                                        Height="23"
-                                        MinHeight="0"
-                                        Margin="0"
-                                        Padding="2"
-                                        VerticalAlignment="Top"
-                                        Background="Transparent"
-                                        PointerMoved="DragButton_PointerMoved">
+                                    Grid.Column="1"
+                                    Height="23"
+                                    MinHeight="0"
+                                    Margin="0"
+                                    Padding="2"
+                                    VerticalAlignment="Top"
+                                    Background="Transparent"
+                                    PointerMoved="DragButton_PointerMoved">
                                         <Svg
-                                            Width="18"
-                                            Height="18"
-                                            Path="/Assets/drag.svg" />
+                                        Width="18"
+                                        Height="18"
+                                        Path="/Assets/drag.svg" />
                                     </Button>
 
                                     <Button
-                                        Grid.Column="2"
-                                        Width="20"
-                                        Height="23"
-                                        MinHeight="0"
-                                        Margin="0"
-                                        Padding="2"
-                                        VerticalAlignment="Top"
-                                        Background="Transparent"
-                                        Command="{Binding #Root.((vm:MainViewModel)DataContext).ToggleExpand}"
-                                        CommandParameter="{Binding .}">
+                                    Grid.Column="2"
+                                    Width="20"
+                                    Height="23"
+                                    MinHeight="0"
+                                    Margin="0"
+                                    Padding="2"
+                                    VerticalAlignment="Top"
+                                    Background="Transparent"
+                                    Command="{Binding #Root.((vm:MainViewModel)DataContext).ToggleExpand}"
+                                    CommandParameter="{Binding .}">
                                         <StackPanel>
                                             <Svg
-                                                Width="18"
-                                                Height="18"
-                                                Path="{Binding Expanded, Converter={StaticResource ExpandCollapseConverter}}" />
+                                            Width="18"
+                                            Height="18"
+                                            Path="{Binding Expanded, Converter={StaticResource ExpandCollapseConverter}}" />
                                             <TextBlock
-                                                FontSize="10"
-                                                Foreground="#1d8eeb"
-                                                Text="{Binding NumRecursiveTodoChildren}"
-                                                ZIndex="10">
+                                            FontSize="10"
+                                            Foreground="#1d8eeb"
+                                            Text="{Binding NumRecursiveTodoChildren}"
+                                            ZIndex="10">
                                                 <TextBlock.RenderTransform>
                                                     <TranslateTransform X="6" Y="-23" />
                                                 </TextBlock.RenderTransform>
@@ -199,16 +198,16 @@
                                     </Button>
 
                                     <CheckBox
-                                        Grid.Column="3"
-                                        Width="26"
-                                        Height="26"
-                                        MinHeight="0"
-                                        Margin="0"
-                                        Padding="0"
-                                        VerticalAlignment="Top"
-                                        Content=""
-                                        FontSize="1"
-                                        IsChecked="{Binding Done}">
+                                    Grid.Column="3"
+                                    Width="26"
+                                    Height="26"
+                                    MinHeight="0"
+                                    Margin="0"
+                                    Padding="0"
+                                    VerticalAlignment="Top"
+                                    Content=""
+                                    FontSize="1"
+                                    IsChecked="{Binding Done}">
                                         <CheckBox.RenderTransform>
                                             <TransformGroup>
                                                 <TranslateTransform X="2" Y="-4" />
@@ -219,34 +218,34 @@
 
                                     <Grid Grid.Column="4" HorizontalAlignment="{Binding Done, Converter={StaticResource TextBoxDoneGridAlignmentConverter}}">
                                         <TextBox
-                                            MinHeight="0"
-                                            Margin="0"
-                                            Padding="2,5"
-                                            Background="Transparent"
-                                            BorderThickness="0"
-                                            FontSize="13"
-                                            IsHitTestVisible="{Binding Done, Converter={StaticResource NegationConverter}}"
-                                            KeyDown="TextBox_KeyDown"
-                                            Opacity="{Binding Done, Converter={StaticResource TextBoxDoneOpacityConverter}}"
-                                            Text="{Binding Text}"
-                                            TextWrapping="Wrap" />
+                                        MinHeight="0"
+                                        Margin="0"
+                                        Padding="2,5"
+                                        Background="Transparent"
+                                        BorderThickness="0"
+                                        FontSize="13"
+                                        IsHitTestVisible="{Binding Done, Converter={StaticResource NegationConverter}}"
+                                        KeyDown="TextBox_KeyDown"
+                                        Opacity="{Binding Done, Converter={StaticResource TextBoxDoneOpacityConverter}}"
+                                        Text="{Binding Text}"
+                                        TextWrapping="Wrap" />
                                         <Rectangle
-                                            Height="1"
-                                            Fill="{Binding Done, Converter={StaticResource TextBoxDoneRectangleFillConverter}}"
-                                            IsHitTestVisible="false"
-                                            ZIndex="1">
+                                        Height="1"
+                                        Fill="{Binding Done, Converter={StaticResource TextBoxDoneRectangleFillConverter}}"
+                                        IsHitTestVisible="false"
+                                        ZIndex="1">
                                             <Rectangle.RenderTransform>
                                                 <TranslateTransform X="0" Y="0" />
                                             </Rectangle.RenderTransform>
                                         </Rectangle>
                                         <Rectangle
-                                            HorizontalAlignment="Stretch"
-                                            Fill="#242424"
-                                            IsHitTestVisible="{Binding NotTemporarilyUnHidden}"
-                                            IsVisible="{Binding Hidden}"
-                                            Opacity="{Binding NotTemporarilyUnHidden, Converter={StaticResource EitherOrConverter}, ConverterParameter='1|0,3'}}"
-                                            PointerPressed="Note_Spoiler_Rectangle_Click"
-                                            ZIndex="2">
+                                        HorizontalAlignment="Stretch"
+                                        Fill="#242424"
+                                        IsHitTestVisible="{Binding NotTemporarilyUnHidden}"
+                                        IsVisible="{Binding Hidden}"
+                                        Opacity="{Binding NotTemporarilyUnHidden, Converter={StaticResource EitherOrConverter}, ConverterParameter='1|0,3'}}"
+                                        PointerPressed="Note_Spoiler_Rectangle_Click"
+                                        ZIndex="2">
                                             <Rectangle.RenderTransform>
                                                 <TranslateTransform X="0" Y="0" />
                                             </Rectangle.RenderTransform>
@@ -254,49 +253,49 @@
                                     </Grid>
 
                                     <Button
-                                        Grid.Column="5"
-                                        Height="25"
-                                        MinHeight="0"
-                                        Margin="0,0,12,0"
-                                        Padding="5,1"
-                                        VerticalAlignment="Top"
-                                        Background="Transparent"
-                                        FontSize="16">
+                                    Grid.Column="5"
+                                    Height="25"
+                                    MinHeight="0"
+                                    Margin="0,0,12,0"
+                                    Padding="5,1"
+                                    VerticalAlignment="Top"
+                                    Background="Transparent"
+                                    FontSize="16">
                                         <Svg
-                                            Width="18"
-                                            Height="18"
-                                            Path="/Assets/meatballs.svg" />
+                                        Width="18"
+                                        Height="18"
+                                        Path="/Assets/meatballs.svg" />
                                         <Button.Flyout>
                                             <MenuFlyout>
                                                 <MenuItem
-                                                    Command="{Binding #Root.((vm:MainViewModel)DataContext).ExportItemToClipboardCommand}"
-                                                    CommandParameter="{Binding .}"
-                                                    Header="Export to Clipboard" />
+                                                Command="{Binding #Root.((vm:MainViewModel)DataContext).ExportItemToClipboardCommand}"
+                                                CommandParameter="{Binding .}"
+                                                Header="Export to Clipboard" />
                                                 <Separator />
                                                 <MenuItem
-                                                    Command="{Binding #Root.((vm:MainViewModel)DataContext).FocusNoteCommand}"
-                                                    CommandParameter="{Binding .}"
-                                                    Header="Focus Note" />
+                                                Command="{Binding #Root.((vm:MainViewModel)DataContext).FocusNoteCommand}"
+                                                CommandParameter="{Binding .}"
+                                                Header="Focus Note" />
                                                 <Separator />
                                                 <MenuItem
-                                                    Command="{Binding #Root.((vm:MainViewModel)DataContext).ToggleNoteHiddenCommand}"
-                                                    CommandParameter="{Binding .}"
-                                                    Header="Toggle Hidden" />
+                                                Command="{Binding #Root.((vm:MainViewModel)DataContext).ToggleNoteHiddenCommand}"
+                                                CommandParameter="{Binding .}"
+                                                Header="Toggle Hidden" />
                                                 <MenuItem
-                                                    Command="{Binding #Root.((vm:MainViewModel)DataContext).ToggleNoteSubtreeHiddenCommand}"
-                                                    CommandParameter="{Binding .}"
-                                                    Header="Toggle Subtree Hidden" />
+                                                Command="{Binding #Root.((vm:MainViewModel)DataContext).ToggleNoteSubtreeHiddenCommand}"
+                                                CommandParameter="{Binding .}"
+                                                Header="Toggle Subtree Hidden" />
                                                 <Separator />
                                                 <MenuItem
-                                                    Command="{Binding #Root.((vm:MainViewModel)DataContext).RemoveDoneSubnotesCommand}"
-                                                    CommandParameter="{Binding .}"
-                                                    Foreground="Red"
-                                                    Header="Delete Done Subnotes" />
+                                                Command="{Binding #Root.((vm:MainViewModel)DataContext).RemoveDoneSubnotesCommand}"
+                                                CommandParameter="{Binding .}"
+                                                Foreground="Red"
+                                                Header="Delete Done Subnotes" />
                                                 <MenuItem
-                                                    Command="{Binding #Root.((vm:MainViewModel)DataContext).RemoveItemCommand}"
-                                                    CommandParameter="{Binding .}"
-                                                    Foreground="Red"
-                                                    Header="Delete" />
+                                                Command="{Binding #Root.((vm:MainViewModel)DataContext).RemoveItemCommand}"
+                                                CommandParameter="{Binding .}"
+                                                Foreground="Red"
+                                                Header="Delete" />
                                             </MenuFlyout>
                                         </Button.Flyout>
                                     </Button>
@@ -306,11 +305,11 @@
                     </ItemsControl>
                 </ScrollViewer>
                 <TextBlock
-                    Grid.Row="2"
-                    HorizontalAlignment="Center"
-                    FontSize="4"
-                    Text="{Binding DebugText}"
-                    TextWrapping="Wrap" />
+                Grid.Row="2"
+                HorizontalAlignment="Center"
+                FontSize="4"
+                Text="{Binding DebugText}"
+                TextWrapping="Wrap" />
             </Grid>
         </Border>
 
