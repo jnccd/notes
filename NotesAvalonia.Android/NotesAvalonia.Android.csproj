@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net9.0-android</TargetFramework>
+    <TargetFramework>net10.0-android</TargetFramework>
     <AndroidCompileSdkVersion>33</AndroidCompileSdkVersion>
     <SupportedOSPlatformVersion>23</SupportedOSPlatformVersion>
     <Nullable>enable</Nullable>
@@ -20,8 +20,7 @@
 
   <ItemGroup>
     <PackageReference Include="Avalonia.Android" />
-    <PackageReference Include="Xamarin.AndroidX.Core.SplashScreen" />
-    <PackageReference Include="Xamarin.AndroidX.Work.Runtime" />
+    <PackageReference Include="Xamarin.AndroidX.Work.Work.Runtime.Ktx" />
   </ItemGroup>
 
   <ItemGroup>

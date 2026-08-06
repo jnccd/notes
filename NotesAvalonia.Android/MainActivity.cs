@@ -1,15 +1,9 @@
-﻿using System;
-using System.Linq;
-using System.Net.Http;
+﻿using System.Linq;
 using Android.App;
 using Android.Content;
 using Android.Content.PM;
 using Android.OS;
-using Android.Net;
 using Android.Views;
-using Android.Widget;
-using AndroidX.Work;
-using Avalonia;
 using Avalonia.Android;
 using Uri = Android.Net.Uri;
 
@@ -21,7 +15,7 @@ namespace NotesAvalonia.Android;
     Icon = "@drawable/Icon",
     MainLauncher = true,
     ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize | ConfigChanges.UiMode)]
-public class MainActivity : AvaloniaMainActivity<CrossPlatformAvaloniaApp>
+public class MainActivity : AvaloniaMainActivity
 {
     protected override void OnCreate(Bundle? savedInstanceState)
     {
@@ -52,12 +46,6 @@ public class MainActivity : AvaloniaMainActivity<CrossPlatformAvaloniaApp>
     {
         base.OnPause();
         UpdateWidget();
-    }
-
-    protected override AppBuilder CustomizeAppBuilder(AppBuilder builder)
-    {
-        return base.CustomizeAppBuilder(builder)
-            .WithInterFont();
     }
 
     void UpdateWidget()

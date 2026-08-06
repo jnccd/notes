@@ -36,13 +36,15 @@ public class Note
         Text = ""
     };
 
-    public List<(int Depth, Note Note, Note? Parent)> RecursiveSubNotes(int depth = 0, Note? parent = null)
+    public List<(int Depth, Note Note, Note? Parent)> RecursiveSubNotes(bool SkipChildrenOfClosedNotes = false, int depth = 0, Note? parent = null)
     {
         List<(int, Note, Note?)> result = [];
         result.Add((depth, this, parent));
+        if (SkipChildrenOfClosedNotes && !this.Expanded)
+            return result;
         foreach (var note in this.SubNotes)
         {
-            result.AddRange(note.RecursiveSubNotes(depth + 1, this));
+            result.AddRange(note.RecursiveSubNotes(SkipChildrenOfClosedNotes, depth + 1, this));
         }
         return result;
     }
@@ -59,7 +61,7 @@ public class Note
 
     public string SubtreeToStyledString()
     {
-        return this.RecursiveSubNotes()
+        return this.RecursiveSubNotes(SkipChildrenOfClosedNotes: true)
             .Select(x =>
             {
                 var depthPadding = x.Depth <= 0 ? "" :

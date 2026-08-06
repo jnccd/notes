@@ -26,10 +26,6 @@ public partial class CrossPlatformAvaloniaApp : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
-        // Avoid duplicate validations from both Avalonia and the CommunityToolkit. 
-        // More info: https://docs.avaloniaui.net/docs/guides/development-guides/data-validation#manage-validationplugins
-        DisableAvaloniaDataAnnotationValidation();
-
         // Init config
         Config.Load();
 
@@ -56,9 +52,8 @@ public partial class CrossPlatformAvaloniaApp : Application
                 ShowInTaskbar = false,
                 Title = "Notes",
                 ExtendClientAreaToDecorationsHint = true,
-                ExtendClientAreaChromeHints = Avalonia.Platform.ExtendClientAreaChromeHints.NoChrome,
                 ExtendClientAreaTitleBarHeightHint = -1,
-                SystemDecorations = SystemDecorations.None,
+                WindowDecorations = WindowDecorations.None,
                 Clip = new Avalonia.Media.RectangleGeometry
                 {
                     Rect = new Avalonia.Rect(0, 0, Config.Data.Width ?? Globals.InitialWindowSize.X, Config.Data.Height ?? Globals.InitialWindowSize.Y),
@@ -75,18 +70,5 @@ public partial class CrossPlatformAvaloniaApp : Application
         }
 
         base.OnFrameworkInitializationCompleted();
-    }
-
-    private void DisableAvaloniaDataAnnotationValidation()
-    {
-        // Get an array of plugins to remove
-        var dataValidationPluginsToRemove =
-            BindingPlugins.DataValidators.OfType<DataAnnotationsValidationPlugin>().ToArray();
-
-        // remove each entry found
-        foreach (var plugin in dataValidationPluginsToRemove)
-        {
-            BindingPlugins.DataValidators.Remove(plugin);
-        }
     }
 }

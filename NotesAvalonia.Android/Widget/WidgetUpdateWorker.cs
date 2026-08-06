@@ -1,10 +1,6 @@
 using System;
-using System.IO;
 using System.Linq;
-using Android.App;
-using Android.Appwidget;
 using Android.Content;
-using Android.Widget;
 using AndroidX.Work;
 using Notes.Interface;
 using NotesAvalonia.Configuration;

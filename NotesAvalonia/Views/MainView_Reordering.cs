@@ -13,10 +13,20 @@ using NotesAvalonia.ViewModels;
 
 namespace NotesAvalonia.Views;
 
-class CustomDragData : IDataObject
+public static class DragDropFormats
+{
+    public static readonly DataFormat<FlattenedNoteViewModel> FlattenedNoteRef =
+        DataFormat.CreateInProcessFormat<FlattenedNoteViewModel>("FlattenedNoteRef");
+}
+
+class CustomDragData : IDataTransfer
 {
     public static string Format = "FlattenedNoteRef";
     public FlattenedNoteViewModel DraggedNote { get; set; }
+
+    public IReadOnlyList<DataFormat> Formats => [DataFormat.CreateStringApplicationFormat(CustomDragData.Format)];
+
+    public IReadOnlyList<IDataTransferItem> Items => throw new NotImplementedException();
 
     public CustomDragData(FlattenedNoteViewModel DraggedNote)
     {
@@ -28,6 +38,11 @@ class CustomDragData : IDataObject
     public bool Contains(string dataFormat) => dataFormat == CustomDragData.Format;
 
     public object? Get(string dataFormat) => DraggedNote;
+
+    public void Dispose()
+    {
+        throw new NotImplementedException();
+    }
 }
 
 public partial class MainView : UserControl
@@ -36,7 +51,7 @@ public partial class MainView : UserControl
     double lockedY = 0;
     FlattenedNoteViewModel? MobileDraggedFlattenedNote = null;
 
-    private void DragButton_PointerMoved(object? sender, PointerEventArgs e)
+    private async void DragButton_PointerMoved(object? sender, PointerEventArgs e)
     {
         if (e.Properties.IsLeftButtonPressed && sender is Button senderButton)
         {
@@ -50,8 +65,11 @@ public partial class MainView : UserControl
                     if (model != null)
                         model.AddDebugText($"Drag Start {draggedViewModel}");
 
-                    var result = DragDrop.DoDragDrop(e, new CustomDragData(draggedViewModel), DragDropEffects.Move);
-                    Task.Run(() => Debug.WriteLine($"DragButton_DragDrop.DoDragDrop done! Result={result.Result}"));
+                    var dataTransfer = new DataTransfer();
+                    dataTransfer.Add(DataTransferItem.Create(DragDropFormats.FlattenedNoteRef, draggedViewModel));
+
+                    var result = await DragDrop.DoDragDropAsync(new PointerPressedEventArgs(sender, e.Pointer, this, new Point(), (ulong)DateTime.Now.ToBinary(), new PointerPointProperties(), KeyModifiers.None), dataTransfer, DragDropEffects.Move);
+                    Task.Run(() => Debug.WriteLine($"DragButton_DragDrop.DoDragDrop done! Result={result}")).Start();
 
                     if (!Globals.IsDesktop)
                     {
@@ -81,9 +99,9 @@ public partial class MainView : UserControl
         if (model != null)
             model.AddDebugText($"NoteContainer_OnDrop: {e}");
 
-        if (e.Data.Contains(CustomDragData.Format))
+        if (e.DataTransfer.Contains(DragDropFormats.FlattenedNoteRef))
         {
-            FlattenedNoteViewModel? draggedFlattenedNote = e.Data.Get(CustomDragData.Format) as FlattenedNoteViewModel;
+            FlattenedNoteViewModel? draggedFlattenedNote = e.DataTransfer.TryGetValue(DragDropFormats.FlattenedNoteRef);
             Debug.WriteLine($"NoteContainer_OnDrop: {draggedFlattenedNote?.FlattenedNote.OriginalNote.DecodedText}");
 
             if (draggedFlattenedNote != null)

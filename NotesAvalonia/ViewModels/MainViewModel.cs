@@ -4,6 +4,7 @@ using System.Linq;
 using System.Security;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.LogicalTree;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -113,7 +114,9 @@ public partial class MainViewModel : ViewModelBase
         if (topLevel != null)
         {
             var exportText = flattenedNoteVM.FlattenedNote.OriginalNote.SubtreeToStyledString();
-            topLevel.Clipboard?.SetTextAsync(exportText);
+            var dataTransfer = new DataTransfer();
+            dataTransfer.Add(DataTransferItem.Create(DataFormat.Text, exportText));
+            topLevel.Clipboard?.SetDataAsync(dataTransfer);
         }
     }
 

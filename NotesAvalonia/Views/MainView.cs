@@ -17,6 +17,7 @@ namespace NotesAvalonia.Views;
 
 public partial class MainView : UserControl
 {
+    Window? window => TopLevel.GetTopLevel(this) as Window;
     ScrollViewer? scrollViewer;
     MainViewModel? viewModel => DataContext as MainViewModel;
     Helper.Popup? popupManager;
@@ -52,9 +53,8 @@ public partial class MainView : UserControl
         {
             if (DataContext is MainViewModel model)
                 model.AddDebugText($"Failed to show popup: {ex} {ex.StackTrace}");
-        }, this.GetVisualRoot() as Window, this.FindControl<Border>("WindowBorder"));
+        }, window, this.FindControl<Border>("WindowBorder"));
 #if DEBUG
-        var window = this.GetVisualRoot() as Window;
         window?.AttachDevTools();
 #endif
         Handle_Communicator_On_MainView_Loaded(sender, e);
@@ -105,7 +105,6 @@ public partial class MainView : UserControl
     private void Border_ContextMenu_Close_Click(object? sender, RoutedEventArgs e)
     {
         SaveConfig();
-        var window = this.GetVisualRoot() as Window;
         window?.Close();
     }
 
