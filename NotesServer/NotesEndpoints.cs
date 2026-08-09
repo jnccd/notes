@@ -31,10 +31,11 @@ public static class NotesEndpoints
 
         version1Api.MapGet("/notes", (
             [FromServices] AuthService auth,
+            [FromServices] NotesDbContext notesDbContext,
             [FromHeader(Name = "Authorization")] string? authTokenHeader,
             HttpRequest request) =>
         {
-            return auth?.GetUser(authTokenHeader, httpClient, u =>
+            return auth?.GetUser(authTokenHeader, httpClient, notesDbContext, u =>
             {
                 return Results.Text(u.NotesPayload?.ToString(), contentType: "application/json");
             });
@@ -42,12 +43,12 @@ public static class NotesEndpoints
 
         version1Api.MapPost("/notes/batch", async (
             [FromServices] AuthService auth,
-            [FromServices] PersistenceService persistence,
+            [FromServices] NotesDbContext notesDbContext,
             [FromHeader(Name = "Authorization"), Required] string? authTokenHeader,
             [FromBody, Required] NoteChange[] noteChanges,
             HttpRequest request) =>
         {
-            Result<User> userResult = auth.GetUser(authTokenHeader, httpClient);
+            Result<User> userResult = auth.GetUser(authTokenHeader, httpClient, notesDbContext);
             if (!userResult.IsSuccess)
                 return userResult.HttpResult;
             User? u = userResult.Value;
@@ -126,7 +127,7 @@ public static class NotesEndpoints
                 }
 
                 results[i] = Results.Ok();
-                persistence.Save();
+                notesDbContext.SaveChanges();
             }
 
             if (results.All(x => x is OkResult))

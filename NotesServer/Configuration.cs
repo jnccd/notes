@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using Notes.Interface;
 using NotesServer.Services;
 using NotesServer.Services.Auth;
+using NotesServer.Services.Notes;
 using System.Net;
 using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
@@ -50,6 +51,7 @@ public static class Configuration
 
         // Other
         builder.Services.AddHttpClient();
+        builder.Services.AddDbContext<NotesDbContext>(_ => { });
         builder.Services.AddSingleton<IEzAuth>(new EzKeycloak());
         builder.Services.AddOptions<AuthOptions>().Configure((authOption) =>
         {
