@@ -130,13 +130,13 @@ public static class NotesEndpoints
                 notesDbContext.SaveChanges();
             }
 
-            if (results.All(x => x is OkResult))
+            if (results.All(x => x.Equals(Results.Ok())))
             {
                 string message = $"User {u?.UserId} successfully applied {noteChanges.Length} changes";
                 Logger.WriteLine(message);
                 return Results.Json(new NotesBatchPostResult(results), statusCode: StatusCodes.Status200OK);
             }
-            else if (results.All(x => x is not OkResult))
+            else if (results.All(x => !x.Equals(Results.Ok())))
             {
                 string message = $"All changes failed: {results.Select((x, i) => new { Result = x, Index = i }).Select(x => $"{x.Index}: {x.Result}").Aggregate((x, y) => x + ", " + y)}";
                 Logger.WriteLine(message);
@@ -144,7 +144,7 @@ public static class NotesEndpoints
             }
             else
             {
-                string message = $"One or more changes failed: {results.Select((x, i) => new { Result = x, Index = i }).Where(x => x.Result is not OkResult).Select(x => $"{x.Index}: {x.Result}").Aggregate((x, y) => x + ", " + y)}";
+                string message = $"One or more changes failed: {results.Select((x, i) => new { Result = x, Index = i }).Where(x => !x.Result.Equals(Results.Ok())).Select(x => $"{x.Index}: {x.Result}").Aggregate((x, y) => x + ", " + y)}";
                 Logger.WriteLine(message);
                 return Results.Json(new NotesBatchPostResult(results), statusCode: StatusCodes.Status207MultiStatus);
             }
