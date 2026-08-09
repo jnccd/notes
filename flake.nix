@@ -27,7 +27,7 @@
             mkShell {
               packages = [
                 icu
-                dotnet-sdk_8
+                dotnet-sdk_10
                 dotnet-ef
               ];
             };
