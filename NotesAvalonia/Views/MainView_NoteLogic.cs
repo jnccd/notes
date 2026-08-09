@@ -12,6 +12,7 @@ using Avalonia.Threading;
 using Notes.Interface;
 using Notes.Interface.DTO;
 using NotesAvalonia.Configuration;
+using NotesAvalonia.Helper;
 using NotesAvalonia.ViewModels;
 
 namespace NotesAvalonia.Views;

@@ -51,19 +51,6 @@ public class Note
             })
             .Aggregate((x, y) => x + "\n" + y);
 
-    public List<FlattenedNote> Flatten(uint depth = 0, FlattenedNote? parent = null)
-    {
-        List<FlattenedNote> result = [];
-        var currentFlattened = new FlattenedNote(this) { Depth = depth, Parent = parent };
-        result.Add(currentFlattened);
-        if (this.Data.Expanded)
-            foreach (var note in this.SubNotes)
-            {
-                result.AddRange(note.Flatten(depth + 1, currentFlattened));
-            }
-        return result;
-    }
-
     public override bool Equals(object? obj)
     {
         return obj is Note n && n.Id == this.Id;

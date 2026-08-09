@@ -12,6 +12,7 @@ using CommunityToolkit.Mvvm.Input;
 using Notes.Interface;
 using Notes.Interface.DTO;
 using NotesAvalonia.Configuration;
+using NotesAvalonia.Helper;
 using NotesAvalonia.Views;
 
 namespace NotesAvalonia.ViewModels;
