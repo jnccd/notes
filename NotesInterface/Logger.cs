@@ -34,7 +34,10 @@ namespace Notes.Interface
         {
             // Get logger of calling type (this is horrible for performance but the code looks better this way)
             StackTrace st = new(true);
-            var logger = LogManager.GetLogger(st.GetFrames().ElementAt(1).GetMethod()?.DeclaringType);
+            var loggerType = st.GetFrames().ElementAt(1).GetMethod()?.DeclaringType;
+            if (loggerType == null)
+                loggerType = typeof(Logger);
+            var logger = LogManager.GetLogger(loggerType);
 
             if (level == LogLevel.Debug)
                 logger.Debug(o);
