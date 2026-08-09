@@ -127,6 +127,8 @@ public static class NotesEndpoints
                 }
 
                 results[i] = new HttpResult(StatusCodes.Status200OK);
+                u!.NotesPayload!.Checksum = u!.NotesPayload!.GenerateChecksum();
+                u!.NotesPayload!.SaveTime = DateTime.Now;
                 notesDbContext.SaveChanges();
             }
 
