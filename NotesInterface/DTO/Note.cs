@@ -14,7 +14,7 @@ public class Note
     // Json Compat
     public bool? Done { get; set; }
     public string? Text { get; set; } // Should be URL encoded so that the json parser is not interrupted by special characters 
-    [JsonIgnore]
+    [JsonIgnore, System.Text.Json.Serialization.JsonIgnore]
     public string? DecodedText
     {
         get
