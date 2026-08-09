@@ -3,6 +3,7 @@ using System.Linq;
 using Android.Content;
 using AndroidX.Work;
 using Notes.Interface;
+using Notes.Interface.DTO;
 using NotesAvalonia.Configuration;
 
 namespace NotesAvalonia.Android
