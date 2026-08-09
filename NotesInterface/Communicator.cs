@@ -1,6 +1,5 @@
 ﻿using EzAuth.Interfaces;
 using EzAuth.Keycloak;
-using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Notes.Interface.DTO;
 using System.Diagnostics;

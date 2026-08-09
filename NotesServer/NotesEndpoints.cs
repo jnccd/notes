@@ -61,7 +61,7 @@ public static class NotesEndpoints
             }
 
             Logger.WriteLine($"writing for {u?.UserId}");
-            IResult[] results = new IResult[noteChanges.Length];
+            HttpResult[] results = new HttpResult[noteChanges.Length];
 
             for (int i = 0; i < noteChanges.Length; i++)
             {
@@ -74,17 +74,17 @@ public static class NotesEndpoints
                     case NoteChangeType.Add:
                         if (noteChange.Data == null || noteChange.ParentId == null)
                         {
-                            results[i] = Results.BadRequest($"{i}: Invalid Payload: Add requires Data and ParentId");
+                            results[i] = new HttpResult(StatusCodes.Status400BadRequest, $"{i}: Invalid Payload: Add requires Data and ParentId");
                             continue;
                         }
                         if (noteParentPosition == null)
                         {
-                            results[i] = Results.NotFound($"{i}: Parent note {noteChange.ParentId} not found!");
+                            results[i] = new HttpResult(StatusCodes.Status404NotFound, $"{i}: Parent note {noteChange.ParentId} not found!");
                             continue;
                         }
                         if (noteChange.ChildInsertionIndex < 0 || noteChange.ChildInsertionIndex > noteParentPosition.Note.SubNotes.Count)
                         {
-                            results[i] = Results.BadRequest($"{i}: Invalid Payload: ChildInsertionIndex {noteChange.ChildInsertionIndex} is out of bounds for parent note {noteChange.ParentId} with {noteParentPosition.Note.SubNotes.Count} subnotes");
+                            results[i] = new HttpResult(StatusCodes.Status400BadRequest, $"{i}: Invalid Payload: ChildInsertionIndex {noteChange.ChildInsertionIndex} is out of bounds for parent note {noteChange.ParentId} with {noteParentPosition.Note.SubNotes.Count} subnotes");
                             continue;
                         }
                         try
@@ -99,14 +99,14 @@ public static class NotesEndpoints
                         {
                             string message = $"{i}: Error adding note {noteChange.NoteId} to parent {noteChange.ParentId}: {e.Message}";
                             Logger.WriteLine(message);
-                            results[i] = Results.BadRequest(message);
+                            results[i] = new HttpResult(StatusCodes.Status400BadRequest, message);
                             continue;
                         }
                         break;
                     case NoteChangeType.Update:
                         if (noteChange.Data == null)
                         {
-                            results[i] = Results.BadRequest($"{i}: Invalid Payload: Update requires Data");
+                            results[i] = new HttpResult(StatusCodes.Status400BadRequest, $"{i}: Invalid Payload: Update requires Data");
                             continue;
                         }
                         notePosition?.Note.Data = noteChange.Data;
@@ -120,23 +120,23 @@ public static class NotesEndpoints
                         {
                             string message = $"{i}: Error deleting note {noteChange.NoteId} from parent {notePosition?.Parent?.Id}: {e.Message}";
                             Logger.WriteLine(message);
-                            results[i] = Results.BadRequest(message);
+                            results[i] = new HttpResult(StatusCodes.Status400BadRequest, message);
                             continue;
                         }
                         break;
                 }
 
-                results[i] = Results.Ok();
+                results[i] = new HttpResult(StatusCodes.Status200OK);
                 notesDbContext.SaveChanges();
             }
 
-            if (results.All(x => x.Equals(Results.Ok())))
+            if (results.All(x => x.StatusCode == StatusCodes.Status200OK))
             {
                 string message = $"User {u?.UserId} successfully applied {noteChanges.Length} changes";
                 Logger.WriteLine(message);
-                return Results.Json(new NotesBatchPostResult(results), statusCode: StatusCodes.Status200OK);
+                return Results.Json(new NotesBatchPostResult(results.ToArray()), statusCode: StatusCodes.Status200OK);
             }
-            else if (results.All(x => !x.Equals(Results.Ok())))
+            else if (results.All(x => x.StatusCode != StatusCodes.Status200OK))
             {
                 string message = $"All changes failed: {results.Select((x, i) => new { Result = x, Index = i }).Select(x => $"{x.Index}: {x.Result}").Aggregate((x, y) => x + ", " + y)}";
                 Logger.WriteLine(message);
@@ -144,7 +144,7 @@ public static class NotesEndpoints
             }
             else
             {
-                string message = $"One or more changes failed: {results.Select((x, i) => new { Result = x, Index = i }).Where(x => !x.Result.Equals(Results.Ok())).Select(x => $"{x.Index}: {x.Result}").Aggregate((x, y) => x + ", " + y)}";
+                string message = $"One or more changes failed: {results.Select((x, i) => new { Result = x, Index = i }).Where(x => x.Result.StatusCode != StatusCodes.Status200OK).Select(x => $"{x.Index}: {x.Result}").Aggregate((x, y) => x + ", " + y)}";
                 Logger.WriteLine(message);
                 return Results.Json(new NotesBatchPostResult(results), statusCode: StatusCodes.Status207MultiStatus);
             }
