@@ -11,22 +11,6 @@ public class Note
 
     public static Note EmptyNote() => new Note();
 
-    // Json Compat
-    public bool? Done { get; set; }
-    public string? Text { get; set; } // Should be URL encoded so that the json parser is not interrupted by special characters 
-    [JsonIgnore, System.Text.Json.Serialization.JsonIgnore]
-    public string? DecodedText
-    {
-        get
-        {
-            return HttpUtility.UrlDecode(Text) ?? "";
-        }
-        set { Text = HttpUtility.UrlEncode(value); }
-    } // Should be URL encoded so that the json parser is not interrupted by special characters 
-    public bool? Expanded { get; set; }
-    public bool? Hidden { get; set; }
-    public NotePriority? Prio { get; set; }
-
     public List<NotePosition> RecursiveSubNotes(bool SkipChildrenOfClosedNotes = false, int depth = 0, Note? parent = null)
     {
         List<NotePosition> result = [];
