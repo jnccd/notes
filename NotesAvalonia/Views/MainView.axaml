@@ -85,17 +85,17 @@
                                     <TextBox
                                         Name="UrlTextBox"
                                         Text="{Binding LoginServerUri}"
-                                        Watermark="URL" />
+                                        PlaceholderText="URL" />
                                     <TextBox
                                         Name="UsernameTextBox"
                                         Text="{Binding LoginServerUsername}"
-                                        Watermark="Username" />
+                                        PlaceholderText="Username" />
                                     <TextBox
                                         Name="PasswordTextBox"
                                         KeyDown="PasswordTextBox_KeyDown"
                                         PasswordChar="•"
                                         Text="{Binding LoginPassword}"
-                                        Watermark="Password" />
+                                        PlaceholderText="Password" />
 
                                     <StackPanel Orientation="Horizontal" Spacing="5">
                                         <Button
