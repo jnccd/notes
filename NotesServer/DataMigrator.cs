@@ -22,5 +22,7 @@ public static class DataMigrator
             });
             user.NotesPayload?.SaveTime = DateTime.Now;
         }
+
+        dbContext.SaveChanges();
     }
 }
