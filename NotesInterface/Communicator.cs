@@ -127,7 +127,7 @@ public class Communicator : IDisposable
 
             stateChanged?.Invoke(CommsState.Working);
             var httpContent = new StringContent(s, Encoding.UTF8, "application/json");
-            using var response = client.PostAsync($"{serverUri}{ROUTE_VERSION_PREFIX}/notes", httpContent).Result;
+            using var response = client.PostAsync($"{serverUri}{ROUTE_VERSION_PREFIX}/notes/batch", httpContent).Result;
             stateChanged?.Invoke(response.StatusCode != HttpStatusCode.GatewayTimeout ? CommsState.Connected : CommsState.Disconnected);
 
             if (!response.IsSuccessStatusCode)
