@@ -2,8 +2,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace NotesServer.Services.Notes;
 
-public class NotesDbContext() : DbContext
+public class NotesDbContext : DbContext
 {
+    public NotesDbContext(DbContextOptions<NotesDbContext> options)
+        : base(options)
+    {
+    }
+
     public DbSet<User> Users { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder options)
