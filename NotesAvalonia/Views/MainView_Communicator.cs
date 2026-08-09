@@ -210,14 +210,11 @@ public partial class MainView : UserControl
         {
             var currentPayload = Config.Data.CurrentUsersNotePayload();
             validPayload = payload != null &&
-                payload.Checksum == payload.GenerateChecksum() &&
                 (currentPayload == null ||
                     currentPayload.SaveTime < payload.SaveTime);
 
-            if (validPayload && currentPayload != null)
-            {
-                currentPayload.Notes = payload!.Notes;
-            }
+            if (validPayload)
+                currentPayload?.Notes = payload!.Notes;
         }
 
         if (validPayload)
