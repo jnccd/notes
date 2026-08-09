@@ -1,12 +1,7 @@
 ﻿using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
-namespace Notes.Interface;
+namespace Notes.Interface.DTO;
 
 public class Payload
 {
@@ -42,7 +37,9 @@ public class Payload
         Source = System.Runtime.InteropServices.RuntimeInformation.OSDescription;
     }
     public int GenerateChecksum() => SaveTime.Minute + SaveTime.Second +
-        Encoding.Unicode.GetBytes(Notes.Select(x => x.Text).Combine("")).Select(x => (int)x).Sum();
+        Encoding.Unicode.GetBytes(Notes.Select(x => x.Data.Text).Combine("")).Select(x => (int)x).Sum();
+
+    public List<NotePosition> GetAllNotes() => Notes.SelectMany(x => x.RecursiveSubNotes(depth: 1)).ToList();
 
     public override string ToString()
     {

@@ -10,6 +10,8 @@ using Avalonia.Input;
 using Avalonia.LogicalTree;
 using Avalonia.Threading;
 using Notes.Interface;
+using Notes.Interface.DTO;
+using NotesAvalonia.Configuration;
 using NotesAvalonia.ViewModels;
 
 namespace NotesAvalonia.Views;
@@ -28,13 +30,17 @@ public partial class MainView : UserControl
             var note = nvm?.FlattenedNote.OriginalNote;
             var parentNote = nvm?.FlattenedNote.Parent?.OriginalNote;
 
-            if (note?.SubNotes.Count > 0 || !string.IsNullOrWhiteSpace(note?.DecodedText))
+            if (note?.SubNotes.Count > 0 || !string.IsNullOrWhiteSpace(note?.Data.DecodedText))
                 return;
 
             var noteIndex = parentNote?.SubNotes.IndexOf(note!);
             note!.DeleteFrom(parentNote);
             viewModel?.ReFlatten();
-            unsavedChanges = true;
+            Config.Data.CurrentUsersUnsyncedChanges?.Add(new NoteChange()
+            {
+                Type = NoteChangeType.Delete,
+                NoteId = note.Id,
+            });
 
             if (noteIndex != null && noteIndex > 0)
             {
@@ -77,7 +83,14 @@ public partial class MainView : UserControl
             ogParent.SubNotes.Insert(insertionIndex, newNote);
             viewModel?.FlattenedNoteVMs.Insert(flattenedInsertionIndex, new FlattenedNoteViewModel(flattenedNewNote) { });
 
-            unsavedChanges = true;
+            Config.Data.CurrentUsersUnsyncedChanges?.Add(new NoteChange()
+            {
+                Type = NoteChangeType.Add,
+                NoteId = newNote.Id,
+                Data = newNote.Data,
+                ParentId = ogParent.Id,
+                ChildInsertionIndex = insertionIndex,
+            });
 
             Task.Run(() =>
             {

@@ -9,6 +9,8 @@ using Avalonia.Controls.Presenters;
 using Avalonia.Input;
 using Avalonia.LogicalTree;
 using Avalonia.Threading;
+using Notes.Interface.DTO;
+using NotesAvalonia.Configuration;
 using NotesAvalonia.ViewModels;
 
 namespace NotesAvalonia.Views;
@@ -102,7 +104,7 @@ public partial class MainView : UserControl
         if (e.DataTransfer.Contains(DragDropFormats.FlattenedNoteRef))
         {
             FlattenedNoteViewModel? draggedFlattenedNote = e.DataTransfer.TryGetValue(DragDropFormats.FlattenedNoteRef);
-            Debug.WriteLine($"NoteContainer_OnDrop: {draggedFlattenedNote?.FlattenedNote.OriginalNote.DecodedText}");
+            Debug.WriteLine($"NoteContainer_OnDrop: {draggedFlattenedNote?.FlattenedNote.OriginalNote.Data.DecodedText}");
 
             if (draggedFlattenedNote != null)
             {
@@ -144,8 +146,21 @@ public partial class MainView : UserControl
 
         // Reflatten
         model.ReFlatten();
-        unsavedChanges = true;
-        // TODO: Update Server?
+
+        // TODO: This should probably be atomic
+        Config.Data.CurrentUsersUnsyncedChanges?.Add(new NoteChange()
+        {
+            Type = NoteChangeType.Delete,
+            NoteId = ogDraggedNote.Id,
+        });
+        Config.Data.CurrentUsersUnsyncedChanges?.Add(new NoteChange()
+        {
+            Type = NoteChangeType.Add,
+            NoteId = ogDraggedNote.Id,
+            Data = ogDraggedNote.Data,
+            ParentId = ogDraggedToNoteParent.Id,
+            ChildInsertionIndex = ogDraggedToNoteParentIndex,
+        });
     }
 
     private void Handle_Reordering_On_MainView_PointerReleased(object? sender, PointerReleasedEventArgs e)

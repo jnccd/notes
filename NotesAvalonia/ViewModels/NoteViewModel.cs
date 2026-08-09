@@ -1,11 +1,8 @@
 ﻿using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Linq;
-using System.Web;
-using Avalonia.Controls;
-using Avalonia.Layout;
 using CommunityToolkit.Mvvm.ComponentModel;
-using Notes.Interface;
+using Notes.Interface.DTO;
+using NotesAvalonia.Configuration;
 
 namespace NotesAvalonia.ViewModels;
 
@@ -18,9 +15,9 @@ public partial class NoteViewModel : ViewModelBase
     {
         BaseNote = item;
 
-        Done = item.Done;
-        Expanded = item.Expanded;
-        Text = item.DecodedText;
+        Done = item.Data.Done;
+        Expanded = item.Data.Expanded;
+        Text = item.Data.DecodedText;
 
         SubNotes = new ObservableCollection<NoteViewModel>(
             item.SubNotes.Select(n => new NoteViewModel(n))
@@ -39,7 +36,7 @@ public partial class NoteViewModel : ViewModelBase
         set
         {
             SetProperty(ref _done, value);
-            BaseNote.Done = value;
+            BaseNote.Data.Done = value;
         }
     }
 
@@ -50,7 +47,7 @@ public partial class NoteViewModel : ViewModelBase
         set
         {
             SetProperty(ref _expanded, value);
-            BaseNote.Expanded = value;
+            BaseNote.Data.Expanded = value;
         }
     }
 
@@ -73,13 +70,13 @@ public partial class FlattenedNoteViewModel : ViewModelBase
     {
         get
         {
-            var children = FlattenedNote.OriginalNote.RecursiveSubNotes().Where(x => x.Note != FlattenedNote.OriginalNote && !string.IsNullOrWhiteSpace(x.Note.DecodedText));
-            var undoneChildren = children.Where(x => !x.Note.Done);
+            var children = FlattenedNote.OriginalNote.RecursiveSubNotes().Where(x => x.Note != FlattenedNote.OriginalNote && !string.IsNullOrWhiteSpace(x.Note.Data.DecodedText));
+            var undoneChildren = children.Where(x => !x.Note.Data.Done);
 
             var childCount = children.Count();
             var undoneChildCount = undoneChildren.Count();
 
-            if (childCount <= 0 || FlattenedNote.OriginalNote.Expanded)
+            if (childCount <= 0 || FlattenedNote.OriginalNote.Data.Expanded)
                 return "";
             if (undoneChildCount >= 10)
                 return "✹";
@@ -90,12 +87,17 @@ public partial class FlattenedNoteViewModel : ViewModelBase
     private bool _done;
     public bool Done
     {
-        get { return FlattenedNote.OriginalNote.Done; }
+        get { return FlattenedNote.OriginalNote.Data.Done; }
         set
         {
-            FlattenedNote.OriginalNote.Done = value;
+            FlattenedNote.OriginalNote.Data.Done = value;
             if (mainView != null)
-                mainView.unsavedChanges = true;
+                Config.Data.CurrentUsersUnsyncedChanges?.Add(new NoteChange()
+                {
+                    Type = NoteChangeType.Update,
+                    NoteId = FlattenedNote.OriginalNote.Id,
+                    Data = FlattenedNote.OriginalNote.Data
+                });
             SetProperty(ref _done, value);
         }
     }
@@ -103,12 +105,17 @@ public partial class FlattenedNoteViewModel : ViewModelBase
     private bool _hidden;
     public bool Hidden
     {
-        get { return FlattenedNote.OriginalNote.Hidden; }
+        get { return FlattenedNote.OriginalNote.Data.Hidden; }
         set
         {
-            FlattenedNote.OriginalNote.Hidden = value;
+            FlattenedNote.OriginalNote.Data.Hidden = value;
             if (mainView != null)
-                mainView.unsavedChanges = true;
+                Config.Data.CurrentUsersUnsyncedChanges?.Add(new NoteChange()
+                {
+                    Type = NoteChangeType.Update,
+                    NoteId = FlattenedNote.OriginalNote.Id,
+                    Data = FlattenedNote.OriginalNote.Data
+                });
             SetProperty(ref _hidden, value);
         }
     }
@@ -118,12 +125,17 @@ public partial class FlattenedNoteViewModel : ViewModelBase
     private bool _expanded;
     public bool Expanded
     {
-        get { return FlattenedNote.OriginalNote.Expanded; }
+        get { return FlattenedNote.OriginalNote.Data.Expanded; }
         set
         {
-            FlattenedNote.OriginalNote.Expanded = value;
+            FlattenedNote.OriginalNote.Data.Expanded = value;
             if (mainView != null)
-                mainView.unsavedChanges = true;
+                Config.Data.CurrentUsersUnsyncedChanges?.Add(new NoteChange()
+                {
+                    Type = NoteChangeType.Update,
+                    NoteId = FlattenedNote.OriginalNote.Id,
+                    Data = FlattenedNote.OriginalNote.Data
+                });
             SetProperty(ref _expanded, value);
         }
     }
@@ -131,12 +143,17 @@ public partial class FlattenedNoteViewModel : ViewModelBase
     private string _text = "";
     public string Text
     {
-        get { return FlattenedNote.OriginalNote.DecodedText ?? ""; }
+        get { return FlattenedNote.OriginalNote.Data.DecodedText ?? ""; }
         set
         {
-            FlattenedNote.OriginalNote.DecodedText = value;
+            FlattenedNote.OriginalNote.Data.DecodedText = value;
             if (mainView != null)
-                mainView.unsavedChanges = true;
+                Config.Data.CurrentUsersUnsyncedChanges?.Add(new NoteChange()
+                {
+                    Type = NoteChangeType.Update,
+                    NoteId = FlattenedNote.OriginalNote.Id,
+                    Data = FlattenedNote.OriginalNote.Data
+                });
             SetProperty(ref _text, value);
         }
     }

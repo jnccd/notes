@@ -10,6 +10,7 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Notes.Interface;
+using Notes.Interface.DTO;
 using NotesAvalonia.Configuration;
 using NotesAvalonia.Views;
 
@@ -29,7 +30,7 @@ public partial class MainViewModel : ViewModelBase
     {
         VirtualRoot = new Note()
         {
-            Expanded = true,
+            Data = { Expanded = true },
             SubNotes = notes
         };
         ReFlatten();
@@ -104,7 +105,11 @@ public partial class MainViewModel : ViewModelBase
 
         ReFlatten();
         if (mainView != null)
-            mainView.unsavedChanges = true;
+            Config.Data.CurrentUsersUnsyncedChanges?.Add(new NoteChange()
+            {
+                Type = NoteChangeType.Delete,
+                NoteId = ogToDeleteFlattenedNote.Id
+            });
     }
 
     [RelayCommand]
@@ -143,14 +148,14 @@ public partial class MainViewModel : ViewModelBase
         var recursiveSubnotesResult = flattenedNoteVM.FlattenedNote.OriginalNote.RecursiveSubNotes();
         foreach (var snResult in recursiveSubnotesResult)
         {
-            snResult.Note.Hidden = !snResult.Note.Hidden;
+            snResult.Note.Data.Hidden = !snResult.Note.Data.Hidden;
         }
 
         // Notify UI
         var subtreeFlattenedNotesVM = FlattenedNoteVMs.Where(x => recursiveSubnotesResult.Any(y => x.FlattenedNote.OriginalNote.Id == y.Note.Id));
         foreach (var fnvm in subtreeFlattenedNotesVM)
         {
-            fnvm.Hidden = fnvm.FlattenedNote.OriginalNote.Hidden;
+            fnvm.Hidden = fnvm.FlattenedNote.OriginalNote.Data.Hidden;
         }
     }
 
@@ -158,7 +163,7 @@ public partial class MainViewModel : ViewModelBase
     public void RemoveDoneSubnotes(FlattenedNoteViewModel flattenedNoteVM)
     {
         var doneSubNotes = flattenedNoteVM.FlattenedNote.OriginalNote.RecursiveSubNotes()
-            .Where(x => x.Note.Done);
+            .Where(x => x.Note.Data.Done);
         foreach (var toDeleteSubNote in doneSubNotes)
         {
             toDeleteSubNote.Note.DeleteFrom(toDeleteSubNote.Parent);
@@ -166,19 +171,39 @@ public partial class MainViewModel : ViewModelBase
 
         ReFlatten();
         if (mainView != null)
-            mainView.unsavedChanges = true;
+            Config.Data.CurrentUsersUnsyncedChanges?.AddRange(
+                doneSubNotes.Select(toDeleteSubNote => new NoteChange()
+                {
+                    Type = NoteChangeType.Delete,
+                    NoteId = toDeleteSubNote.Note.Id
+                }));
     }
 
     [RelayCommand]
     public void ToggleExpand(FlattenedNoteViewModel item)
     {
         item.Expanded = !item.Expanded;
+        if (mainView != null)
+            Config.Data.CurrentUsersUnsyncedChanges?.Add(new NoteChange()
+            {
+                Type = NoteChangeType.Update,
+                NoteId = item.FlattenedNote.OriginalNote.Id,
+                Data = item.FlattenedNote.OriginalNote.Data
+            });
+
         if (item.Expanded && item.FlattenedNote.OriginalNote.SubNotes.Count == 0)
         {
             var newNote = Note.EmptyNote();
             item.FlattenedNote.OriginalNote.SubNotes.Add(newNote);
             if (mainView != null)
-                mainView.unsavedChanges = true;
+                Config.Data.CurrentUsersUnsyncedChanges?.Add(new NoteChange()
+                {
+                    Type = NoteChangeType.Add,
+                    NoteId = newNote.Id,
+                    Data = newNote.Data,
+                    ParentId = item.FlattenedNote.OriginalNote.Id,
+                    ChildInsertionIndex = item.FlattenedNote.OriginalNote.SubNotes.IndexOf(newNote)
+                });
 
             // Focus the new note's TextBox
             Dispatcher.UIThread.Post(() =>
@@ -193,9 +218,15 @@ public partial class MainViewModel : ViewModelBase
         }
         if (!item.Expanded)
         {
-            item.FlattenedNote.OriginalNote.SubNotes.RemoveAll(x => string.IsNullOrWhiteSpace(x.DecodedText));
+            var toDeleteSubNotes = item.FlattenedNote.OriginalNote.SubNotes.Where(x => string.IsNullOrWhiteSpace(x.Data.DecodedText)).ToList();
             if (mainView != null)
-                mainView.unsavedChanges = true;
+                Config.Data.CurrentUsersUnsyncedChanges?.AddRange(toDeleteSubNotes.Select(subNote => new NoteChange()
+                {
+                    Type = NoteChangeType.Delete,
+                    NoteId = subNote.Id,
+                }));
+            foreach (var toDeleteSubNote in toDeleteSubNotes)
+                item.FlattenedNote.OriginalNote.SubNotes.Remove(toDeleteSubNote);
         }
         ReFlatten();
     }

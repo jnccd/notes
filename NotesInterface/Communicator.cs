@@ -1,18 +1,11 @@
 ﻿using EzAuth.Interfaces;
 using EzAuth.Keycloak;
+using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
+using Notes.Interface.DTO;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Net;
-using System.Net.Http;
-using System.Net.Sockets;
-using System.Runtime;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Notes.Interface;
 
@@ -24,6 +17,8 @@ public enum CommsState
 }
 public class Communicator : IDisposable
 {
+    const string ROUTE_VERSION_PREFIX = "/v1";
+
     readonly object lockject = new object();
     readonly Action<CommsState>? stateChanged;
     readonly Action<Exception>? onPayloadRequestError;
@@ -53,7 +48,7 @@ public class Communicator : IDisposable
 
     public static EzAuthAddress GetAuthBackendAddress(string serverUri, HttpClient httpClient)
     {
-        HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, $"{serverUri}/authBackend");
+        HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, $"{serverUri}{ROUTE_VERSION_PREFIX}/authBackend");
         request.Headers.Add("accept", "*/*");
         HttpResponseMessage response = httpClient.SendAsync(request).Result;
         response.EnsureSuccessStatusCode();
@@ -117,21 +112,29 @@ public class Communicator : IDisposable
         }, serverToken.Token);
     }
 
-    public void SendString(string s)
+    /// <summary>
+    /// Sends a batch of note changes to the server. Returns a list of unfinished note changes if any errors occurred.
+    /// If the list is empty, all changes were successfully sent.
+    /// </summary>
+    /// <param name="noteChanges">List of note changes to send, after their sending operation elements are removed in place from this list</param>
+    public void SendChanges(List<NoteChange> noteChanges)
     {
-        Logger.WriteLine($"Sending string...");
+        Logger.WriteLine($"Sending change...");
 
         try
         {
+            var s = JsonConvert.SerializeObject(noteChanges, Formatting.Indented);
+
             stateChanged?.Invoke(CommsState.Working);
             var httpContent = new StringContent(s, Encoding.UTF8, "application/json");
-            using var response = client.PostAsync(serverUri, httpContent).Result;
+            using var response = client.PostAsync($"{serverUri}{ROUTE_VERSION_PREFIX}/notes", httpContent).Result;
             stateChanged?.Invoke(response.StatusCode != HttpStatusCode.GatewayTimeout ? CommsState.Connected : CommsState.Disconnected);
 
             if (!response.IsSuccessStatusCode)
             {
                 string errorContent = response.Content.ReadAsStringAsync().Result;
                 onPayloadRequestError?.Invoke(new Exception($"{response.StatusCode}: {errorContent}"));
+                Logger.WriteLine($"Error sending changes: {response.StatusCode}: {errorContent}");
             }
 
             Logger.WriteLine(response.StatusCode);
@@ -144,6 +147,7 @@ public class Communicator : IDisposable
         }
 
         Logger.WriteLine($"Sent");
+        noteChanges.Clear();
     }
     public Payload? ReqPayload() => ReqPayload(out string _);
     public Payload? ReqPayload(out string receivedText)
@@ -151,7 +155,7 @@ public class Communicator : IDisposable
         try
         {
             stateChanged?.Invoke(CommsState.Working);
-            receivedText = client.GetStringAsync(serverUri).Result;
+            receivedText = client.GetStringAsync($"{serverUri}{ROUTE_VERSION_PREFIX}/notes").Result;
 
             StringBuilder sb = new StringBuilder(receivedText);
             sb.Replace("\\\n", "");

@@ -15,6 +15,7 @@ using Avalonia.LogicalTree;
 using Avalonia.Threading;
 using EzAuth;
 using Notes.Interface;
+using Notes.Interface.DTO;
 using NotesAvalonia.Configuration;
 using NotesAvalonia.ViewModels;
 
@@ -26,7 +27,6 @@ public partial class MainView : UserControl
 {
     public Communicator? communicator { get; private set; } = null;
     DateTime lastSaveTime = DateTime.MinValue;
-    public bool unsavedChanges = false;
     public List<OpenUrlActionOnSystem> OpenUrlActionsOnSystem { get; private set; } = [
         new(OperatingSystem.IsWindows(), (url) =>
             Process.Start(new ProcessStartInfo
@@ -99,18 +99,24 @@ public partial class MainView : UserControl
     {
         LoadConfig();
 
-        Payload GetNewPayload() => new(Config.Data.CurrentUsersNotePayload()?.SaveTime ?? DateTime.Now, Config.Data.CurrentUsersNotePayload()?.Notes ?? []);
         Task.Run(() =>
         {
             Thread.CurrentThread.Name = "Autosave Thread";
             while (true)
             {
                 Task.Delay(500).Wait();
-                if (unsavedChanges)
+                if (Config.Data.CurrentUsersUnsyncedChanges?.Count > 0)
                 {
-                    unsavedChanges = false;
                     SaveConfig();
-                    communicator?.SendString(GetNewPayload().ToString());
+                    if (communicator != null)
+                        communicator.SendChanges(Config.Data.CurrentUsersUnsyncedChanges);
+                    else
+                    {
+                        Dispatcher.UIThread.Invoke(() =>
+                        {
+                            popupManager?.Show("Error synching data to Server!", "Communicator object is gone :/", TakeFocus: false, AlwaysAsFlyout: true);
+                        });
+                    }
                 }
             }
         });

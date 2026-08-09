@@ -33,7 +33,7 @@
             };
           desktop = inputs.jnccd-utils.lib.mkUnfrozenDotnetShell {
             inherit system nixpkgs;
-            dotnetVersion = "9.0";
+            dotnetVersion = "10.0";
             androidSdkVersions = [
               "34"
               "35"
@@ -44,7 +44,7 @@
           # Dev
           dev = inputs.jnccd-utils.lib.mkUnfrozenDotnetShell {
             inherit system nixpkgs;
-            dotnetVersion = "9.0";
+            dotnetVersion = "10.0";
             androidSdkVersions = [
               "34"
               "35"

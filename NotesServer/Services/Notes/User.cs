@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 using Notes.Interface;
+using Notes.Interface.DTO;
 
 namespace NotesServer.Services.Notes;
 

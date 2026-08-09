@@ -1,6 +1,7 @@
 ﻿using Avalonia;
 using Avalonia.Media;
 using Notes.Interface;
+using Notes.Interface.DTO;
 using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
@@ -8,6 +9,8 @@ using Size = Avalonia.Size;
 
 namespace NotesAvalonia.Configuration
 {
+    public record NotesDataForUser(NotePayload NotePayload, List<NoteChange> UnsyncedChanges);
+
     public class ConfigData
     {
         // Local Gui Settings
@@ -23,7 +26,7 @@ namespace NotesAvalonia.Configuration
         public string? AuthBackendRefreshTokenForAndroidWidget;
 
         // Notes payload
-        public Dictionary<string, NotePayload> NotePayloadOfUser;
+        public Dictionary<string, NotesDataForUser> NotePayloadOfUser;
 
         public NotePayload? CurrentUsersNotePayload()
         {
@@ -31,10 +34,35 @@ namespace NotesAvalonia.Configuration
                 return null;
 
             if (!NotePayloadOfUser.ContainsKey(Username))
-                NotePayloadOfUser[Username!] = new();
+                NotePayloadOfUser[Username!] = new(NotePayload: new(), UnsyncedChanges: new());
 
-            return NotePayloadOfUser[Username];
+            return NotePayloadOfUser[Username].NotePayload;
         }
+        public List<NoteChange>? CurrentUsersUnsyncedChanges
+        {
+            get
+            {
+                if (string.IsNullOrWhiteSpace(Username))
+                    return null;
+
+                if (!NotePayloadOfUser.ContainsKey(Username))
+                    NotePayloadOfUser[Username!] = new(NotePayload: new(), UnsyncedChanges: new());
+
+                return NotePayloadOfUser[Username].UnsyncedChanges;
+            }
+            set
+            {
+                if (string.IsNullOrWhiteSpace(Username))
+                    return;
+
+                if (!NotePayloadOfUser.ContainsKey(Username))
+                    NotePayloadOfUser[Username!] = new(NotePayload: new(), UnsyncedChanges: new());
+
+                NotePayloadOfUser[Username].UnsyncedChanges.Clear();
+                NotePayloadOfUser[Username].UnsyncedChanges.AddRange(value ?? new());
+            }
+        }
+
 
         public ConfigData()
         {
