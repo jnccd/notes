@@ -211,7 +211,7 @@ public partial class MainView : UserControl
             var currentPayload = Config.Data.CurrentUsersNotePayload();
             validPayload = payload != null &&
                 (currentPayload == null ||
-                    currentPayload.SaveTime < payload.SaveTime);
+                    currentPayload.SaveTime + TimeSpan.FromSeconds(3) < payload.SaveTime);
 
             if (validPayload)
                 currentPayload?.Notes = payload!.Notes;
