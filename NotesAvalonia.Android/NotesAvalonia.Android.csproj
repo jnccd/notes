@@ -18,6 +18,10 @@
     </AndroidResource>
   </ItemGroup>
 
+  <PropertyGroup>
+    <DisableImplicitAspNetCoreAppFrameworkReference>true</DisableImplicitAspNetCoreAppFrameworkReference>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Avalonia.Android" />
     <PackageReference Include="Xamarin.AndroidX.Work.Work.Runtime.Ktx" />
