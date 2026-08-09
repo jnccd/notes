@@ -6,10 +6,35 @@ namespace Notes.Interface.DTO;
 public class Note
 {
     public Guid Id { get; set; } = Guid.NewGuid();
+
+    public bool? Done { get; set; }
+    public string? Text { get; set; } // Should be URL encoded so that the json parser is not interrupted by special characters 
+    [JsonIgnore]
+    public string? DecodedText
+    {
+        get
+        {
+            return HttpUtility.UrlDecode(Text) ?? "";
+        }
+        set { Text = HttpUtility.UrlEncode(value); }
+    } // Should be URL encoded so that the json parser is not interrupted by special characters 
+    public bool? Expanded { get; set; }
+    public bool? Hidden { get; set; }
+    public NotePriority? Prio { get; set; }
+
     public NoteData Data { get; set; } = new NoteData();
     public List<Note> SubNotes { get; set; } = new();
 
     public static Note EmptyNote() => new Note();
+
+    public Note()
+    {
+        if (Done != null) Data.Done = this.Done.Value;
+        if (Text != null) Data.Text = this.Text;
+        if (Expanded != null) Data.Expanded = this.Expanded.Value;
+        if (Hidden != null) Data.Hidden = this.Hidden.Value;
+        if (Prio != null) Data.Prio = this.Prio.Value;
+    }
 
     public List<NotePosition> RecursiveSubNotes(bool SkipChildrenOfClosedNotes = false, int depth = 0, Note? parent = null)
     {
