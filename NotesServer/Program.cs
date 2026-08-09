@@ -12,4 +12,5 @@ var app = builder.Build();
 app.RegisterMiddlewares();
 app.ConfigureWebApp();
 app.RegisterNotesEndpoints(app.Services);
+DataMigrator.Migrate();
 app.Run();
