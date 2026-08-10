@@ -4,5 +4,5 @@ cd ./NotesAvalonia.Desktop
 if [ -z "$NIXOS_JNCCD_GUI_STARTER_UNCHANGED" ] || [ "$NIXOS_JNCCD_GUI_STARTER_UNCHANGED" != "1" ]; then
   dotnet run -c Release
 else
-  dotnet ./bin/Release/net9.0/NotesAvalonia.Desktop.dll
+  dotnet ./bin/Release/net10.0/NotesAvalonia.Desktop.dll
 fi
