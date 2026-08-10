@@ -38,6 +38,7 @@ namespace NotesAvalonia.Configuration
 
             return NotePayloadOfUser[Username].NotePayload;
         }
+        [JsonIgnore]
         public List<NoteChange>? CurrentUsersUnsyncedChanges
         {
             get
@@ -62,7 +63,6 @@ namespace NotesAvalonia.Configuration
                 NotePayloadOfUser[Username].UnsyncedChanges.AddRange(value ?? new());
             }
         }
-
 
         public ConfigData()
         {
