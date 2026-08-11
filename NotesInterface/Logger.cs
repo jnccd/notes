@@ -32,23 +32,31 @@ namespace Notes.Interface
         /// </summary>
         public static void WriteLine(object o, LogLevel level = LogLevel.Info)
         {
-            // Get logger of calling type (this is horrible for performance but the code looks better this way)
-            StackTrace st = new(true);
-            var loggerType = st.GetFrames().ElementAt(1).GetMethod()?.DeclaringType;
-            if (loggerType == null)
-                loggerType = typeof(Logger);
-            var logger = LogManager.GetLogger(loggerType);
+            try
+            {
+                // Get logger of calling type (this is horrible for performance but the code looks better this way)
+                StackTrace st = new(true);
+                var loggerType = st.GetFrames().ElementAt(1).GetMethod()?.DeclaringType;
+                if (loggerType == null)
+                    loggerType = typeof(Logger);
+                var logger = LogManager.GetLogger(loggerType);
 
-            if (level == LogLevel.Debug)
-                logger.Debug(o);
-            else if (level == LogLevel.Info)
-                logger.Info(o);
-            else if (level == LogLevel.Warn)
-                logger.Warn(o);
-            else if (level == LogLevel.Error)
-                logger.Error(o);
-            else if (level == LogLevel.Fatal)
-                logger.Fatal(o);
+                if (level == LogLevel.Debug)
+                    logger.Debug(o);
+                else if (level == LogLevel.Info)
+                    logger.Info(o);
+                else if (level == LogLevel.Warn)
+                    logger.Warn(o);
+                else if (level == LogLevel.Error)
+                    logger.Error(o);
+                else if (level == LogLevel.Fatal)
+                    logger.Fatal(o);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Logger failed: {e}");
+                Debug.WriteLine($"Logger failed: {e}");
+            }
         }
 
         /// <summary>
