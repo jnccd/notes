@@ -124,15 +124,18 @@ public class Communicator : IDisposable
         {
             var s = JsonConvert.SerializeObject(noteChanges, Formatting.Indented);
 
-            stateChanged?.Invoke(CommsState.Working);
+            try { stateChanged?.Invoke(CommsState.Working); }
+            catch (Exception ex) { Logger.WriteLine($"Error on stateChanged: {ex}"); }
             var httpContent = new StringContent(s, Encoding.UTF8, "application/json");
             using var response = client.PostAsync($"{serverUri}{ROUTE_VERSION_PREFIX}/notes/batch", httpContent).Result;
-            stateChanged?.Invoke(response.StatusCode != HttpStatusCode.GatewayTimeout ? CommsState.Connected : CommsState.Disconnected);
+            try { stateChanged?.Invoke(response.StatusCode != HttpStatusCode.GatewayTimeout ? CommsState.Connected : CommsState.Disconnected); }
+            catch (Exception ex) { Logger.WriteLine($"Error on stateChanged: {ex}"); }
 
             if (!response.IsSuccessStatusCode)
             {
                 string errorContent = response.Content.ReadAsStringAsync().Result;
-                onPayloadRequestError?.Invoke(new Exception($"{response.StatusCode}: {errorContent}"));
+                try { onPayloadRequestError?.Invoke(new Exception($"{response.StatusCode}: {errorContent}")); }
+                catch (Exception e) { Logger.WriteLine($"Error on onPayloadRequestError: {e}"); }
                 Logger.WriteLine($"Error sending changes: {response.StatusCode}: {errorContent}");
             }
 
@@ -142,7 +145,8 @@ public class Communicator : IDisposable
         catch (Exception e)
         {
             Logger.WriteLine(e, LogLevel.Error);
-            stateChanged?.Invoke(CommsState.Disconnected);
+            try { stateChanged?.Invoke(CommsState.Disconnected); }
+            catch (Exception ex) { Logger.WriteLine($"Error on stateChanged: {ex}"); }
         }
 
         Logger.WriteLine($"Sent");
