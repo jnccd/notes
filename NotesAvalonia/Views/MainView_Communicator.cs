@@ -108,15 +108,16 @@ public partial class MainView : UserControl
                 if (Config.Data.CurrentUsersUnsyncedChanges?.Count > 0)
                 {
                     SaveConfig();
-                    if (communicator != null)
-                        communicator.SendChanges(Config.Data.CurrentUsersUnsyncedChanges);
-                    else
+
+                    if (communicator == null)
                     {
                         Dispatcher.UIThread.Invoke(() =>
                         {
                             popupManager?.Show("Error synching data to Server!", "Communicator object is gone :/", TakeFocus: false, AlwaysAsFlyout: true);
                         });
+                        continue;
                     }
+                    communicator.SendChanges(Config.Data.CurrentUsersUnsyncedChanges);
                 }
             }
         });
