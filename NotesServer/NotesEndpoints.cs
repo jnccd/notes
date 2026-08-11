@@ -66,8 +66,9 @@ public static class NotesEndpoints
             for (int i = 0; i < noteChanges.Length; i++)
             {
                 NoteChange noteChange = noteChanges[i];
-                var notePosition = u!.NotesPayload!.GetAllNotes().FirstOrDefault(x => x.Note.Id == noteChange.NoteId);
-                var noteParentPosition = u!.NotesPayload!.GetAllNotes().FirstOrDefault(x => x.Note.Id == noteChange.ParentId);
+                var allNotes = u!.NotesPayload!.GetAllNotes();
+                var notePosition = allNotes.FirstOrDefault(x => x.Note.Id == noteChange.NoteId);
+                var noteParentPosition = allNotes.FirstOrDefault(x => x.Note.Id == noteChange.ParentId);
 
                 switch (noteChange.Type)
                 {
@@ -85,6 +86,11 @@ public static class NotesEndpoints
                         if (noteChange.ChildInsertionIndex < 0 || noteChange.ChildInsertionIndex > noteParentPosition.Note.SubNotes.Count)
                         {
                             results[i] = new HttpResult(StatusCodes.Status400BadRequest, $"{i}: Invalid Payload: ChildInsertionIndex {noteChange.ChildInsertionIndex} is out of bounds for parent note {noteChange.ParentId} with {noteParentPosition.Note.SubNotes.Count} subnotes");
+                            continue;
+                        }
+                        if (allNotes.Any(x => x.Note.Id == noteChange.NoteId))
+                        {
+                            results[i] = new HttpResult(StatusCodes.Status400BadRequest, $"{i}: Invalid Payload: Id {noteChange.NoteId} already exists in the notes structure");
                             continue;
                         }
                         try
