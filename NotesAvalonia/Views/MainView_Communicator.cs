@@ -169,7 +169,7 @@ public partial class MainView : UserControl
             var server = viewModel?.LoginServerUri;
             if (string.IsNullOrWhiteSpace(server))
                 throw new Exception("You need to set the Connect URL of the note server first!");
-            var authBackendAddress = Communicator.GetAuthBackendAddress(server!, new System.Net.Http.HttpClient());
+            var authBackendAddress = Communicator.GetAuthBackendAddress(server!, new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(10) });
             var url = authBackendAddress.RealmUrl + "/account";
 
             var action = OpenUrlActionsOnSystem.FirstOrDefault(x => x.IsCurrentOperatingSystem);

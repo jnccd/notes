@@ -27,22 +27,27 @@ public class Communicator : IDisposable
     public Task? ServerTask { get => serverTask; private set { } }
     Task? serverTask;
 
-    string serverUri;
-    IEzAuthHttpClient client;
-    IEzAuth auth;
-    EzAuthAddress authBackendAddress;
-    HttpClient? _httpClient;
+    readonly string serverUri;
+    readonly string? initialAuthBackendRefreshToken;
+    readonly Action<string> authBackendRefreshTokenChanged;
+    readonly IEzAuth auth;
+    readonly HttpClient httpClient;
+
+    readonly object initLock = new();
+    EzAuthAddress? authBackendAddress;
+    IEzAuthHttpClient? client;
+    string? lastReportedError = null;
 
     public Communicator(string serverUri, string? initialAuthBackendRefreshToken, Action<string> authBackendRefreshTokenChanged, Action<CommsState>? stateChanged = null, HttpClient? httpClient = null, Action<Exception>? onPayloadRequestError = null)
     {
         this.serverUri = serverUri;
         this.stateChanged = stateChanged;
         this.onPayloadRequestError = onPayloadRequestError;
-        _httpClient = httpClient ?? new HttpClient();
+        this.initialAuthBackendRefreshToken = initialAuthBackendRefreshToken;
+        this.authBackendRefreshTokenChanged = authBackendRefreshTokenChanged;
+        this.httpClient = httpClient ?? new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
 
         auth = new EzKeycloak();
-        authBackendAddress = GetAuthBackendAddress(serverUri, _httpClient);
-        client = new KeyCloakHttpClient(authBackendAddress, authBackendRefreshTokenChanged, initialAuthBackendRefreshToken, httpClient);
     }
 
     public static EzAuthAddress GetAuthBackendAddress(string serverUri, HttpClient httpClient)
@@ -56,15 +61,30 @@ public class Communicator : IDisposable
         return authBackendAddress!;
     }
 
+    void EnsureInitialized()
+    {
+        if (client != null)
+            return;
+        lock (initLock)
+        {
+            if (client != null)
+                return;
+            authBackendAddress = GetAuthBackendAddress(serverUri, httpClient);
+            client = new KeyCloakHttpClient(authBackendAddress, authBackendRefreshTokenChanged, initialAuthBackendRefreshToken, httpClient);
+        }
+    }
+
     public string GetSeparateSessionRefreshToken(string username, string password)
     {
-        var res = auth.Login(_httpClient!, authBackendAddress.RealmUrl!, authBackendAddress.Client!, username, password);
+        EnsureInitialized();
+        var res = auth.Login(httpClient, authBackendAddress!.RealmUrl!, authBackendAddress!.Client!, username, password);
         return res!.RefreshToken!;
     }
 
     public void DoNewLogIn(string username, string password)
     {
-        client.Login(username, password);
+        EnsureInitialized();
+        client!.Login(username, password);
     }
 
     public void StartRequestLoop(Action<string, Payload?> receivedEvent)
@@ -122,12 +142,13 @@ public class Communicator : IDisposable
 
         try
         {
+            EnsureInitialized();
             var s = JsonConvert.SerializeObject(noteChanges, Formatting.Indented);
 
             try { stateChanged?.Invoke(CommsState.Working); }
             catch (Exception ex) { Logger.WriteLine($"Error on stateChanged: {ex}"); }
             var httpContent = new StringContent(s, Encoding.UTF8, "application/json");
-            using var response = client.PostAsync($"{serverUri}{ROUTE_VERSION_PREFIX}/notes/batch", httpContent).Result;
+            using var response = client!.PostAsync($"{serverUri}{ROUTE_VERSION_PREFIX}/notes/batch", httpContent).Result;
             try { stateChanged?.Invoke(response.StatusCode != HttpStatusCode.GatewayTimeout ? CommsState.Connected : CommsState.Disconnected); }
             catch (Exception ex) { Logger.WriteLine($"Error on stateChanged: {ex}"); }
 
@@ -157,8 +178,9 @@ public class Communicator : IDisposable
     {
         try
         {
+            EnsureInitialized();
             stateChanged?.Invoke(CommsState.Working);
-            receivedText = client.GetStringAsync($"{serverUri}{ROUTE_VERSION_PREFIX}/notes").Result;
+            receivedText = client!.GetStringAsync($"{serverUri}{ROUTE_VERSION_PREFIX}/notes").Result;
 
             StringBuilder sb = new StringBuilder(receivedText);
             sb.Replace("\\\n", "");
@@ -177,6 +199,7 @@ public class Communicator : IDisposable
             {
                 lock (lockject)
                 {
+                    lastReportedError = null; // connection recovered; report the next distinct error again
                     Payload? receivedPayload = null;
                     try { receivedPayload = Payload.Parse(receivedText); }
                     catch (Exception e) { Logger.WriteLine($"Error parsing payload: {e}"); }
@@ -189,10 +212,16 @@ public class Communicator : IDisposable
         {
             receivedText = "";
 
-            if (onPayloadRequestError != null)
-                onPayloadRequestError(e);
-            else
-                Logger.WriteLine(e, LogLevel.Error);
+            // Only report a given error once (the request loop retries every few seconds,
+            // so without this the "Error Connecting to Server!" popup would spam the UI).
+            if (e.ToString() != lastReportedError)
+            {
+                lastReportedError = e.ToString();
+                if (onPayloadRequestError != null)
+                    onPayloadRequestError(e);
+                else
+                    Logger.WriteLine(e, LogLevel.Error);
+            }
             stateChanged?.Invoke(CommsState.Disconnected);
         }
 
