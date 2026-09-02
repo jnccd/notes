@@ -102,12 +102,44 @@ public partial class MainView : UserControl
         Task.Run(() =>
         {
             Thread.CurrentThread.Name = "Autosave Thread";
+            int lastPersistedQueueCount = 0;
+            DateTime lastPersistTime = DateTime.Now;
             while (true)
             {
                 Task.Delay(500).Wait();
-                if (Config.Data.CurrentUsersUnsyncedChanges?.Count > 0)
+                try
                 {
-                    SaveConfig();
+                    var unsyncedChanges = Config.Data.CurrentUsersUnsyncedChanges;
+                    if (unsyncedChanges == null || unsyncedChanges.Count == 0)
+                    {
+                        // Queue drained (e.g. after a successful send): persist the now
+                        // empty queue so a restart does not re-send old changes. Don't
+                        // bump SaveTime here - the server state is at least as new as
+                        // ours after a successful sync, and bumping would make the
+                        // request loop reject the server's payload as stale.
+                        if (lastPersistedQueueCount != 0)
+                        {
+                            SaveConfig(false);
+                            lastPersistedQueueCount = 0;
+                        }
+                        continue;
+                    }
+
+                    // Persist whenever the queue changed (new offline changes were added,
+                    // or the previous send removed delivered ones). While a backlog just
+                    // sits there (offline wait), only do a slow safety save instead of
+                    // rewriting config.json every 500 ms. SaveTime is only bumped when
+                    // the queue grew (fresh local edits); after a send or while idling
+                    // the server state is at least as new, so we don't claim otherwise.
+                    bool queueGrew = unsyncedChanges.Count > lastPersistedQueueCount;
+                    bool queueChanged = unsyncedChanges.Count != lastPersistedQueueCount;
+                    bool safetySaveDue = DateTime.Now - lastPersistTime > TimeSpan.FromSeconds(10);
+                    if (queueChanged || safetySaveDue)
+                    {
+                        SaveConfig(queueGrew);
+                        lastPersistedQueueCount = unsyncedChanges.Count;
+                        lastPersistTime = DateTime.Now;
+                    }
 
                     if (communicator == null)
                     {
@@ -117,7 +149,12 @@ public partial class MainView : UserControl
                         });
                         continue;
                     }
-                    communicator.SendChanges(Config.Data.CurrentUsersUnsyncedChanges);
+                    communicator.SendChanges(unsyncedChanges);
+                }
+                catch (Exception e)
+                {
+                    // Never let one bad tick kill the autosave/retry loop.
+                    Notes.Interface.Logger.WriteLine(e, Notes.Interface.LogLevel.Error);
                 }
             }
         });
