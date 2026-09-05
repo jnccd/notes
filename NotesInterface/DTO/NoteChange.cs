@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using System.Web;
-using Newtonsoft.Json;
 
 namespace Notes.Interface.DTO;
 

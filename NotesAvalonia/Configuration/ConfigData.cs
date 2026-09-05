@@ -1,11 +1,11 @@
 using Avalonia;
 using Avalonia.Media;
-using Newtonsoft.Json;
 using Notes.Interface;
 using Notes.Interface.DTO;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json.Serialization;
 using Size = Avalonia.Size;
 
 namespace NotesAvalonia.Configuration
@@ -15,19 +15,27 @@ namespace NotesAvalonia.Configuration
     public class ConfigData
     {
         // Local Gui Settings
+        // Pos/BackColor stay fields with [JsonInclude] instead of auto-properties: their types are
+        // structs whose members STJ can only assign by whole-value field/ctor write, and the fields
+        // keep the stored JSON shape identical to the Newtonsoft era. The converters are also
+        // declared here so the source generator treats them as handled.
+        [JsonInclude]
+        [JsonConverter(typeof(PixelPointJsonConverter))]
         public PixelPoint? Pos;
-        public double? Width;
-        public double? Height;
+        [JsonInclude]
+        [JsonConverter(typeof(ColorJsonConverter))]
         public Color BackColor;
+        public double? Width { get; set; }
+        public double? Height { get; set; }
 
         // Server
-        public string? ServerUri;
-        public string? Username;
-        public string? AuthBackendRefreshToken;
-        public string? AuthBackendRefreshTokenForAndroidWidget;
+        public string? ServerUri { get; set; }
+        public string? Username { get; set; }
+        public string? AuthBackendRefreshToken { get; set; }
+        public string? AuthBackendRefreshTokenForAndroidWidget { get; set; }
 
         // Notes payload
-        public Dictionary<string, NotesDataForUser> NotePayloadOfUser;
+        public Dictionary<string, NotesDataForUser> NotePayloadOfUser { get; set; }
 
         // Workspace key used while no user is logged in yet (empty/whitespace Username). Notes
         // typed in that state used to be global in Config.Data.Notes and persisted regardless of
@@ -131,8 +139,8 @@ namespace NotesAvalonia.Configuration
 
     public record NotePayload
     {
-        public DateTime SaveTime;
-        public List<Note> Notes;
+        public DateTime SaveTime { get; set; }
+        public List<Note> Notes { get; set; }
 
         public NotePayload()
         {

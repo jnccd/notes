@@ -1,6 +1,6 @@
 using System;
+using System.Text.Json.Serialization;
 using System.Web;
-using Newtonsoft.Json;
 
 namespace Notes.Interface.DTO;
 
@@ -25,7 +25,7 @@ public class NoteData
     /// </summary>
     public Guid? LinkTargetId { get; set; }
     public string Text { get; set; } = ""; // Should be URL encoded so that the json parser is not interrupted by special characters 
-    [JsonIgnore, System.Text.Json.Serialization.JsonIgnore]
+    [JsonIgnore]
     public string DecodedText
     {
         get

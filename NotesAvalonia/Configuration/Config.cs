@@ -1,10 +1,11 @@
 using Avalonia.Logging;
-using Newtonsoft.Json;
+using Notes.Interface;
 using System;
 using System.Collections;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text.Json;
 
 namespace NotesAvalonia.Configuration
 {
@@ -15,6 +16,17 @@ namespace NotesAvalonia.Configuration
         static readonly string configPath = PersonalPath + "config.json";
         static readonly string configBackupPath = PersonalPath + "config_backup.json";
         public static bool UnsavedChanges = false;
+
+        // Same shape as NoteJson.Default plus converters for Avalonia structs (PixelPoint/Color)
+        // that STJ cannot assign member-by-member. Uses the source-generated resolver so the
+        // config also loads/stores under NativeAOT (reflection-based STJ disabled).
+        static readonly JsonSerializerOptions JsonOptions = new()
+        {
+            WriteIndented = true,
+            PropertyNameCaseInsensitive = true,
+            TypeInfoResolver = ConfigJsonContext.Default,
+            Converters = { new PixelPointJsonConverter(), new ColorJsonConverter() }
+        };
         public static ConfigData Data
         {
             get
@@ -55,7 +67,7 @@ namespace NotesAvalonia.Configuration
             {
                 if (File.Exists(configPath))
                     File.Copy(configPath, configBackupPath, true);
-                File.WriteAllText(configPath, JsonConvert.SerializeObject(Data, Formatting.Indented));
+                File.WriteAllText(configPath, JsonSerializer.Serialize(Data, JsonOptions));
 
                 UnsavedChanges = false;
             }
@@ -65,7 +77,7 @@ namespace NotesAvalonia.Configuration
             lock (lockject)
             {
                 if (Exists())
-                    Data = JsonConvert.DeserializeObject<ConfigData>(File.ReadAllText(configPath)) ?? Data;
+                    Data = JsonSerializer.Deserialize<ConfigData>(File.ReadAllText(configPath), JsonOptions) ?? Data;
                 else
                     Data = new ConfigData();
 
@@ -79,32 +91,41 @@ namespace NotesAvalonia.Configuration
         {
             lock (lockject)
             {
-                Data = JsonConvert.DeserializeObject<ConfigData>(JSON) ?? Data;
+                Data = JsonSerializer.Deserialize<ConfigData>(JSON, JsonOptions) ?? Data;
             }
         }
         public static new string ToString()
         {
             string output = "";
 
-            FieldInfo[] Infos = typeof(ConfigData).GetFields();
-            foreach (FieldInfo info in Infos)
+            // ConfigData members are public properties now (a few remaining fields carry
+            // [JsonInclude]); list both so the debug output stays useful.
+            var members = typeof(ConfigData)
+                .GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+                .Cast<System.Reflection.MemberInfo>()
+                .Concat(typeof(ConfigData)
+                    .GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+                    .Where(f => f.GetCustomAttributes(typeof(System.Text.Json.Serialization.JsonIncludeAttribute), false).Length > 0));
+            foreach (var member in members)
             {
-                output += "\n" + info.Name + ": ";
+                object? value = member switch
+                {
+                    System.Reflection.PropertyInfo p => p.GetValue(Data),
+                    System.Reflection.FieldInfo f => f.GetValue(Data),
+                    _ => null
+                };
+                output += "\n" + member.Name + ": ";
 
-                if (info.FieldType != typeof(string) && typeof(IEnumerable).IsAssignableFrom(info.FieldType))
+                var valueType = (member as System.Reflection.PropertyInfo)?.PropertyType ?? (member as System.Reflection.FieldInfo)?.FieldType;
+                if (valueType != typeof(string) && value is IEnumerable a)
                 {
                     output += "\n";
-                    IEnumerable a = info.GetValue(Data) as IEnumerable ?? Array.Empty<string>();
-                    IEnumerator e = a.GetEnumerator();
-                    e.Reset();
-                    while (e.MoveNext())
-                    {
-                        output += e.Current + ", ";
-                    }
+                    foreach (var item in a)
+                        output += item + ", ";
                 }
                 else
                 {
-                    output += info.GetValue(Data) + "\n";
+                    output += value + "\n";
                 }
             }
 

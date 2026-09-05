@@ -1,5 +1,5 @@
-﻿using Newtonsoft.Json;
 using System.Text;
+using System.Text.Json;
 
 namespace Notes.Interface.DTO;
 
@@ -43,21 +43,16 @@ public class Payload
 
     public override string ToString()
     {
-        StringBuilder sb = new StringBuilder(JsonConvert.SerializeObject(this, Formatting.Indented));
-        sb.Replace("\\\n", "");
-        sb.Replace("\\n", "");
-        sb.Replace("\\\"", "\"");
-        sb.Replace("\\\"", "\"");
-        //sb.Replace("\r", "");
-        //sb.Replace("\n", "");
-        //sb.Replace("\\", "");
-        return sb.ToString();
+        // Note text is URL-encoded, so values never contain raw quotes/newlines that would need
+        // escaping - plain JSON serialization is safe here (the old Newtonsoft output used escape
+        // stripping hacks for the same reason).
+        return JsonSerializer.Serialize(this, NoteJson.Default);
     }
     public static Payload? Parse(string json)
     {
         try
         {
-            return JsonConvert.DeserializeObject<Payload>(json);
+            return JsonSerializer.Deserialize<Payload>(json, NoteJson.Default);
         }
         catch
         {

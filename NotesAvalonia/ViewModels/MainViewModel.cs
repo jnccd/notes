@@ -250,12 +250,20 @@ public partial class MainViewModel : ViewModelBase
         {
             return Config.Data.ServerUri;
         }
-        set { Config.Data.ServerUri = value; SetProperty(ref Config.Data.ServerUri, value); }
+        set
+        {
+            Config.Data.ServerUri = value;
+            OnPropertyChanged(nameof(LoginServerUri));
+        }
     }
     public string? LoginServerUsername
     {
         get { return Config.Data.Username; }
-        set { Config.Data.Username = value; SetProperty(ref Config.Data.Username, value); }
+        set
+        {
+            Config.Data.Username = value;
+            OnPropertyChanged(nameof(LoginServerUsername));
+        }
     }
     [ObservableProperty]
     private string _loginPassword = "";

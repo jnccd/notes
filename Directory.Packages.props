@@ -5,7 +5,6 @@
   </PropertyGroup>
   <ItemGroup>
     <!-- Interface packages -->
-    <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.5" />
     <PackageVersion Include="log4net" Version="3.3.2" />
     <!-- Server packages -->

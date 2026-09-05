@@ -1,11 +1,10 @@
 using EzAuth.Interfaces;
 using EzAuth.Keycloak;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using Notes.Interface.DTO;
 using System.Diagnostics;
 using System.Net;
 using System.Text;
+using System.Text.Json;
 
 namespace Notes.Interface;
 
@@ -70,7 +69,7 @@ public class Communicator : IDisposable
         HttpResponseMessage response = httpClient.SendAsync(request).Result;
         response.EnsureSuccessStatusCode();
         string responseBody = response.Content.ReadAsStringAsync().Result;
-        EzAuthAddress? authBackendAddress = JsonConvert.DeserializeObject<EzAuthAddress>(responseBody);
+        EzAuthAddress? authBackendAddress = JsonSerializer.Deserialize<EzAuthAddress>(responseBody, NoteJson.Default);
         return authBackendAddress!;
     }
 
@@ -184,7 +183,7 @@ public class Communicator : IDisposable
         try
         {
             EnsureInitialized();
-            var s = JsonConvert.SerializeObject(toSend, Formatting.Indented);
+            var s = JsonSerializer.Serialize(toSend, NoteJson.Default);
 
             ReportState(CommsState.Working);
             var httpContent = new StringContent(s, Encoding.UTF8, "application/json");
@@ -263,18 +262,26 @@ public class Communicator : IDisposable
             return null;
         try
         {
-            var obj = JObject.Parse(content);
-            var arr = obj["results"] as JArray ?? obj["Results"] as JArray;
-            if (arr == null || arr.Count != expectedCount)
+            using var document = JsonDocument.Parse(content);
+            var root = document.RootElement;
+            if (root.ValueKind != JsonValueKind.Object)
                 return null;
+            if (!root.TryGetProperty("results", out var array) && !root.TryGetProperty("Results", out array))
+                return null;
+            if (array.ValueKind != JsonValueKind.Array || array.GetArrayLength() != expectedCount)
+                return null;
+
             int[] statuses = new int[expectedCount];
-            for (int i = 0; i < expectedCount; i++)
+            int i = 0;
+            foreach (var item in array.EnumerateArray())
             {
-                var item = arr[i] as JObject;
-                var statusToken = item?["statusCode"] ?? item?["StatusCode"];
-                if (statusToken == null)
+                if (item.ValueKind != JsonValueKind.Object)
                     return null;
-                statuses[i] = statusToken.Value<int>();
+                if (!item.TryGetProperty("statusCode", out var statusToken) && !item.TryGetProperty("StatusCode", out statusToken))
+                    return null;
+                if (!statusToken.TryGetInt32(out int status))
+                    return null;
+                statuses[i++] = status;
             }
             return statuses;
         }

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <!--If you are willing to use Windows/MacOS native APIs you will need to create 3 projects.
@@ -9,7 +9,10 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <PublishAot>true</PublishAot>
+    <!-- Only publish the desktop app AOT (a Release `dotnet publish`); debug/JIT runs must keep
+         reflection-based System.Text.Json enabled (PublishAot also flips
+         JsonSerializer.IsReflectionEnabledByDefault=false into the Debug runtimeconfig). -->
+    <PublishAot Condition="'$(Configuration)' == 'Release'">true</PublishAot>
   </PropertyGroup>
 
   <PropertyGroup>
