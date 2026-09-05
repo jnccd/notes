@@ -196,26 +196,61 @@
                                         </StackPanel>
                                     </Button>
 
-                                    <CheckBox
+                                    <Grid
                                         Grid.Column="3"
                                         Width="26"
                                         Height="26"
-                                        MinHeight="0"
                                         Margin="0"
-                                        Padding="0"
-                                        VerticalAlignment="Top"
-                                        Click="CheckBox_Click"
-                                        Content=""
-                                        FontSize="1"
-                                        IsChecked="{Binding CheckedState, Mode=OneWay}"
-                                        PointerPressed="CheckBox_PointerPressed">
-                                        <CheckBox.RenderTransform>
+                                        VerticalAlignment="Top">
+                                        <Grid.RenderTransform>
                                             <TransformGroup>
                                                 <TranslateTransform X="2" Y="-4" />
                                                 <ScaleTransform ScaleX="0.8" ScaleY="0.8" />
                                             </TransformGroup>
-                                        </CheckBox.RenderTransform>
-                                    </CheckBox>
+                                        </Grid.RenderTransform>
+
+                                        <!-- Platform checkbox: shows the blue check for done, the empty box for
+                                        open. Hidden entirely for canceled so the custom indicator below
+                                        fully owns the canceled look (the platform's built-in indeterminate
+                                        glyph is a blocky rectangle we don't want). Opacity 0 keeps the
+                                        control hit-testable, so clicks still reach it. -->
+                                        <CheckBox
+                                            Width="26"
+                                            Height="26"
+                                            MinHeight="0"
+                                            Margin="0"
+                                            Padding="0"
+                                            Click="CheckBox_Click"
+                                            Content=""
+                                            FontSize="1"
+                                            IsChecked="{Binding Done, Mode=OneWay}"
+                                            Opacity="{Binding ShowCanceledGlyph, Converter={StaticResource EitherOrConverter}, ConverterParameter='0|1'}"
+                                            PointerPressed="CheckBox_PointerPressed" />
+
+                                        <!-- Custom canceled indicator: neutral gray box with a white dash.
+                                        (done = blue check, canceled = gray dash, open = empty)
+                                        Left edge + vertically centered to sit exactly where the
+                                        platform checkbox draws its own box. -->
+                                        <Border
+                                            Width="21"
+                                            Height="21"
+                                            Margin="0,5,0,0"
+                                            HorizontalAlignment="Left"
+                                            VerticalAlignment="Center"
+                                            Background="#6B6B6B"
+                                            CornerRadius="4"
+                                            IsHitTestVisible="False"
+                                            IsVisible="{Binding ShowCanceledGlyph}">
+                                            <TextBlock
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"
+                                                FontSize="15"
+                                                FontWeight="Bold"
+                                                Foreground="White"
+                                                Text="–"
+                                                TextAlignment="Center" />
+                                        </Border>
+                                    </Grid>
 
                                     <Grid Grid.Column="4" HorizontalAlignment="{Binding Closed, Converter={StaticResource TextBoxDoneGridAlignmentConverter}}">
                                         <TextBox

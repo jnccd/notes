@@ -100,7 +100,7 @@ public partial class FlattenedNoteViewModel : ViewModelBase
                 });
             SetProperty(ref _done, value);
             OnPropertyChanged(nameof(Closed));
-            OnPropertyChanged(nameof(CheckedState));
+            OnPropertyChanged(nameof(ShowCanceledGlyph));
         }
     }
 
@@ -120,7 +120,7 @@ public partial class FlattenedNoteViewModel : ViewModelBase
                 });
             SetProperty(ref _canceled, value);
             OnPropertyChanged(nameof(Closed));
-            OnPropertyChanged(nameof(CheckedState));
+            OnPropertyChanged(nameof(ShowCanceledGlyph));
         }
     }
 
@@ -128,12 +128,9 @@ public partial class FlattenedNoteViewModel : ViewModelBase
     // editing, ...), so bind the Done-based styling to this combined flag instead.
     public bool Closed => Done || Canceled;
 
-    // The CheckBox shows a third (indeterminate) state for canceled:
-    //   true  = done
-    //   null  = canceled
-    //   false = open
-    // If both flags are somehow set, Done wins.
-    public bool? CheckedState => Done ? true : Canceled ? null : false;
+    // Show the custom canceled checkbox (gray box with a dash) instead of the platform checkbox.
+    // Done wins if both flags are somehow set, so never show the gray box over the done check.
+    public bool ShowCanceledGlyph => Canceled && !Done;
 
     /// <summary>Primary click on the checkbox: open &lt;-&gt; done; clicking a canceled note reopens it.</summary>
     public void ToggleDone()
