@@ -135,8 +135,7 @@
 
                 <ScrollViewer
                     Name="RootScrollViewer"
-                    Grid.Row="1"
-                    ScrollChanged="ScrollViewer_ScrollChanged">
+                    Grid.Row="1">
                     <ItemsControl ItemsSource="{Binding FlattenedNoteVMs}">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>

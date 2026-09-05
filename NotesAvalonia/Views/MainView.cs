@@ -43,7 +43,15 @@ public partial class MainView : UserControl
         if (layoutTransformControl != null)
             layoutTransformControl.LayoutTransform = new Avalonia.Media.ScaleTransform(Globals.LayoutScale, Globals.LayoutScale);
 
-        Handle_AndroidCompat_On_Constructor();
+        // Mobile: don't show the window border's context menu (Close) on long-press
+        if (!Globals.IsDesktop)
+        {
+            var windowBorder = this.GetLogicalDescendants()
+                .OfType<Border>()
+                .FirstOrDefault(x => x.Name == "WindowBorder");
+            if (windowBorder != null)
+                windowBorder.ContextMenu = null;
+        }
     }
 
     private void MainView_Loaded(object? sender, RoutedEventArgs e)
@@ -76,7 +84,19 @@ public partial class MainView : UserControl
             RoutingStrategies.Tunnel | RoutingStrategies.Bubble
         );
 
-        Handle_AndroidCompat_On_MainView_Loaded(sender, e);
+        // Mobile: keep the view locked while a note row is dragged (row reorder) so the list
+        // cannot scroll out from under the drag.
+        if (!Globals.IsDesktop)
+        {
+            scrollViewer = this.GetLogicalDescendants()
+                .OfType<ScrollViewer>()
+                .First();
+            scrollViewer.PropertyChanged += (s, e) =>
+            {
+                if (e.Property == ScrollViewer.OffsetProperty && disableScrolling)
+                    scrollViewer.Offset = new Avalonia.Vector(0, lockedY);
+            };
+        }
     }
 
     private void MainView_PointerReleased(object? sender, PointerReleasedEventArgs e)
@@ -85,7 +105,6 @@ public partial class MainView : UserControl
         if (model != null)
             model.AddDebugText($"MainView_PointerReleased: LeftButtonPressed={e.Properties.IsLeftButtonPressed}, Pressure={e.Properties.Pressure} {e.GetPosition(sender as ItemsControl)}");
 
-        Handle_AndroidCompat_On_MainView_PointerReleased(sender, e);
         Handle_Reordering_On_MainView_PointerReleased(sender, e);
     }
 

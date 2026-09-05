@@ -293,10 +293,17 @@ public partial class MainView : UserControl
             if (viewModel == null)
                 return;
             var currentPayload = Config.Data.CurrentUsersNotePayload();
-            if (currentPayload != null && (currentPayload.Notes == null || currentPayload.Notes.Count == 0))
-                currentPayload.Notes = [Note.EmptyNote()];
-            if (currentPayload != null)
-                viewModel.LoadNew(currentPayload.Notes ?? [Note.EmptyNote()]);
+            var notes = currentPayload?.Notes;
+            if (notes == null || notes.Count == 0)
+            {
+                // No notes yet - either not logged in yet (fresh config, no user payload) or the
+                // current user has no notes on the server. Seed the UI with one empty note so it
+                // is immediately usable; once a payload arrives it replaces this seed.
+                notes = [Note.EmptyNote()];
+                if (currentPayload != null)
+                    currentPayload.Notes = notes;
+            }
+            viewModel.LoadNew(notes);
         }
     }
 }

@@ -467,3 +467,5 @@ $RECYCLE.BIN/
 logcat.txt
 
 **.lscache
+
+**/.build-check
