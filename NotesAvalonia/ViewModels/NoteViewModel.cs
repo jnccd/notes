@@ -156,6 +156,17 @@ public partial class FlattenedNoteViewModel : ViewModelBase
         }
     }
 
+    // Info-menu display: when this note was created. New notes are stamped at creation
+    // (Note.EmptyNote), old notes without the value get backfilled on load (MainViewModel.LoadNew).
+    public string CreatedInfo
+    {
+        get
+        {
+            var created = FlattenedNote.OriginalNote.Data.Created;
+            return $"Created: {(created.HasValue ? created.Value.ToString("yyyy-MM-dd HH:mm") : "—")}";
+        }
+    }
+
     private bool _hidden;
     public bool Hidden
     {

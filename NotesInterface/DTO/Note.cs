@@ -1,3 +1,4 @@
+using System;
 using System.Web;
 using Newtonsoft.Json;
 
@@ -9,7 +10,14 @@ public class Note
     public NoteData Data { get; set; } = new NoteData();
     public List<Note> SubNotes { get; set; } = new();
 
-    public static Note EmptyNote() => new Note();
+    /// <summary>Creates a brand new note and stamps its creation time (so the Created field is
+    /// set immediately and travels with the note's Add change).</summary>
+    public static Note EmptyNote()
+    {
+        var note = new Note();
+        note.Data.Created = DateTimeOffset.Now;
+        return note;
+    }
 
     public List<NotePosition> RecursiveSubNotes(bool SkipChildrenOfClosedNotes = false, int depth = 0, Note? parent = null)
     {

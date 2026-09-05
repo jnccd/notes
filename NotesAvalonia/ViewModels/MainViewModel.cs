@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -29,12 +30,40 @@ public partial class MainViewModel : ViewModelBase
 
     public void LoadNew(List<Note> notes)
     {
+        BackfillMissingCreatedDates(notes);
         VirtualRoot = new Note()
         {
             Data = { Expanded = true },
             SubNotes = notes
         };
         ReFlatten();
+    }
+
+    // One-time migration for notes created before the Created field existed: stamp them with the
+    // local "now" and queue an update so the value is persisted and synced. Runs once per note -
+    // after this the field is set and stays stable.
+    static void BackfillMissingCreatedDates(List<Note> notes)
+    {
+        foreach (var note in notes)
+            BackfillMissingCreatedDates(note);
+    }
+
+    static void BackfillMissingCreatedDates(Note note)
+    {
+        if (note.Data.Created == null)
+        {
+            note.Data.Created = DateTimeOffset.Now;
+            if (mainView != null)
+                Config.Data.AddNoteChange(new NoteChange()
+                {
+                    Type = NoteChangeType.Update,
+                    NoteId = note.Id,
+                    Data = note.Data
+                });
+        }
+
+        foreach (var subNote in note.SubNotes)
+            BackfillMissingCreatedDates(subNote);
     }
 
     public void ReFlatten()

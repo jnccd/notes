@@ -303,6 +303,12 @@
                                             Path="/Assets/meatballs.svg" />
                                         <Button.Flyout>
                                             <MenuFlyout>
+                                                <!-- Read-only note metadata; more fields can be added as further rows. -->
+                                                <MenuItem Header="Note Info">
+                                                    <MenuItem
+                                                        IsEnabled="False"
+                                                        Header="{Binding CreatedInfo}" />
+                                                </MenuItem>
                                                 <MenuItem
                                                     Command="{Binding #Root.((vm:MainViewModel)DataContext).AddChildNoteCommand}"
                                                     CommandParameter="{Binding .}"
