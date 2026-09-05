@@ -10,7 +10,7 @@ using NotesServer.Services.Notes;
 
 namespace NotesServer;
 
-public static class NotesEndpoints
+public static class NotesEndpointsV1
 {
     const string ROUTE_VERSION_PREFIX = "/v1";
     static HttpClient httpClient = new();
