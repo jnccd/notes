@@ -7,6 +7,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Presenters;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.LogicalTree;
 using Avalonia.Threading;
 using Notes.Interface;
@@ -35,13 +36,7 @@ public partial class MainView : UserControl
                 return;
 
             var noteIndex = parentNote?.SubNotes.IndexOf(note!);
-            note!.DeleteFrom(parentNote);
-            viewModel?.ReFlatten();
-            Config.Data.CurrentUsersUnsyncedChanges?.Add(new NoteChange()
-            {
-                Type = NoteChangeType.Delete,
-                NoteId = note.Id,
-            });
+            viewModel?.DeleteNote(note!, parentNote); // also removes symlinks pointing into it
 
             if (noteIndex != null && noteIndex > 0)
             {
@@ -77,31 +72,60 @@ public partial class MainView : UserControl
             var insertBefore = tb.CaretIndex == 0;
             var insertionIndex = ogParent!.SubNotes.IndexOf(ogNote) + (insertBefore ? 0 : 1);
 
-            // Ground truth: the new note becomes a sibling right before/after ogNote, so in the
+            // Ground truth: the new note becomes a sibling right before/after ogNote. In the
             // flattened view it belongs right before ogNote's row (caret at start) or right after
             // ogNote's ENTIRE visible subtree (caret elsewhere) - not just after ogNote's own row,
-            // which would land between an expanded ogNote and its children. Find that spot in the
-            // already-flattened list incrementally instead of re-flattening: rows following ogNote
-            // with a strictly greater depth all belong to ogNote's visible subtree, and the run ends
-            // at the first row whose depth is not greater than ogNote's (its next flattened sibling).
+            // which would land between an expanded ogNote and its children.
             var flattenedNotes = viewModel!.FlattenedNoteVMs;
-            var flattenedInsertionIndex = flattenedNotes.IndexOf(nvm!);
-            if (!insertBefore)
+            var newNote = Note.EmptyNote();
+            ogParent.SubNotes.Insert(insertionIndex, newNote);
+
+            // The same canonical subtree can be rendered in several flattened instances at once
+            // (e.g. under an expanded symlink). The new sibling row must be added to EVERY such
+            // instance - but only the instance the Enter happened in must receive focus. For each
+            // instance find the copy of ogNote (same canonical note under that instance's parent
+            // context) and insert the new row at the same relative spot.
+            int SlotAfterAnchorRow(int anchorRowIndex)
             {
-                var ogDepth = nvm!.FlattenedNote.Depth;
-                while (flattenedInsertionIndex + 1 < flattenedNotes.Count
-                       && flattenedNotes[flattenedInsertionIndex + 1].FlattenedNote.Depth > ogDepth)
+                int idx = anchorRowIndex;
+                if (!insertBefore)
                 {
-                    flattenedInsertionIndex++;
+                    uint anchorDepth = flattenedNotes[idx].FlattenedNote.Depth;
+                    while (idx + 1 < flattenedNotes.Count && flattenedNotes[idx + 1].FlattenedNote.Depth > anchorDepth)
+                        idx++;
+                    idx++;
                 }
-                flattenedInsertionIndex++;
+                return idx;
             }
 
-            var newNote = Note.EmptyNote();
-            var flattenedNewNote = newNote.Flatten(depth: nvm!.FlattenedNote.Depth, parent: nvm!.FlattenedNote.Parent).First();
+            var primaryCtx = nvm.FlattenedNote.Parent;
+            var slots = new List<(int Index, uint Depth, FlattenedNote? Parent)>();
+            FlattenedNoteViewModel? primaryVm = null;
 
-            ogParent.SubNotes.Insert(insertionIndex, newNote);
-            flattenedNotes.Insert(flattenedInsertionIndex, new FlattenedNoteViewModel(flattenedNewNote) { });
+            for (int i = 0; i < flattenedNotes.Count; i++)
+            {
+                var row = flattenedNotes[i];
+                var ctx = row.FlattenedNote.Parent;
+                if (row.FlattenedNote.OriginalNote != ogNote)
+                    continue;
+                if (ctx == null || !ReferenceEquals(ctx.OriginalNote, ogParent))
+                    continue;
+                // ctx is one display instance of ogNote (the Entered one, or a symlink mirror).
+                slots.Add((SlotAfterAnchorRow(i), row.FlattenedNote.Depth, ctx));
+            }
+
+            // Insert from the end so earlier indices stay valid; remember the primary instance row.
+            foreach (var slot in slots.OrderByDescending(s => s.Index))
+            {
+                var vm = new FlattenedNoteViewModel(new FlattenedNote(newNote)
+                {
+                    Depth = slot.Depth,
+                    Parent = slot.Parent
+                });
+                flattenedNotes.Insert(slot.Index, vm);
+                if (ReferenceEquals(slot.Parent, primaryCtx))
+                    primaryVm = vm;
+            }
 
             Config.Data.CurrentUsersUnsyncedChanges?.Add(new NoteChange()
             {
@@ -116,7 +140,13 @@ public partial class MainView : UserControl
             {
                 Dispatcher.UIThread.Post(() =>
                 {
-                    var newTextbox = this.GetLogicalDescendants().OfType<TextBox>().FirstOrDefault(x => x.DataContext is FlattenedNoteViewModel nvm && nvm.FlattenedNote.OriginalNote == newNote);
+                    // Focus the row in the instance the Enter happened in (not a mirrored copy
+                    // under a symlink); fall back to any row of the new note if it is gone.
+                    var newTextbox = this.GetLogicalDescendants()
+                        .OfType<TextBox>()
+                        .FirstOrDefault(x => primaryVm != null && ReferenceEquals(x.DataContext, primaryVm))
+                        ?? this.GetLogicalDescendants().OfType<TextBox>()
+                            .FirstOrDefault(x => x.DataContext is FlattenedNoteViewModel nvm && nvm.FlattenedNote.OriginalNote == newNote);
                     if (newTextbox != null)
                     {
                         newTextbox.Focusable = true;
@@ -125,5 +155,30 @@ public partial class MainView : UserControl
                 });
             });
         }
+    }
+
+    private void AddSubtreeFromString_Click(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not MenuItem { DataContext: FlattenedNoteViewModel nvm })
+            return;
+
+        popupManager?.ShowTextInput(
+            "Add Subtree from String",
+            "Paste note text as produced by \"Export to Clipboard\":",
+            "",
+            result =>
+            {
+                if (string.IsNullOrWhiteSpace(result))
+                    return;
+                if (Note.TryParseStyledSubtree(result, out var parsedRoot, out var error))
+                {
+                    if (DataContext is MainViewModel model)
+                        model.AddSubtreeFromString(nvm, parsedRoot);
+                }
+                else
+                {
+                    popupManager?.Show("Add Subtree from String", error ?? "Could not parse the text.", AlwaysAsFlyout: true);
+                }
+            });
     }
 }

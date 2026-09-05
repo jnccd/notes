@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Linq;
+using Avalonia;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Notes.Interface.DTO;
 using NotesAvalonia.Configuration;
@@ -66,11 +67,44 @@ public partial class FlattenedNoteViewModel : ViewModelBase
 
     public uint Depth => FlattenedNote.Depth;
 
+    /// <summary>True when this row is a symlink to another note.</summary>
+    public bool IsLink => FlattenedNote.OriginalNote.Data.LinkTargetId != null;
+
+    /// <summary>
+    /// The note whose content this row displays and edits. For symlink rows that is the resolved
+    /// target (set during flatten); for regular notes it is the note itself. Structural operations
+    /// (move/delete/insert sibling) still use <see cref="FlattenedNote"/>.OriginalNote - the link
+    /// that lives in this position.
+    /// </summary>
+    public Note EffectiveNote => FlattenedNote.DereferencedNote ?? FlattenedNote.OriginalNote;
+
+    // Text box left padding grows on symlink rows to make room for the 🔗 marker.
+    public Thickness TextPadding => IsLink ? new Thickness(20, 5, 2, 5) : new Thickness(2, 5);
+
+    // The same canonical note can be displayed in several rows at once (a note under an expanded
+    // symlink and its own place in the backlog). Data changes are shared, but each row has its own
+    // bindings - so after editing content, tell every other row showing the same note to re-read
+    // its values. (Edits through a link must show up on the canonical row and vice versa.)
+    void NotifySharedContentRows()
+    {
+        if (mainView?.DataContext is not MainViewModel model)
+            return;
+        var effective = EffectiveNote;
+        foreach (var fnvm in model.FlattenedNoteVMs)
+        {
+            if (ReferenceEquals(fnvm, this))
+                continue;
+            if (fnvm.EffectiveNote == effective)
+                fnvm.OnPropertyChanged(string.Empty); // refresh all bindings of the shared note
+        }
+    }
+
     public string NumRecursiveTodoChildren
     {
         get
         {
-            var children = FlattenedNote.OriginalNote.RecursiveSubNotes().Where(x => x.Note != FlattenedNote.OriginalNote && !string.IsNullOrWhiteSpace(x.Note.Data.DecodedText));
+            var effectiveNote = EffectiveNote;
+            var children = effectiveNote.RecursiveSubNotes().Where(x => x.Note != effectiveNote && !string.IsNullOrWhiteSpace(x.Note.Data.DecodedText));
             var undoneChildren = children.Where(x => !x.Note.Data.Done && !x.Note.Data.Canceled);
 
             var childCount = children.Count();
@@ -87,40 +121,42 @@ public partial class FlattenedNoteViewModel : ViewModelBase
     private bool _done;
     public bool Done
     {
-        get { return FlattenedNote.OriginalNote.Data.Done; }
+        get { return EffectiveNote.Data.Done; }
         set
         {
-            FlattenedNote.OriginalNote.Data.Done = value;
+            EffectiveNote.Data.Done = value;
             if (mainView != null)
                 Config.Data.AddNoteChange(new NoteChange()
                 {
                     Type = NoteChangeType.Update,
-                    NoteId = FlattenedNote.OriginalNote.Id,
-                    Data = FlattenedNote.OriginalNote.Data
+                    NoteId = EffectiveNote.Id,
+                    Data = EffectiveNote.Data
                 });
             SetProperty(ref _done, value);
             OnPropertyChanged(nameof(Closed));
             OnPropertyChanged(nameof(ShowCanceledGlyph));
+            NotifySharedContentRows();
         }
     }
 
     private bool _canceled;
     public bool Canceled
     {
-        get { return FlattenedNote.OriginalNote.Data.Canceled; }
+        get { return EffectiveNote.Data.Canceled; }
         set
         {
-            FlattenedNote.OriginalNote.Data.Canceled = value;
+            EffectiveNote.Data.Canceled = value;
             if (mainView != null)
                 Config.Data.AddNoteChange(new NoteChange()
                 {
                     Type = NoteChangeType.Update,
-                    NoteId = FlattenedNote.OriginalNote.Id,
-                    Data = FlattenedNote.OriginalNote.Data
+                    NoteId = EffectiveNote.Id,
+                    Data = EffectiveNote.Data
                 });
             SetProperty(ref _canceled, value);
             OnPropertyChanged(nameof(Closed));
             OnPropertyChanged(nameof(ShowCanceledGlyph));
+            NotifySharedContentRows();
         }
     }
 
@@ -162,7 +198,7 @@ public partial class FlattenedNoteViewModel : ViewModelBase
     {
         get
         {
-            var created = FlattenedNote.OriginalNote.Data.Created;
+            var created = EffectiveNote.Data.Created;
             return $"Created: {(created.HasValue ? created.Value.ToString("yyyy-MM-dd HH:mm") : "—")}";
         }
     }
@@ -170,23 +206,26 @@ public partial class FlattenedNoteViewModel : ViewModelBase
     private bool _hidden;
     public bool Hidden
     {
-        get { return FlattenedNote.OriginalNote.Data.Hidden; }
+        get { return EffectiveNote.Data.Hidden; }
         set
         {
-            FlattenedNote.OriginalNote.Data.Hidden = value;
+            EffectiveNote.Data.Hidden = value;
             if (mainView != null)
                 Config.Data.AddNoteChange(new NoteChange()
                 {
                     Type = NoteChangeType.Update,
-                    NoteId = FlattenedNote.OriginalNote.Id,
-                    Data = FlattenedNote.OriginalNote.Data
+                    NoteId = EffectiveNote.Id,
+                    Data = EffectiveNote.Data
                 });
             SetProperty(ref _hidden, value);
+            NotifySharedContentRows();
         }
     }
     [ObservableProperty]
     private bool _notTemporarilyUnHidden = true;
 
+    // Expansion state stays on the row's own note (per-link for symlinks, shared for the note
+    // itself), so it is NOT routed through EffectiveNote.
     private bool _expanded;
     public bool Expanded
     {
@@ -202,24 +241,26 @@ public partial class FlattenedNoteViewModel : ViewModelBase
                     Data = FlattenedNote.OriginalNote.Data
                 });
             SetProperty(ref _expanded, value);
+            NotifySharedContentRows();
         }
     }
 
     private string _text = "";
     public string Text
     {
-        get { return FlattenedNote.OriginalNote.Data.DecodedText ?? ""; }
+        get { return EffectiveNote.Data.DecodedText ?? ""; }
         set
         {
-            FlattenedNote.OriginalNote.Data.DecodedText = value;
+            EffectiveNote.Data.DecodedText = value;
             if (mainView != null)
                 Config.Data.AddNoteChange(new NoteChange()
                 {
                     Type = NoteChangeType.Update,
-                    NoteId = FlattenedNote.OriginalNote.Id,
-                    Data = FlattenedNote.OriginalNote.Data
+                    NoteId = EffectiveNote.Id,
+                    Data = EffectiveNote.Data
                 });
             SetProperty(ref _text, value);
+            NotifySharedContentRows();
         }
     }
 }

@@ -1,6 +1,8 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Data.Converters;
+using Avalonia.Layout;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -124,5 +126,149 @@ public class Popup(Action<Exception>? OnError, Window? OriginWindow, Control? Fl
         };
         Flyout.SetAttachedFlyout(FlyoutOrigin!, currentFlyout);
         currentFlyout.ShowAt(FlyoutOrigin!);
+    }
+
+    /// <summary>Shows a popup with a multi-line text input and OK/Cancel buttons. The entered text
+    /// (or null when cancelled) is delivered through <paramref name="onResult"/>.</summary>
+    public void ShowTextInput(string title, string label, string initialText, Action<string?> onResult)
+    {
+        try
+        {
+            if (Globals.IsDesktop)
+                ShowTextInputWindow(title, label, initialText, onResult);
+            else
+                ShowTextInputFlyout(title, label, initialText, onResult);
+        }
+        catch (Exception ex)
+        {
+            OnError?.Invoke(ex);
+        }
+    }
+
+    private void ShowTextInputWindow(string title, string label, string initialText, Action<string?> onResult)
+    {
+        var textBox = new TextBox
+        {
+            Text = initialText,
+            AcceptsReturn = true,
+            TextWrapping = Avalonia.Media.TextWrapping.Wrap,
+            MinHeight = 120
+        };
+        var okButton = new Button { Content = "OK", Width = 90 };
+        var cancelButton = new Button { Content = "Cancel", Width = 90 };
+        var buttonRow = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 8,
+            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right
+        };
+        buttonRow.Children.Add(okButton);
+        buttonRow.Children.Add(cancelButton);
+
+        var labelBlock = new TextBlock
+        {
+            Text = label,
+            TextWrapping = Avalonia.Media.TextWrapping.Wrap
+        };
+        var grid = new Grid
+        {
+            Margin = new Thickness(10),
+            RowDefinitions = { new RowDefinition(GridLength.Auto), new RowDefinition(GridLength.Star), new RowDefinition(GridLength.Auto) },
+            RowSpacing = 8
+        };
+        grid.Children.Add(labelBlock);
+        grid.Children.Add(textBox);
+        grid.Children.Add(buttonRow);
+        Grid.SetRow(labelBlock, 0);
+        Grid.SetRow(textBox, 1);
+        Grid.SetRow(buttonRow, 2);
+
+        currentWindow?.Close();
+        currentWindow = new Window
+        {
+            Title = title,
+            Content = grid,
+            Width = 520,
+            Height = 320,
+            Padding = new Thickness(10)
+        };
+        okButton.Click += (s, e) =>
+        {
+            var result = textBox.Text;
+            currentWindow.Close();
+            onResult(result);
+        };
+        cancelButton.Click += (s, e) =>
+        {
+            currentWindow.Close();
+            onResult(null);
+        };
+        currentWindow.ShowActivated = true;
+        currentWindow.Show(OriginWindow!);
+        textBox.Focus();
+    }
+
+    private void ShowTextInputFlyout(string title, string label, string initialText, Action<string?> onResult)
+    {
+        var titleBlock = new TextBlock
+        {
+            Text = title,
+            FontSize = 18,
+            TextWrapping = Avalonia.Media.TextWrapping.Wrap
+        };
+        var textBox = new TextBox
+        {
+            Text = initialText,
+            AcceptsReturn = true,
+            TextWrapping = Avalonia.Media.TextWrapping.Wrap,
+            MinHeight = 120
+        };
+        var okButton = new Button { Content = "OK" };
+        var cancelButton = new Button { Content = "Cancel" };
+        var buttonRow = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 8,
+            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right
+        };
+        buttonRow.Children.Add(okButton);
+        buttonRow.Children.Add(cancelButton);
+
+        var grid = new Grid
+        {
+            Margin = new Thickness(10),
+            RowDefinitions = { new RowDefinition(GridLength.Auto), new RowDefinition(GridLength.Star), new RowDefinition(GridLength.Auto) },
+            RowSpacing = 8,
+            MinWidth = 300
+        };
+        grid.Children.Add(titleBlock);
+        grid.Children.Add(textBox);
+        grid.Children.Add(buttonRow);
+        Grid.SetRow(titleBlock, 0);
+        Grid.SetRow(textBox, 1);
+        Grid.SetRow(buttonRow, 2);
+
+        okButton.Click += (s, e) =>
+        {
+            var result = textBox.Text;
+            currentFlyout?.Hide();
+            onResult(result);
+        };
+        cancelButton.Click += (s, e) =>
+        {
+            currentFlyout?.Hide();
+            onResult(null);
+        };
+
+        currentFlyout?.Hide();
+        currentFlyout = new Flyout
+        {
+            Content = grid,
+            Placement = PlacementMode.Center,
+            ShowMode = FlyoutShowMode.Transient,
+        };
+        Flyout.SetAttachedFlyout(FlyoutOrigin!, currentFlyout);
+        currentFlyout.ShowAt(FlyoutOrigin!);
+        textBox.Focus();
     }
 }

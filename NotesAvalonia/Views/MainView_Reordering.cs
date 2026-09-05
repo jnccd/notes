@@ -71,7 +71,7 @@ public partial class MainView : UserControl
                     dataTransfer.Add(DataTransferItem.Create(DragDropFormats.FlattenedNoteRef, draggedViewModel));
 
                     var result = await DragDrop.DoDragDropAsync(new PointerPressedEventArgs(sender, e.Pointer, this, new Point(), (ulong)DateTime.Now.ToBinary(), new PointerPointProperties(), KeyModifiers.None), dataTransfer, DragDropEffects.Move);
-                    Task.Run(() => Debug.WriteLine($"DragButton_DragDrop.DoDragDrop done! Result={result}")).Start();
+                    Debug.WriteLine($"DragButton_DragDrop.DoDragDrop done! Result={result}");
 
                     if (!Globals.IsDesktop)
                     {
@@ -114,7 +114,15 @@ public partial class MainView : UserControl
                 var draggedToFlattenedNote = presenterElem?.DataContext as FlattenedNoteViewModel;
 
                 if (draggedToFlattenedNote != null)
-                    MoveNoteFromTo(draggedFlattenedNote, draggedToFlattenedNote);
+                {
+                    // Ctrl + drop creates a symlink to the dragged note before the drop target
+                    // instead of moving it (plain drag & drop needs no modifier keys).
+                    bool createLink = (e.KeyModifiers & KeyModifiers.Control) != 0;
+                    if (createLink)
+                        model.CreateLinkTo(draggedFlattenedNote.EffectiveNote, draggedToFlattenedNote, asChild: false, insertBefore: true);
+                    else
+                        MoveNoteFromTo(draggedFlattenedNote, draggedToFlattenedNote);
+                }
             }
         }
     }
@@ -131,7 +139,7 @@ public partial class MainView : UserControl
         var ogDraggedToNoteParentIndex = ogDraggedToNoteParent.SubNotes.IndexOf(ogDraggedToNote);
         var draggedToNoteFlattenedIndex = draggedToFlattenedNote == null ? -1 : flattenedNotes.IndexOf(draggedToFlattenedNote);
 
-        if (ogDraggedNote.RecursiveSubNotes().FirstOrDefault(n => n.Note == ogDraggedToNote)!.Note != null)
+        if (ogDraggedNote.RecursiveSubNotes().Any(n => n.Note == ogDraggedToNote))
             return; // Can't move a note into one of its own subnotes
 
         Debug.WriteLine($"NoteContainer_OnDrop reorder! ogDraggedNote{ogDraggedNote} ogDraggedNoteParent{ogDraggedNoteParent} ogDraggedToNote{ogDraggedToNote} ogDraggedToNote{ogDraggedToNote} ogDraggedToNoteParent{ogDraggedToNoteParent} ogDraggedToNoteParentIndex{ogDraggedToNoteParentIndex} draggedToNoteFlattenedIndex{draggedToNoteFlattenedIndex}");

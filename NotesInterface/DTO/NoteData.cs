@@ -17,6 +17,13 @@ public class NoteData
     /// backfilled with the local "now" once when loaded (and synced via an update change).
     /// </summary>
     public DateTimeOffset? Created { get; set; }
+    /// <summary>
+    /// Symlink marker: when set, this note is a link to the note with this id (living elsewhere in
+    /// the same payload tree). The link has no content of its own - the UI dereferences it to the
+    /// target, edits the target's data and shows its children when the link is expanded. Old
+    /// payloads/clients simply ignore the field.
+    /// </summary>
+    public Guid? LinkTargetId { get; set; }
     public string Text { get; set; } = ""; // Should be URL encoded so that the json parser is not interrupted by special characters 
     [JsonIgnore, System.Text.Json.Serialization.JsonIgnore]
     public string DecodedText

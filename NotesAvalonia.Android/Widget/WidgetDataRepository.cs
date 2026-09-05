@@ -24,7 +24,21 @@ namespace NotesAvalonia.Android
             if (virtualRootNote == null || virtualRootNote.SubNotes == null || virtualRootNote.SubNotes.Count == 0)
                 return null;
 
-            var lines = virtualRootNote.SubtreeToStyledString()
+            // Resolve symlinks against the payload root so links show their target's content.
+            Note? FindInRoot(Note node, Guid id)
+            {
+                if (node.Id == id)
+                    return node;
+                foreach (var subNote in node.SubNotes)
+                {
+                    var found = FindInRoot(subNote, id);
+                    if (found != null)
+                        return found;
+                }
+                return null;
+            }
+
+            var lines = virtualRootNote.SubtreeToStyledString(id => FindInRoot(virtualRootNote, id))
                 .Split('\n')
                 .Skip(1)                    // first line is the (virtual) root note itself
                 .Where(l => !string.IsNullOrWhiteSpace(l))

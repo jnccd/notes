@@ -253,10 +253,17 @@
                                     </Grid>
 
                                     <Grid Grid.Column="4" HorizontalAlignment="{Binding Closed, Converter={StaticResource TextBoxDoneGridAlignmentConverter}}">
+                                        <!-- Symlink marker (rows are padded on the left to make room) -->
+                                        <TextBlock
+                                            Margin="0,2,0,0"
+                                            IsHitTestVisible="False"
+                                            IsVisible="{Binding IsLink}"
+                                            Text="🔗"
+                                            VerticalAlignment="Top" />
                                         <TextBox
                                             MinHeight="0"
                                             Margin="0"
-                                            Padding="2,5"
+                                            Padding="{Binding TextPadding}"
                                             Background="Transparent"
                                             BorderThickness="0"
                                             FontSize="13"
@@ -317,6 +324,22 @@
                                                     Command="{Binding #Root.((vm:MainViewModel)DataContext).ExportItemToClipboardCommand}"
                                                     CommandParameter="{Binding .}"
                                                     Header="Export to Clipboard" />
+                                                <MenuItem
+                                                    Click="AddSubtreeFromString_Click"
+                                                    Header="Add Subtree from String…" />
+                                                <Separator />
+                                                <MenuItem
+                                                    Command="{Binding #Root.((vm:MainViewModel)DataContext).CopyLinkCommand}"
+                                                    CommandParameter="{Binding .}"
+                                                    Header="Copy Link" />
+                                                <MenuItem
+                                                    Command="{Binding #Root.((vm:MainViewModel)DataContext).PasteLinkAsChildCommand}"
+                                                    CommandParameter="{Binding .}"
+                                                    Header="Paste Link as Child" />
+                                                <MenuItem
+                                                    Command="{Binding #Root.((vm:MainViewModel)DataContext).PasteLinkAsSiblingCommand}"
+                                                    CommandParameter="{Binding .}"
+                                                    Header="Paste Link as Sibling" />
                                                 <Separator />
                                                 <MenuItem
                                                     Command="{Binding #Root.((vm:MainViewModel)DataContext).FocusNoteCommand}"
