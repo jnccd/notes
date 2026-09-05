@@ -56,16 +56,15 @@ namespace NotesAvalonia.Android
 
                 var virtualRootNote = new Note() { SubNotes = payload?.Notes ?? [] };
                 var widgetText = WidgetDataRepository.BuildWidgetText(virtualRootNote);
-                if (widgetText != null)
+                if (widgetText == null)
                 {
-                    WidgetDataRepository.SaveData(ApplicationContext, widgetText);
+                    // Nothing to show (no notes, or only empty content): keep whatever the widget
+                    // currently displays. Overwriting it with an empty string here would blank the
+                    // widget whenever the server account is (temporarily) empty.
+                    return Result.InvokeSuccess();
                 }
-                else
-                {
-                    // No notes yet (or only empty ones): clear the widget so it does not keep
-                    // showing stale data from a previous note set.
-                    WidgetDataRepository.SaveData(ApplicationContext, "");
-                }
+
+                WidgetDataRepository.SaveData(ApplicationContext, widgetText);
                 WidgetDataRepository.RequestUpdate(ApplicationContext);
 
                 return Result.InvokeSuccess();
