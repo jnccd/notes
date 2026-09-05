@@ -37,4 +37,14 @@ public class NoteData
     public bool Expanded { get; set; } = false;
     public bool Hidden { get; set; } = false;
     public NotePriority Prio { get; set; } = NotePriority.Medium;
+
+
+    /// <summary>
+    /// Optimistic-concurrency revision. Bumped by the editing client each time a change for this
+    /// note is queued; sent inside the note's Data snapshot. The server accepts an Update only when
+    /// its BaseRev matches the stored revision, so stale clients can never overwrite newer data.
+    /// ulong: overflow/wraparound (and negative revisions) are practically impossible. Note for a
+    /// future JS-based client: values above 2^53 lose integer precision in JSON.
+    /// </summary>
+    public ulong Rev { get; set; } = 0;
 }

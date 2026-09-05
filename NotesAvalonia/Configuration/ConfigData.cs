@@ -48,10 +48,11 @@ namespace NotesAvalonia.Configuration
             string.IsNullOrWhiteSpace(Username) ? AnonymousUserKey : Username!;
 
         /// <summary>
-        /// Queues a change for the current user. Update changes carry a full <see cref="NoteData"/>
-        /// snapshot, so a new update supersedes any earlier update of the same note still in the
-        /// queue - without this, typing one character enqueues one update and the queue grows
-        /// without bound while changes cannot be delivered (offline / not logged in yet).
+        /// Queues a change for the current user.
+        /// Update changes carry a full <see cref="NoteData"/> snapshot: only the newest update per
+        /// note matters (typing one character must not enqueue one update), and each update stamps
+        /// the note's optimistic-concurrency revision (BaseRev = revision it was based on, then the
+        /// note's Rev is bumped) so the server can reject stale clients.
         /// </summary>
         public void AddNoteChange(NoteChange change)
         {
@@ -60,7 +61,35 @@ namespace NotesAvalonia.Configuration
                 return;
 
             if (change.Type == NoteChangeType.Update)
-                queue.RemoveAll(c => c.Type == NoteChangeType.Update && c.NoteId == change.NoteId);
+            {
+                // Coalesce: replace the pending snapshot of the same note in place and keep the
+                // entry's original BaseRev/Rev - a burst of local edits advances the revision
+                // exactly once per update that will actually be sent.
+                int existingIndex = queue.FindIndex(c => c.Type == NoteChangeType.Update && c.NoteId == change.NoteId);
+                if (existingIndex >= 0)
+                {
+                    var existing = queue[existingIndex];
+                    if (change.Data != null)
+                        existing.Data = change.Data;
+                    return;
+                }
+
+                // Fresh update: stamp the revision this change builds on and the new revision on
+                // the note itself (rides the snapshot that gets sent and persisted).
+                if (change.Data != null)
+                {
+                    change.BaseRev = change.Data.Rev;
+                    change.Data.Rev += 1;
+                }
+            }
+            else if (change.Type == NoteChangeType.Delete && change.Data != null)
+            {
+                // A delete that carries the note's data gets an optimistic-concurrency check too
+                // (BaseRev = the revision being deleted), so a stale client cannot delete a note
+                // that was updated by a newer client in the meantime. Deletes without data are
+                // unconditional (legacy clients / deliberate force-delete escape hatch).
+                change.BaseRev = change.Data.Rev;
+            }
 
             queue.Add(change);
         }

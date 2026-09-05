@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using EzAuth;
 using EzAuth.Interfaces;
 using Microsoft.AspNetCore.Mvc;
@@ -115,9 +115,31 @@ public static class NotesEndpointsV1
                             results[i] = new HttpResult(StatusCodes.Status400BadRequest, $"{i}: Invalid Payload: Update requires Data");
                             continue;
                         }
-                        notePosition?.Note.Data = noteChange.Data;
+                        if (notePosition == null)
+                        {
+                            // Note no longer exists (deleted elsewhere): nothing to update.
+                            break;
+                        }
+                        // Optimistic concurrency: accept the update only when it was based on the
+                        // revision currently stored, so a stale client cannot overwrite newer data
+                        // written by other clients. Legacy clients send no BaseRev -> accepted.
+                        if (noteChange.BaseRev != null && notePosition.Note.Data.Rev != noteChange.BaseRev.Value)
+                        {
+                            results[i] = new HttpResult(StatusCodes.Status409Conflict, $"{i}: Update conflict for note {noteChange.NoteId}: server revision {notePosition.Note.Data.Rev} != base revision {noteChange.BaseRev.Value}");
+                            continue; // leave server state and SaveTime untouched
+                        }
+                        notePosition.Note.Data = noteChange.Data;
                         break;
                     case NoteChangeType.Delete:
+                        // Optimistic concurrency on deletes too (when the client sent the deleted
+                        // note's data): do not delete a note that was updated by a newer client in
+                        // the meantime. Legacy/force deletes carry no BaseRev and stay unconditional
+                        // (this is also the escape hatch for corrupted revisions).
+                        if (noteChange.BaseRev != null && notePosition != null && notePosition.Note.Data.Rev != noteChange.BaseRev.Value)
+                        {
+                            results[i] = new HttpResult(StatusCodes.Status409Conflict, $"{i}: Delete conflict for note {noteChange.NoteId}: server revision {notePosition.Note.Data.Rev} != base revision {noteChange.BaseRev.Value}");
+                            continue;
+                        }
                         try
                         {
                             notePosition?.Note.DeleteFrom(notePosition.Parent);

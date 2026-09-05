@@ -156,12 +156,13 @@ public partial class MainView : UserControl
         model.ReFlatten();
 
         // TODO: This should probably be atomic
-        Config.Data.CurrentUsersUnsyncedChanges?.Add(new NoteChange()
+        Config.Data.AddNoteChange(new NoteChange()
         {
             Type = NoteChangeType.Delete,
             NoteId = ogDraggedNote.Id,
+            Data = ogDraggedNote.Data,
         });
-        Config.Data.CurrentUsersUnsyncedChanges?.Add(new NoteChange()
+        Config.Data.AddNoteChange(new NoteChange()
         {
             Type = NoteChangeType.Add,
             NoteId = ogDraggedNote.Id,

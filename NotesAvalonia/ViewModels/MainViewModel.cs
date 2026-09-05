@@ -33,40 +33,47 @@ public partial class MainViewModel : ViewModelBase
     {
         // Remove symlinks whose target no longer exists or would create a cycle.
         PruneBrokenLinks(notes);
-        BackfillMissingCreatedDates(notes);
+        bool stampedCreatedDates = BackfillMissingCreatedDates(notes);
         VirtualRoot = new Note()
         {
             Data = { Expanded = true },
             SubNotes = notes
         };
         ReFlatten();
+
+        // Persist locally-stamped Created values so they stay stable across restarts. Deliberately
+        // NOT enqueued as Update changes: a startup backfill would upload a full snapshot for every
+        // old note, and a client whose local payload is stale could overwrite newer data that other
+        // clients already wrote to the server (the server applies updates blindly). Created reaches
+        // the server on the next genuine edit of each note instead.
+        if (stampedCreatedDates && mainView != null)
+            Config.Save();
     }
 
     // One-time migration for notes created before the Created field existed: stamp them with the
-    // local "now" and queue an update so the value is persisted and synced. Runs once per note -
-    // after this the field is set and stays stable.
-    static void BackfillMissingCreatedDates(List<Note> notes)
+    // local "now" so the value is stable locally. Returns whether anything was stamped. No sync
+    // change is queued here (see LoadNew).
+    static bool BackfillMissingCreatedDates(List<Note> notes)
     {
+        bool anyStamped = false;
         foreach (var note in notes)
-            BackfillMissingCreatedDates(note);
+            anyStamped |= BackfillMissingCreatedDates(note);
+        return anyStamped;
     }
 
-    static void BackfillMissingCreatedDates(Note note)
+    static bool BackfillMissingCreatedDates(Note note)
     {
+        bool stamped = false;
         if (note.Data.Created == null)
         {
             note.Data.Created = DateTimeOffset.Now;
-            if (mainView != null)
-                Config.Data.AddNoteChange(new NoteChange()
-                {
-                    Type = NoteChangeType.Update,
-                    NoteId = note.Id,
-                    Data = note.Data
-                });
+            stamped = true;
         }
 
         foreach (var subNote in note.SubNotes)
-            BackfillMissingCreatedDates(subNote);
+            stamped |= BackfillMissingCreatedDates(subNote);
+
+        return stamped;
     }
 
     public void ReFlatten()
@@ -229,6 +236,7 @@ public partial class MainViewModel : ViewModelBase
                         {
                             Type = NoteChangeType.Delete,
                             NoteId = child.Id,
+                            Data = child.Data
                         });
                 }
                 else
@@ -319,7 +327,8 @@ public partial class MainViewModel : ViewModelBase
             Config.Data.AddNoteChange(new NoteChange()
             {
                 Type = NoteChangeType.Delete,
-                NoteId = toDelete.Id
+                NoteId = toDelete.Id,
+                Data = toDelete.Data // carries the revision so the server can concurrency-check the delete
             });
 
         CleanupDanglingLinks(doomed);
@@ -354,7 +363,8 @@ public partial class MainViewModel : ViewModelBase
                     Config.Data.AddNoteChange(new NoteChange()
                     {
                         Type = NoteChangeType.Delete,
-                        NoteId = child.Id
+                        NoteId = child.Id,
+                        Data = child.Data
                     });
             }
             else if (!doomed.Contains(child.Id))
@@ -494,7 +504,8 @@ public partial class MainViewModel : ViewModelBase
                     Config.Data.AddNoteChange(new NoteChange()
                     {
                         Type = NoteChangeType.Delete,
-                        NoteId = victim.Id
+                        NoteId = victim.Id,
+                        Data = victim.Data
                     });
             }
         }
@@ -723,11 +734,13 @@ public partial class MainViewModel : ViewModelBase
             var note = item.FlattenedNote.OriginalNote;
             var toDeleteSubNotes = note.SubNotes.Where(x => string.IsNullOrWhiteSpace(x.Data.DecodedText)).ToList();
             if (mainView != null)
-                Config.Data.CurrentUsersUnsyncedChanges?.AddRange(toDeleteSubNotes.Select(subNote => new NoteChange()
-                {
-                    Type = NoteChangeType.Delete,
-                    NoteId = subNote.Id,
-                }));
+                foreach (var toDeleteSubNote in toDeleteSubNotes)
+                    Config.Data.AddNoteChange(new NoteChange()
+                    {
+                        Type = NoteChangeType.Delete,
+                        NoteId = toDeleteSubNote.Id,
+                        Data = toDeleteSubNote.Data,
+                    });
             foreach (var toDeleteSubNote in toDeleteSubNotes)
                 note.SubNotes.Remove(toDeleteSubNote);
         }
