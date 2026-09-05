@@ -2,6 +2,9 @@ using Android.App;
 using Android.Appwidget;
 using Android.Content;
 using Android.Widget;
+using Notes.Interface.DTO;
+using System;
+using System.Linq;
 
 namespace NotesAvalonia.Android
 {
@@ -9,6 +12,27 @@ namespace NotesAvalonia.Android
     {
         private const string PREFS_NAME = "MyWidgetPrefs";
         private const string KEY_DATA = "WidgetData";
+
+        /// <summary>
+        /// Builds the multi-line text the widget displays from a note tree (reusing the shared
+        /// <see cref="Note.SubtreeToStyledString"/> formatting and stripping the virtual root line
+        /// plus the top-level indent). Returns null when there is nothing to show, never throws
+        /// on empty/edge-case content.
+        /// </summary>
+        public static string? BuildWidgetText(Note virtualRootNote)
+        {
+            if (virtualRootNote == null || virtualRootNote.SubNotes == null || virtualRootNote.SubNotes.Count == 0)
+                return null;
+
+            var lines = virtualRootNote.SubtreeToStyledString()
+                .Split('\n')
+                .Skip(1)                    // first line is the (virtual) root note itself
+                .Where(l => !string.IsNullOrWhiteSpace(l))
+                .Select(l => l.Length > 2 ? l[2..] : l) // strip the depth indent of top-level notes
+                .ToList();
+
+            return lines.Count == 0 ? null : string.Join("\n", lines);
+        }
 
         public static void SaveData(Context context, string data)
         {

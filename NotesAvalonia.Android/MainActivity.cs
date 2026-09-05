@@ -1,4 +1,5 @@
-﻿using System.Linq;
+using System;
+using System.Linq;
 using Android.App;
 using Android.Content;
 using Android.Content.PM;
@@ -50,17 +51,23 @@ public class MainActivity : AvaloniaMainActivity
 
     void UpdateWidget()
     {
-        var app = (CrossPlatformAvaloniaApp)Avalonia.Application.Current!;
-        if (app.MainViewModel.VirtualRoot == null || app.MainViewModel.VirtualRoot.SubNotes.Count == 0)
-            return;
+        try
+        {
+            var app = (CrossPlatformAvaloniaApp)Avalonia.Application.Current!;
+            if (app.MainViewModel.VirtualRoot == null)
+                return;
 
-        var dataToShow = app.MainViewModel.VirtualRoot.SubtreeToStyledString() // TODO: Add a way to filter virtual root in data instead of string representation, and unify
-                .Split('\n')
-                .Skip(1)
-                .Select(x => x[2..])
-                .Aggregate((x, y) => x + "\n" + y);
+            var widgetText = WidgetDataRepository.BuildWidgetText(app.MainViewModel.VirtualRoot);
+            if (widgetText == null)
+                return; // nothing to show yet; keep whatever the widget currently displays
 
-        WidgetDataRepository.SaveData(this, dataToShow);
-        WidgetDataRepository.RequestUpdate(this);
+            WidgetDataRepository.SaveData(this, widgetText);
+            WidgetDataRepository.RequestUpdate(this);
+        }
+        catch (Exception ex)
+        {
+            // Never let a widget hiccup disturb the activity lifecycle.
+            try { Notes.Interface.Logger.WriteLine(DateTime.Now.ToString() + $": Failed to update widget {ex}\n"); } catch { }
+        }
     }
 }

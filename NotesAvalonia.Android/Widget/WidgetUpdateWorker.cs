@@ -26,35 +26,72 @@ namespace NotesAvalonia.Android
         {
             try
             {
+                // Never logged in / no separate widget session configured: there is nothing to
+                // fetch or display. Report success so the periodic worker does not churn on a
+                // guaranteed failure; the widget only becomes meaningful after the user logs in
+                // inside the app (which provisions AuthBackendRefreshTokenForAndroidWidget).
+                if (string.IsNullOrWhiteSpace(Config.Data.ServerUri) ||
+                    string.IsNullOrWhiteSpace(Config.Data.AuthBackendRefreshTokenForAndroidWidget))
+                    return Result.InvokeSuccess();
+
                 var communicator = new Communicator(
                     Config.Data.ServerUri!,
                     Config.Data.AuthBackendRefreshTokenForAndroidWidget, newAuthBackendRefreshToken =>
                     {
                         Config.Data.AuthBackendRefreshTokenForAndroidWidget = newAuthBackendRefreshToken;
-                        Config.Save();
+                        try { Config.Save(); } catch { }
                     },
                     (CommsState state) => { }
                 );
 
-                var payload = communicator.ReqPayload();
+                Payload? payload;
+                try
+                {
+                    payload = communicator.ReqPayload();
+                }
+                finally
+                {
+                    communicator.Dispose();
+                }
+
                 var virtualRootNote = new Note() { SubNotes = payload?.Notes ?? [] };
-                var dataToShow = virtualRootNote.SubtreeToStyledString() // TODO: Add a way to filter virtual root in data instead of string representation and unify
-                    .Split('\n')
-                    .Skip(1)
-                    .Select(x => x[2..])
-                    .Aggregate((x, y) => x + "\n" + y);
-
-                // Save to SharedPreferences
-                WidgetDataRepository.SaveData(ApplicationContext, dataToShow);
+                var widgetText = WidgetDataRepository.BuildWidgetText(virtualRootNote);
+                if (widgetText != null)
+                {
+                    WidgetDataRepository.SaveData(ApplicationContext, widgetText);
+                }
+                else
+                {
+                    // No notes yet (or only empty ones): clear the widget so it does not keep
+                    // showing stale data from a previous note set.
+                    WidgetDataRepository.SaveData(ApplicationContext, "");
+                }
                 WidgetDataRepository.RequestUpdate(ApplicationContext);
-
-                communicator.Dispose();
 
                 return Result.InvokeSuccess();
             }
             catch (Exception ex)
             {
+                // Transient failure (network, auth/session expired, server error): log it and let
+                // WorkManager retry on the next period.
                 try { Notes.Interface.Logger.WriteLine(DateTime.Now.ToString() + $": Failed to update widget {ex}\n"); } catch { }
+
+                // A dead/expired widget session can never recover on its own (the password is not
+                // stored), so drop the stale token: later runs will short-circuit instead of
+                // failing against the auth server on every period until the user logs in again.
+                var message = ex.Message ?? "";
+                if (message.Contains("invalid_grant", StringComparison.OrdinalIgnoreCase) ||
+                    message.Contains("required client", StringComparison.OrdinalIgnoreCase))
+                {
+                    try
+                    {
+                        Config.Data.AuthBackendRefreshTokenForAndroidWidget = "";
+                        Config.Save();
+                    }
+                    catch { }
+                    return Result.InvokeSuccess();
+                }
+
                 return Result.InvokeFailure();
             }
         }
