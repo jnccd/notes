@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Security;
@@ -144,6 +144,12 @@ public partial class MainViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    public void ToggleNoteCanceled(FlattenedNoteViewModel flattenedNoteVM)
+    {
+        flattenedNoteVM.ToggleCanceled();
+    }
+
+    [RelayCommand]
     public void ToggleNoteSubtreeHidden(FlattenedNoteViewModel flattenedNoteVM)
     {
         var recursiveSubnotesResult = flattenedNoteVM.FlattenedNote.OriginalNote.RecursiveSubNotes();
@@ -164,7 +170,7 @@ public partial class MainViewModel : ViewModelBase
     public void RemoveDoneSubnotes(FlattenedNoteViewModel flattenedNoteVM)
     {
         var doneSubNotes = flattenedNoteVM.FlattenedNote.OriginalNote.RecursiveSubNotes()
-            .Where(x => x.Note.Data.Done);
+            .Where(x => x.Note.Data.Done || x.Note.Data.Canceled);
         foreach (var toDeleteSubNote in doneSubNotes)
         {
             toDeleteSubNote.Note.DeleteFrom(toDeleteSubNote.Parent);

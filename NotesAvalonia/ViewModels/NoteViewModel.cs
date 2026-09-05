@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Notes.Interface.DTO;
@@ -71,7 +71,7 @@ public partial class FlattenedNoteViewModel : ViewModelBase
         get
         {
             var children = FlattenedNote.OriginalNote.RecursiveSubNotes().Where(x => x.Note != FlattenedNote.OriginalNote && !string.IsNullOrWhiteSpace(x.Note.Data.DecodedText));
-            var undoneChildren = children.Where(x => !x.Note.Data.Done);
+            var undoneChildren = children.Where(x => !x.Note.Data.Done && !x.Note.Data.Canceled);
 
             var childCount = children.Count();
             var undoneChildCount = undoneChildren.Count();
@@ -99,6 +99,63 @@ public partial class FlattenedNoteViewModel : ViewModelBase
                     Data = FlattenedNote.OriginalNote.Data
                 });
             SetProperty(ref _done, value);
+            OnPropertyChanged(nameof(Closed));
+            OnPropertyChanged(nameof(CheckedState));
+        }
+    }
+
+    private bool _canceled;
+    public bool Canceled
+    {
+        get { return FlattenedNote.OriginalNote.Data.Canceled; }
+        set
+        {
+            FlattenedNote.OriginalNote.Data.Canceled = value;
+            if (mainView != null)
+                Config.Data.CurrentUsersUnsyncedChanges?.Add(new NoteChange()
+                {
+                    Type = NoteChangeType.Update,
+                    NoteId = FlattenedNote.OriginalNote.Id,
+                    Data = FlattenedNote.OriginalNote.Data
+                });
+            SetProperty(ref _canceled, value);
+            OnPropertyChanged(nameof(Closed));
+            OnPropertyChanged(nameof(CheckedState));
+        }
+    }
+
+    // Canceled should behave exactly like Done everywhere in the UI (crossed through text, no
+    // editing, ...), so bind the Done-based styling to this combined flag instead.
+    public bool Closed => Done || Canceled;
+
+    // The CheckBox shows a third (indeterminate) state for canceled:
+    //   true  = done
+    //   null  = canceled
+    //   false = open
+    // If both flags are somehow set, Done wins.
+    public bool? CheckedState => Done ? true : Canceled ? null : false;
+
+    /// <summary>Primary click on the checkbox: open &lt;-&gt; done; clicking a canceled note reopens it.</summary>
+    public void ToggleDone()
+    {
+        if (Done)
+            Done = false;
+        else if (Canceled)
+            Canceled = false;
+        else
+            Done = true;
+    }
+
+    /// <summary>Middle click / menu: toggle canceled. Done takes precedence while both are set,
+    /// so canceling a done note clears done first to make the canceled state visible.</summary>
+    public void ToggleCanceled()
+    {
+        if (Canceled)
+            Canceled = false;
+        else
+        {
+            Done = false;
+            Canceled = true;
         }
     }
 

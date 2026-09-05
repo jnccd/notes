@@ -43,8 +43,8 @@ public class Note
                         .Repeat("  ", x.Depth)
                         .Aggregate((x, y) => x + y);
                 var expandedSymbol = x.Note.Data.Expanded ? "▼" : "▶";
-                var noteText = x.Note.Data.Done ?
-                    x.Note.Data.DecodedText.Select(x => x + "" + (char)822).Aggregate((x, y) => x + y) : // Cross through if done
+                var noteText = (x.Note.Data.Done || x.Note.Data.Canceled) ?
+                    x.Note.Data.DecodedText.Select(x => x + "" + (char)822).Aggregate((x, y) => x + y) : // Cross through if done/canceled
                     x.Note.Data.DecodedText;
 
                 return depthPadding + expandedSymbol + noteText;

@@ -6,6 +6,11 @@ namespace Notes.Interface.DTO;
 public class NoteData
 {
     public bool Done { get; set; } = false;
+    /// <summary>
+    /// Canceled acts like Done in the UI (crossed through etc.). If both Done and Canceled are
+    /// set, Done wins for display purposes; the UI never produces that combination itself.
+    /// </summary>
+    public bool Canceled { get; set; } = false;
     public string Text { get; set; } = ""; // Should be URL encoded so that the json parser is not interrupted by special characters 
     [JsonIgnore, System.Text.Json.Serialization.JsonIgnore]
     public string DecodedText

@@ -204,9 +204,11 @@
                                         Margin="0"
                                         Padding="0"
                                         VerticalAlignment="Top"
+                                        Click="CheckBox_Click"
                                         Content=""
                                         FontSize="1"
-                                        IsChecked="{Binding Done}">
+                                        IsChecked="{Binding CheckedState, Mode=OneWay}"
+                                        PointerPressed="CheckBox_PointerPressed">
                                         <CheckBox.RenderTransform>
                                             <TransformGroup>
                                                 <TranslateTransform X="2" Y="-4" />
@@ -215,7 +217,7 @@
                                         </CheckBox.RenderTransform>
                                     </CheckBox>
 
-                                    <Grid Grid.Column="4" HorizontalAlignment="{Binding Done, Converter={StaticResource TextBoxDoneGridAlignmentConverter}}">
+                                    <Grid Grid.Column="4" HorizontalAlignment="{Binding Closed, Converter={StaticResource TextBoxDoneGridAlignmentConverter}}">
                                         <TextBox
                                             MinHeight="0"
                                             Margin="0"
@@ -223,14 +225,14 @@
                                             Background="Transparent"
                                             BorderThickness="0"
                                             FontSize="13"
-                                            IsHitTestVisible="{Binding Done, Converter={StaticResource NegationConverter}}"
+                                            IsHitTestVisible="{Binding Closed, Converter={StaticResource NegationConverter}}"
                                             KeyDown="TextBox_KeyDown"
-                                            Opacity="{Binding Done, Converter={StaticResource TextBoxDoneOpacityConverter}}"
+                                            Opacity="{Binding Closed, Converter={StaticResource TextBoxDoneOpacityConverter}}"
                                             Text="{Binding Text}"
                                             TextWrapping="Wrap" />
                                         <Rectangle
                                             Height="1"
-                                            Fill="{Binding Done, Converter={StaticResource TextBoxDoneRectangleFillConverter}}"
+                                            Fill="{Binding Closed, Converter={StaticResource TextBoxDoneRectangleFillConverter}}"
                                             IsHitTestVisible="false"
                                             ZIndex="1">
                                             <Rectangle.RenderTransform>
@@ -284,12 +286,16 @@
                                                     Command="{Binding #Root.((vm:MainViewModel)DataContext).ToggleNoteSubtreeHiddenCommand}"
                                                     CommandParameter="{Binding .}"
                                                     Header="Toggle Subtree Hidden" />
+                                                <MenuItem
+                                                    Command="{Binding #Root.((vm:MainViewModel)DataContext).ToggleNoteCanceledCommand}"
+                                                    CommandParameter="{Binding .}"
+                                                    Header="Toggle Canceled" />
                                                 <Separator />
                                                 <MenuItem
                                                     Command="{Binding #Root.((vm:MainViewModel)DataContext).RemoveDoneSubnotesCommand}"
                                                     CommandParameter="{Binding .}"
                                                     Foreground="Red"
-                                                    Header="Delete Done Subnotes" />
+                                                    Header="Delete Finished Subnotes" />
                                                 <MenuItem
                                                     Command="{Binding #Root.((vm:MainViewModel)DataContext).RemoveItemCommand}"
                                                     CommandParameter="{Binding .}"
