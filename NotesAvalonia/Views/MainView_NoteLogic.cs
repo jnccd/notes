@@ -76,13 +76,32 @@ public partial class MainView : UserControl
 
             var insertBefore = tb.CaretIndex == 0;
             var insertionIndex = ogParent!.SubNotes.IndexOf(ogNote) + (insertBefore ? 0 : 1);
-            var flattenedInsertionIndex = viewModel!.FlattenedNoteVMs.ToList().FindIndex(x => x.FlattenedNote == nvm!.FlattenedNote) + (insertBefore ? 0 : 1);
+
+            // Ground truth: the new note becomes a sibling right before/after ogNote, so in the
+            // flattened view it belongs right before ogNote's row (caret at start) or right after
+            // ogNote's ENTIRE visible subtree (caret elsewhere) - not just after ogNote's own row,
+            // which would land between an expanded ogNote and its children. Find that spot in the
+            // already-flattened list incrementally instead of re-flattening: rows following ogNote
+            // with a strictly greater depth all belong to ogNote's visible subtree, and the run ends
+            // at the first row whose depth is not greater than ogNote's (its next flattened sibling).
+            var flattenedNotes = viewModel!.FlattenedNoteVMs;
+            var flattenedInsertionIndex = flattenedNotes.IndexOf(nvm!);
+            if (!insertBefore)
+            {
+                var ogDepth = nvm!.FlattenedNote.Depth;
+                while (flattenedInsertionIndex + 1 < flattenedNotes.Count
+                       && flattenedNotes[flattenedInsertionIndex + 1].FlattenedNote.Depth > ogDepth)
+                {
+                    flattenedInsertionIndex++;
+                }
+                flattenedInsertionIndex++;
+            }
 
             var newNote = Note.EmptyNote();
             var flattenedNewNote = newNote.Flatten(depth: nvm!.FlattenedNote.Depth, parent: nvm!.FlattenedNote.Parent).First();
 
             ogParent.SubNotes.Insert(insertionIndex, newNote);
-            viewModel?.FlattenedNoteVMs.Insert(flattenedInsertionIndex, new FlattenedNoteViewModel(flattenedNewNote) { });
+            flattenedNotes.Insert(flattenedInsertionIndex, new FlattenedNoteViewModel(flattenedNewNote) { });
 
             Config.Data.CurrentUsersUnsyncedChanges?.Add(new NoteChange()
             {
