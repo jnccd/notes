@@ -187,6 +187,53 @@ public partial class MainViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    public void AddChildNote(FlattenedNoteViewModel item)
+    {
+        var note = item.FlattenedNote.OriginalNote;
+
+        if (!item.Expanded)
+        {
+            // Expanding a note that has no children already creates its first editable child and
+            // focuses it (see ToggleExpand) - in that case there is nothing more to add.
+            if (note.SubNotes.Count == 0)
+            {
+                ToggleExpand(item);
+                return;
+            }
+
+            // Collapsed but has children: expand first so the new child becomes visible below them.
+            item.Expanded = true;
+        }
+
+        // Append a new empty note as the last child.
+        var newNote = Note.EmptyNote();
+        var insertionIndex = note.SubNotes.Count;
+        note.SubNotes.Add(newNote);
+        if (mainView != null)
+            Config.Data.CurrentUsersUnsyncedChanges?.Add(new NoteChange()
+            {
+                Type = NoteChangeType.Add,
+                NoteId = newNote.Id,
+                Data = newNote.Data,
+                ParentId = note.Id,
+                ChildInsertionIndex = insertionIndex,
+            });
+
+        ReFlatten();
+
+        // Focus the new child's TextBox
+        Dispatcher.UIThread.Post(() =>
+        {
+            var newTextbox = mainView?.GetLogicalDescendants()
+                .OfType<TextBox>()
+                .FirstOrDefault(ic => (ic.DataContext as FlattenedNoteViewModel)?.FlattenedNote.OriginalNote == newNote);
+            if (newTextbox != null)
+                newTextbox.Focusable = true;
+            newTextbox?.Focus();
+        });
+    }
+
+    [RelayCommand]
     public void ToggleExpand(FlattenedNoteViewModel item)
     {
         item.Expanded = !item.Expanded;

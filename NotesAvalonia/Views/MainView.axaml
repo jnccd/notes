@@ -304,6 +304,10 @@
                                         <Button.Flyout>
                                             <MenuFlyout>
                                                 <MenuItem
+                                                    Command="{Binding #Root.((vm:MainViewModel)DataContext).AddChildNoteCommand}"
+                                                    CommandParameter="{Binding .}"
+                                                    Header="Add Child Note" />
+                                                <MenuItem
                                                     Command="{Binding #Root.((vm:MainViewModel)DataContext).ExportItemToClipboardCommand}"
                                                     CommandParameter="{Binding .}"
                                                     Header="Export to Clipboard" />
