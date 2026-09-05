@@ -92,7 +92,7 @@ public partial class FlattenedNoteViewModel : ViewModelBase
         {
             FlattenedNote.OriginalNote.Data.Done = value;
             if (mainView != null)
-                Config.Data.CurrentUsersUnsyncedChanges?.Add(new NoteChange()
+                Config.Data.AddNoteChange(new NoteChange()
                 {
                     Type = NoteChangeType.Update,
                     NoteId = FlattenedNote.OriginalNote.Id,
@@ -112,7 +112,7 @@ public partial class FlattenedNoteViewModel : ViewModelBase
         {
             FlattenedNote.OriginalNote.Data.Canceled = value;
             if (mainView != null)
-                Config.Data.CurrentUsersUnsyncedChanges?.Add(new NoteChange()
+                Config.Data.AddNoteChange(new NoteChange()
                 {
                     Type = NoteChangeType.Update,
                     NoteId = FlattenedNote.OriginalNote.Id,
@@ -164,7 +164,7 @@ public partial class FlattenedNoteViewModel : ViewModelBase
         {
             FlattenedNote.OriginalNote.Data.Hidden = value;
             if (mainView != null)
-                Config.Data.CurrentUsersUnsyncedChanges?.Add(new NoteChange()
+                Config.Data.AddNoteChange(new NoteChange()
                 {
                     Type = NoteChangeType.Update,
                     NoteId = FlattenedNote.OriginalNote.Id,
@@ -184,7 +184,7 @@ public partial class FlattenedNoteViewModel : ViewModelBase
         {
             FlattenedNote.OriginalNote.Data.Expanded = value;
             if (mainView != null)
-                Config.Data.CurrentUsersUnsyncedChanges?.Add(new NoteChange()
+                Config.Data.AddNoteChange(new NoteChange()
                 {
                     Type = NoteChangeType.Update,
                     NoteId = FlattenedNote.OriginalNote.Id,
@@ -202,7 +202,7 @@ public partial class FlattenedNoteViewModel : ViewModelBase
         {
             FlattenedNote.OriginalNote.Data.DecodedText = value;
             if (mainView != null)
-                Config.Data.CurrentUsersUnsyncedChanges?.Add(new NoteChange()
+                Config.Data.AddNoteChange(new NoteChange()
                 {
                     Type = NoteChangeType.Update,
                     NoteId = FlattenedNote.OriginalNote.Id,

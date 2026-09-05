@@ -143,10 +143,10 @@ public partial class MainView : UserControl
 
                     if (communicator == null)
                     {
-                        Dispatcher.UIThread.Invoke(() =>
-                        {
-                            popupManager?.Show("Error synching data to Server!", "Communicator object is gone :/", TakeFocus: false, AlwaysAsFlyout: true);
-                        });
+                        // Not logged in / not configured yet: there is nothing to send to, but the
+                        // changes were already persisted above. This is the normal state for an
+                        // anonymous (offline) workspace - not an error, and it would spam popups
+                        // every 500ms tick if we surfaced it.
                         continue;
                     }
                     communicator.SendChanges(unsyncedChanges);

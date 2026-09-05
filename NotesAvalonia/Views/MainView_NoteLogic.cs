@@ -116,7 +116,7 @@ public partial class MainView : UserControl
             {
                 Dispatcher.UIThread.Post(() =>
                 {
-                    var newTextbox = this.GetLogicalDescendants().OfType<TextBox>().First(x => x.DataContext is FlattenedNoteViewModel nvm && nvm.FlattenedNote.OriginalNote == newNote);
+                    var newTextbox = this.GetLogicalDescendants().OfType<TextBox>().FirstOrDefault(x => x.DataContext is FlattenedNoteViewModel nvm && nvm.FlattenedNote.OriginalNote == newNote);
                     if (newTextbox != null)
                     {
                         newTextbox.Focusable = true;

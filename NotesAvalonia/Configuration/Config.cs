@@ -1,4 +1,4 @@
-﻿using Avalonia.Logging;
+using Avalonia.Logging;
 using Newtonsoft.Json;
 using System;
 using System.Collections;
@@ -68,6 +68,11 @@ namespace NotesAvalonia.Configuration
                     Data = JsonConvert.DeserializeObject<ConfigData>(File.ReadAllText(configPath)) ?? Data;
                 else
                     Data = new ConfigData();
+
+                // Collapse redundant queued updates (per-keystroke duplicates etc.) that may have
+                // accumulated while changes could not be delivered. The pruned file is written on
+                // the next Save().
+                Data.CompactUnsyncedChanges();
             }
         }
         public static void LoadFrom(string JSON)

@@ -238,7 +238,7 @@ public partial class MainViewModel : ViewModelBase
     {
         item.Expanded = !item.Expanded;
         if (mainView != null)
-            Config.Data.CurrentUsersUnsyncedChanges?.Add(new NoteChange()
+            Config.Data.AddNoteChange(new NoteChange()
             {
                 Type = NoteChangeType.Update,
                 NoteId = item.FlattenedNote.OriginalNote.Id,
