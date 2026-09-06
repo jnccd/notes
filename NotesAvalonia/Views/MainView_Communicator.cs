@@ -27,7 +27,131 @@ public partial class MainView : UserControl
 {
     public Communicator? communicator { get; private set; } = null;
     DateTime lastSaveTime = DateTime.MinValue;
-    public List<OpenUrlActionOnSystem> OpenUrlActionsOnSystem { get; private set; } = [
+
+    // Deferred payload application: applying a received payload replaces the note data and calls
+    // LoadConfig -> ReFlatten. If that lands while a note is being edited, the focused TextBox's
+    // container is destroyed (focus/IME lost) AND the in-memory tree would be swapped underneath
+    // the note being typed (causing revision-mismatch 409s). While a note has focus we postpone the
+    // WHOLE application (data + reload) until editing stops.
+    DispatcherTimer? deferredPayloadTimer;
+    bool deferredPayloadWaiting = false;
+    List<Note>? deferredPayloadNotes = null;
+
+    // The note that was last being edited when focus was lost, with the exact content/revision at
+    // that moment. A deferred payload can be older than the last keystrokes (server fetches lag
+    // the ~500ms autosave cadence), so applying it must not regress this note.
+    Guid? lastEditedNoteId;
+    NoteData? lastEditedNoteData;
+
+    static NoteData CloneNoteData(NoteData data) => new()
+    {
+        Done = data.Done,
+        Canceled = data.Canceled,
+        Text = data.Text,
+        Expanded = data.Expanded,
+        Hidden = data.Hidden,
+        Prio = data.Prio,
+        Created = data.Created,
+        LinkTargetId = data.LinkTargetId,
+        Rev = data.Rev
+    };
+
+    static Note? FindNoteInTree(List<Note> notes, Guid id)
+    {
+        foreach (var note in notes)
+        {
+            if (note.Id == id)
+                return note;
+            var found = FindNoteInTree(note.SubNotes, id);
+            if (found != null)
+                return found;
+        }
+        return null;
+    }
+
+    void OnPayloadReceived(string receivedText, Payload? payload)
+    {
+        bool validPayload = false;
+        lock (Config.Data)
+        {
+            var currentPayload = Config.Data.CurrentUsersNotePayload();
+            validPayload = payload != null &&
+                (currentPayload == null ||
+                    currentPayload.SaveTime + TimeSpan.FromSeconds(3) < payload.SaveTime);
+        }
+
+        if (validPayload)
+        {
+            var notes = payload!.Notes;
+            Dispatcher.UIThread.Post(() =>
+            {
+                // A note is being edited right now: postpone applying the payload (both the data
+                // swap and the row rebuild) until the user stops typing.
+                if (this.GetLogicalDescendants().OfType<TextBox>().Any(tb => tb.IsFocused))
+                {
+                    ScheduleDeferredPayload(notes);
+                    return;
+                }
+                ApplyReceivedPayload(notes);
+            });
+        }
+    }
+
+    void ApplyReceivedPayload(List<Note> notes)
+    {
+        lock (Config.Data)
+        {
+            var currentPayload = Config.Data.CurrentUsersNotePayload();
+            if (currentPayload == null)
+                return;
+
+            currentPayload.Notes = notes;
+
+            // Keep the exact content of the note the user just finished editing: the payload can
+            // lag the last keystrokes (fetch cadence vs ~500ms autosave), so only a strictly newer
+            // revision is allowed to replace it.
+            if (lastEditedNoteId is Guid editedId && lastEditedNoteData is { } editedData)
+            {
+                var editedNode = FindNoteInTree(currentPayload.Notes, editedId);
+                if (editedNode != null && editedNode.Data.Rev <= editedData.Rev)
+                    editedNode.Data = CloneNoteData(editedData);
+                lastEditedNoteId = null;
+                lastEditedNoteData = null;
+            }
+        }
+        LoadConfig();
+        SaveConfig(false);
+    }
+
+    void ScheduleDeferredPayload(List<Note> notes)
+    {
+        deferredPayloadNotes = notes; // keep the newest one
+        if (deferredPayloadWaiting)
+            return;
+        deferredPayloadWaiting = true;
+        if (deferredPayloadTimer == null)
+        {
+            deferredPayloadTimer = new DispatcherTimer(DispatcherPriority.Background)
+            {
+                Interval = TimeSpan.FromMilliseconds(250)
+            };
+            deferredPayloadTimer.Tick += HandleDeferredPayloadTick;
+        }
+        deferredPayloadTimer.Start();
+    }
+
+    void HandleDeferredPayloadTick(object? sender, EventArgs e)
+    {
+        if (this.GetLogicalDescendants().OfType<TextBox>().Any(tb => tb.IsFocused))
+            return; // still editing - keep waiting
+
+        deferredPayloadWaiting = false;
+        deferredPayloadTimer!.Stop();
+        var notes = deferredPayloadNotes;
+        deferredPayloadNotes = null;
+        if (notes != null)
+            ApplyReceivedPayload(notes);
+    }    public List<OpenUrlActionOnSystem> OpenUrlActionsOnSystem { get; private set; } = [
         new(OperatingSystem.IsWindows(), (url) =>
             Process.Start(new ProcessStartInfo
             {
@@ -239,28 +363,6 @@ public partial class MainView : UserControl
                 viewModel.AddDebugText(ex.ToString());
             popupManager?.Show("Error Showing Logs", "Could not read log file: " + ex.Message);
         }
-    }
-
-    void OnPayloadReceived(string receivedText, Payload? payload)
-    {
-        bool validPayload = false;
-        lock (Config.Data)
-        {
-            var currentPayload = Config.Data.CurrentUsersNotePayload();
-            validPayload = payload != null &&
-                (currentPayload == null ||
-                    currentPayload.SaveTime + TimeSpan.FromSeconds(3) < payload.SaveTime);
-
-            if (validPayload)
-                currentPayload?.Notes = payload!.Notes;
-        }
-
-        if (validPayload)
-            Dispatcher.UIThread.Post(() =>
-            {
-                LoadConfig();
-                SaveConfig(false);
-            });
     }
 
     void SaveConfig(bool updateSaveTime = true)

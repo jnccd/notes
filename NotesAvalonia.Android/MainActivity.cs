@@ -23,8 +23,11 @@ public class MainActivity : AvaloniaMainActivity
         base.OnCreate(savedInstanceState);
         WidgetUpdateWorker.Init(this);
 
-        // Make the window resize when the keyboard appears
-        Window?.SetSoftInputMode(SoftInput.AdjustResize);
+        // EXPERIMENT (IME focus loss on text wrap): with AdjustResize the window shrinks when the
+        // keyboard opens, so a soft line wrap growing the focused row relayouts the viewport and
+        // Android can drop the active input connection. AdjustPan keeps the window size stable
+        // (pans instead) - test whether the wrap still loses focus/IME.
+        Window?.SetSoftInputMode(SoftInput.AdjustPan);
     }
 
     protected override void OnResume()

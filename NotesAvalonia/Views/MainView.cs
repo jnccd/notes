@@ -84,6 +84,10 @@ public partial class MainView : UserControl
             RoutingStrategies.Tunnel | RoutingStrategies.Bubble
         );
 
+        // Remember what was last written when a note stops being edited (all platforms): a deferred
+        // payload can lag the last keystrokes, and must not regress that content.
+        this.AddHandler(InputElement.LostFocusEvent, OnNoteLostFocus, RoutingStrategies.Bubble);
+
         // Mobile: keep the view locked while a note row is dragged (row reorder) so the list
         // cannot scroll out from under the drag.
         if (!Globals.IsDesktop)
@@ -91,11 +95,48 @@ public partial class MainView : UserControl
             scrollViewer = this.GetLogicalDescendants()
                 .OfType<ScrollViewer>()
                 .First();
+
+            // EXPERIMENT E3 (IME focus loss on text wrap): while a note is being edited on mobile,
+            // freeze the TextBox's height so a soft line wrap (or deleting one) cannot change the
+            // row's height / relayout the list - Android drops the active input connection when the
+            // focused editor relayouts. Height is restored to auto when focus leaves the note.
+            this.AddHandler(InputElement.GotFocusEvent, OnMobileNoteGotFocus, RoutingStrategies.Bubble);
+
             scrollViewer.PropertyChanged += (s, e) =>
             {
                 if (e.Property == ScrollViewer.OffsetProperty && disableScrolling)
                     scrollViewer.Offset = new Avalonia.Vector(0, lockedY);
             };
+        }
+    }
+
+    void OnMobileNoteGotFocus(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        if (e.Source is TextBox { DataContext: FlattenedNoteViewModel } textBox && textBox.Bounds.Height > 0)
+        {
+            textBox.Tag = textBox.Bounds.Height;
+            textBox.Height = textBox.Bounds.Height; // freeze at the current (content) height
+        }
+    }
+
+    void OnNoteLostFocus(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        if (e.Source is not TextBox { DataContext: FlattenedNoteViewModel } textBox)
+            return;
+
+        // Restore auto-sizing (mobile freeze from E3).
+        if (textBox.Tag is double frozenHeight)
+        {
+            textBox.Height = double.NaN;
+            textBox.Tag = null;
+        }
+
+        // Capture the exact content/revision at the moment the user stopped editing so an older
+        // deferred payload cannot regress it (see ApplyReceivedPayload).
+        if (textBox.DataContext is FlattenedNoteViewModel nvm)
+        {
+            lastEditedNoteId = nvm.EffectiveNote.Id;
+            lastEditedNoteData = CloneNoteData(nvm.EffectiveNote.Data);
         }
     }
 
