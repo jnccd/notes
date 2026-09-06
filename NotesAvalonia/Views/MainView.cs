@@ -96,10 +96,10 @@ public partial class MainView : UserControl
                 .OfType<ScrollViewer>()
                 .First();
 
-            // EXPERIMENT E3 (IME focus loss on text wrap): while a note is being edited on mobile,
-            // freeze the TextBox's height so a soft line wrap (or deleting one) cannot change the
-            // row's height / relayout the list - Android drops the active input connection when the
-            // focused editor relayouts. Height is restored to auto when focus leaves the note.
+            // Mobile: while a note is being edited, freeze the TextBox's height so a soft line wrap
+            // (or deleting one) cannot change the row's height and relayout the list - that
+            // relayout made Android drop the active input connection (IME/focus loss). The height
+            // is restored to auto when focus leaves the note.
             this.AddHandler(InputElement.GotFocusEvent, OnMobileNoteGotFocus, RoutingStrategies.Bubble);
 
             scrollViewer.PropertyChanged += (s, e) =>
