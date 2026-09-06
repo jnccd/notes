@@ -15,17 +15,17 @@ public class Popup(Action<Exception>? OnError, Window? OriginWindow, Control? Fl
     Window? currentWindow;
     Flyout? currentFlyout;
 
-    public void Show(string title, string message, bool AlwaysAsFlyout = false, bool TakeFocus = true)
+    public void Show(string title, string message, bool AlwaysAsFlyout = false, bool TakeFocus = true, bool SelectableText = false)
     {
         try
         {
             if (Globals.IsDesktop && !AlwaysAsFlyout)
             {
-                ShowPopupWindow(title, message, TakeFocus);
+                ShowPopupWindow(title, message, TakeFocus, SelectableText);
             }
             else
             {
-                ShowPopupFlyout(title, message);
+                ShowPopupFlyout(title, message, SelectableText);
             }
         }
         catch (Exception ex)
@@ -34,7 +34,30 @@ public class Popup(Action<Exception>? OnError, Window? OriginWindow, Control? Fl
         }
     }
 
-    private void ShowPopupWindow(string title, string message, bool TakeFocus = true)
+    // Builds the message content: a plain TextBlock, or a read-only but selectable/copyable TextBox
+    // (used for log output so the text can be copied out).
+    static Control BuildMessageContent(string message, bool selectable)
+    {
+        if (!selectable)
+            return new TextBlock
+            {
+                Text = message,
+                TextWrapping = Avalonia.Media.TextWrapping.Wrap,
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
+            };
+        return new TextBox
+        {
+            Text = message,
+            IsReadOnly = true,
+            AcceptsReturn = true,
+            TextWrapping = Avalonia.Media.TextWrapping.Wrap,
+            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch,
+            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Stretch
+        };
+    }
+
+    private void ShowPopupWindow(string title, string message, bool TakeFocus = true, bool selectable = false)
     {
         var button = new Button
         {
@@ -46,13 +69,7 @@ public class Popup(Action<Exception>? OnError, Window? OriginWindow, Control? Fl
             Width = 120,
             Height = 30
         };
-        var textBlock = new TextBlock
-        {
-            Text = message,
-            TextWrapping = Avalonia.Media.TextWrapping.Wrap,
-            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
-            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
-        };
+        var messageContent = BuildMessageContent(message, selectable);
         var grid = new Grid
         {
             Margin = new Thickness(10),
@@ -62,7 +79,11 @@ public class Popup(Action<Exception>? OnError, Window? OriginWindow, Control? Fl
                 new RowDefinition { Height = new GridLength(40) },
             }
         };
-        grid.Children.Add(message.Length > 1000 ? new ScrollViewer { Content = textBlock, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Stretch } : textBlock);
+        // TextBlocks scroll in a ScrollViewer when long; a selectable TextBox scrolls itself.
+        Control messageHost = (message.Length > 1000 && !selectable)
+            ? new ScrollViewer { Content = messageContent, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Stretch }
+            : messageContent;
+        grid.Children.Add(messageHost);
         grid.Children.Add(button);
         Grid.SetRow(grid.Children[0], 0);
         Grid.SetRow(grid.Children[1], 1);
@@ -73,17 +94,19 @@ public class Popup(Action<Exception>? OnError, Window? OriginWindow, Control? Fl
             Title = title,
             //CanResize = false,
             Content = grid,
-            Width = 400,
-            Height = 115,
+            Width = selectable ? 560 : 400,
+            Height = selectable ? 360 : 115,
             Padding = new Thickness(10)
         };
         button.Click += (s, e) => currentWindow.Close();
 
         currentWindow.ShowActivated = TakeFocus;
         currentWindow.Show(OriginWindow!);
+        if (selectable && messageContent is TextBox logTextBox)
+            logTextBox.Focus();
     }
 
-    private void ShowPopupFlyout(string title, string message)
+    private void ShowPopupFlyout(string title, string message, bool selectable = false)
     {
         var titleBlock = new TextBlock
         {
@@ -93,13 +116,7 @@ public class Popup(Action<Exception>? OnError, Window? OriginWindow, Control? Fl
             HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Left,
             VerticalAlignment = Avalonia.Layout.VerticalAlignment.Top
         };
-        var contentBlock = new TextBlock
-        {
-            Text = message,
-            TextWrapping = Avalonia.Media.TextWrapping.Wrap,
-            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch,
-            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Stretch
-        };
+        var messageContent = BuildMessageContent(message, selectable);
         var grid = new Grid
         {
             Margin = new Thickness(10),
@@ -113,7 +130,10 @@ public class Popup(Action<Exception>? OnError, Window? OriginWindow, Control? Fl
             HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch
         };
         grid.Children.Add(titleBlock);
-        grid.Children.Add(message.Length > 1000 ? new ScrollViewer { Content = contentBlock, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Stretch } : contentBlock);
+        Control contentHost = (message.Length > 1000 && !selectable)
+            ? new ScrollViewer { Content = messageContent, VerticalAlignment = Avalonia.Layout.VerticalAlignment.Stretch }
+            : messageContent;
+        grid.Children.Add(contentHost);
         Grid.SetRow(grid.Children[0], 0);
         Grid.SetRow(grid.Children[1], 1);
 

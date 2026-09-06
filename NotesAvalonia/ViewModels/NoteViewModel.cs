@@ -81,6 +81,10 @@ public partial class FlattenedNoteViewModel : ViewModelBase
     // Text box left padding grows on symlink rows to make room for the 🔗 marker.
     public Thickness TextPadding => IsLink ? new Thickness(20, 5, 2, 5) : new Thickness(2, 5);
 
+    /// <summary>Re-reads every bound value from the underlying note (used after external data
+    /// changes were merged in place).</summary>
+    public void RefreshBindings() => OnPropertyChanged(string.Empty);
+
     // The same canonical note can be displayed in several rows at once (a note under an expanded
     // symlink and its own place in the backlog). Data changes are shared, but each row has its own
     // bindings - so after editing content, tell every other row showing the same note to re-read

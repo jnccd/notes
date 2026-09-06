@@ -28,18 +28,13 @@ public partial class MainView : UserControl
     public Communicator? communicator { get; private set; } = null;
     DateTime lastSaveTime = DateTime.MinValue;
 
-    // Deferred payload application: applying a received payload replaces the note data and calls
-    // LoadConfig -> ReFlatten. If that lands while a note is being edited, the focused TextBox's
-    // container is destroyed (focus/IME lost) AND the in-memory tree would be swapped underneath
-    // the note being typed (causing revision-mismatch 409s). While a note has focus we postpone the
-    // WHOLE application (data + reload) until editing stops.
-    DispatcherTimer? deferredPayloadTimer;
-    bool deferredPayloadWaiting = false;
-    List<Note>? deferredPayloadNotes = null;
-
-    // The note that was last being edited when focus was lost, with the exact content/revision at
-    // that moment. A deferred payload can be older than the last keystrokes (server fetches lag
-    // the ~500ms autosave cadence), so applying it must not regress this note.
+    // Incoming payloads are applied without tearing down an active edit (see
+    // ApplyReceivedPayloadSmart): data-only changes merge into the live tree in place, structural
+    // changes reload but preserve the note being edited.
+    //
+    // The note that was last being edited (or is being edited during a structural reload), with the
+    // exact content/revision at that moment. A payload can lag the last keystrokes (server fetches
+    // lag the ~500ms autosave cadence), so applying it must not regress this note.
     Guid? lastEditedNoteId;
     NoteData? lastEditedNoteData;
 
@@ -71,30 +66,15 @@ public partial class MainView : UserControl
 
     void OnPayloadReceived(string receivedText, Payload? payload)
     {
-        bool validPayload = false;
-        lock (Config.Data)
-        {
-            var currentPayload = Config.Data.CurrentUsersNotePayload();
-            validPayload = payload != null &&
-                (currentPayload == null ||
-                    currentPayload.SaveTime + TimeSpan.FromSeconds(3) < payload.SaveTime);
-        }
+        // Accept every server payload. Staleness/regression protection no longer relies on the
+        // SaveTime gate (typing bumps the local SaveTime, which made remote changes - including
+        // deletes - only apply seconds after you stopped typing): revision-aware merging in
+        // ApplyReceivedPayloadSmart decides what actually wins.
+        if (payload == null)
+            return;
 
-        if (validPayload)
-        {
-            var notes = payload!.Notes;
-            Dispatcher.UIThread.Post(() =>
-            {
-                // A note is being edited right now: postpone applying the payload (both the data
-                // swap and the row rebuild) until the user stops typing.
-                if (this.GetLogicalDescendants().OfType<TextBox>().Any(tb => tb.IsFocused))
-                {
-                    ScheduleDeferredPayload(notes);
-                    return;
-                }
-                ApplyReceivedPayload(notes);
-            });
-        }
+        var notes = payload.Notes;
+        Dispatcher.UIThread.Post(() => ApplyReceivedPayloadSmart(notes));
     }
 
     void ApplyReceivedPayload(List<Note> notes)
@@ -123,34 +103,115 @@ public partial class MainView : UserControl
         SaveConfig(false);
     }
 
-    void ScheduleDeferredPayload(List<Note> notes)
+    // Applies an incoming server payload without disturbing an active edit:
+    //  - tree structure unchanged -> merge changed note data in place (no row rebuild, focus/IME
+    //    and the E3 height freeze stay untouched);
+    //  - structure changed (notes added/removed/moved) -> full reload, but the note currently
+    //    being edited keeps its content and gets focus (and caret) back afterwards.
+    void ApplyReceivedPayloadSmart(List<Note> incomingNotes)
     {
-        deferredPayloadNotes = notes; // keep the newest one
-        if (deferredPayloadWaiting)
-            return;
-        deferredPayloadWaiting = true;
-        if (deferredPayloadTimer == null)
+        var focusedTextBox = this.GetLogicalDescendants().OfType<TextBox>()
+            .FirstOrDefault(tb => tb.IsFocused && tb.DataContext is FlattenedNoteViewModel);
+        var focusedVm = focusedTextBox?.DataContext as FlattenedNoteViewModel;
+
+        List<Note> localNotes;
+        lock (Config.Data)
         {
-            deferredPayloadTimer = new DispatcherTimer(DispatcherPriority.Background)
-            {
-                Interval = TimeSpan.FromMilliseconds(250)
-            };
-            deferredPayloadTimer.Tick += HandleDeferredPayloadTick;
+            var currentPayload = Config.Data.CurrentUsersNotePayload();
+            if (currentPayload == null)
+                return;
+            localNotes = currentPayload.Notes;
         }
-        deferredPayloadTimer.Start();
+
+        if (SameStructure(localNotes, incomingNotes))
+        {
+            ApplyDataOnlyMerge(localNotes, incomingNotes, focusedVm?.EffectiveNote);
+            return;
+        }
+
+        // Structure changed: full reload. Protect the edited note from regressing and re-focus it.
+        if (focusedVm != null)
+        {
+            lastEditedNoteId = focusedVm.EffectiveNote.Id;
+            lastEditedNoteData = CloneNoteData(focusedVm.EffectiveNote.Data);
+        }
+        ApplyReceivedPayload(incomingNotes);
+        if (focusedVm != null && focusedTextBox != null)
+            RestoreFocusedNote(focusedVm.EffectiveNote.Id, focusedTextBox.CaretIndex);
     }
 
-    void HandleDeferredPayloadTick(object? sender, EventArgs e)
+    static bool SameStructure(List<Note> a, List<Note> b)
     {
-        if (this.GetLogicalDescendants().OfType<TextBox>().Any(tb => tb.IsFocused))
-            return; // still editing - keep waiting
+        var idsA = new List<Guid>();
+        var idsB = new List<Guid>();
+        FlattenNoteIds(a, idsA);
+        FlattenNoteIds(b, idsB);
+        return idsA.SequenceEqual(idsB);
+    }
 
-        deferredPayloadWaiting = false;
-        deferredPayloadTimer!.Stop();
-        var notes = deferredPayloadNotes;
-        deferredPayloadNotes = null;
-        if (notes != null)
-            ApplyReceivedPayload(notes);
+    static void FlattenNoteIds(List<Note> notes, List<Guid> ids)
+    {
+        foreach (var note in notes)
+        {
+            ids.Add(note.Id);
+            FlattenNoteIds(note.SubNotes, ids);
+        }
+    }
+
+    // Merges changed note data into the live tree without rebuilding any row. The note currently
+    // being edited keeps its local content (a strictly newer revision from elsewhere will win on a
+    // later reload). Returns whether anything changed.
+    static bool MergeDataInPlace(List<Note> local, List<Note> incoming, Note? editingNote)
+    {
+        bool changed = false;
+        for (int i = 0; i < Math.Min(local.Count, incoming.Count); i++)
+        {
+            var localNote = local[i];
+            var incomingNote = incoming[i];
+            if (localNote.Id != incomingNote.Id)
+                continue; // shapes were checked; this is only a safety net
+            if (!ReferenceEquals(localNote, editingNote) && incomingNote.Data.Rev > localNote.Data.Rev)
+            {
+                localNote.Data = CloneNoteData(incomingNote.Data);
+                changed = true;
+            }
+            changed |= MergeDataInPlace(localNote.SubNotes, incomingNote.SubNotes, editingNote);
+        }
+        return changed;
+    }
+
+    void ApplyDataOnlyMerge(List<Note> localNotes, List<Note> incomingNotes, Note? editingNote)
+    {
+        bool changed = MergeDataInPlace(localNotes, incomingNotes, editingNote);
+        if (!changed)
+            return;
+
+        // Rows read their note's data directly - refresh all bindings (except the note being
+        // edited, whose content we deliberately did not touch).
+        foreach (var fnvm in (DataContext as MainViewModel)?.FlattenedNoteVMs ?? [])
+        {
+            if (editingNote != null && ReferenceEquals(fnvm.EffectiveNote, editingNote))
+                continue;
+            fnvm.RefreshBindings();
+        }
+        SaveConfig(false);
+    }
+
+    void RestoreFocusedNote(Guid noteId, int caretIndex)
+    {
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            var textBox = this.GetLogicalDescendants().OfType<TextBox>()
+                .FirstOrDefault(tb => tb.DataContext is FlattenedNoteViewModel fnvm &&
+                    (fnvm.EffectiveNote.Id == noteId || fnvm.FlattenedNote.OriginalNote.Id == noteId));
+            if (textBox == null)
+                return;
+            textBox.Focusable = true;
+            textBox.Focus();
+            if (caretIndex >= 0)
+                textBox.CaretIndex = Math.Min(caretIndex, textBox.Text?.Length ?? 0);
+            // On mobile the GotFocus handler re-freezes the editing height (E3).
+        });
     }    public List<OpenUrlActionOnSystem> OpenUrlActionsOnSystem { get; private set; } = [
         new(OperatingSystem.IsWindows(), (url) =>
             Process.Start(new ProcessStartInfo
@@ -355,7 +416,7 @@ public partial class MainView : UserControl
         {
             var lines = File.ReadAllLines(Config.PersonalPath + "log.txt");
             lines.Reverse();
-            popupManager?.Show("Logs", string.Join(Environment.NewLine, lines));
+            popupManager?.Show("Logs", string.Join(Environment.NewLine, lines), SelectableText: true);
         }
         catch (Exception ex)
         {
