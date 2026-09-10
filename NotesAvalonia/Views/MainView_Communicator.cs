@@ -103,6 +103,11 @@ public partial class MainView : UserControl
         SaveConfig(false);
     }
 
+    // Notes that exist only locally (never created on the server, e.g. the seeded empty note):
+    // their presence must not make every payload look like a structural change (which forced a
+    // full reload - losing focus and scroll on desktop). We try to create them server-side once.
+    readonly HashSet<Guid> localOnlyAddAttempts = new();
+
     // Applies an incoming server payload without disturbing an active edit:
     //  - tree structure unchanged -> merge changed note data in place (no row rebuild, focus/IME
     //    and the E3 height freeze stay untouched);
@@ -123,13 +128,26 @@ public partial class MainView : UserControl
             localNotes = currentPayload.Notes;
         }
 
-        if (SameStructure(localNotes, incomingNotes))
+        var incomingIds = new List<Guid>();
+        FlattenNoteIds(incomingNotes, incomingIds);
+        var incomingIdSet = incomingIds.ToHashSet();
+
+        // Local-only notes (absent from every server payload) are ignored by the structure
+        // comparison and queued as Add changes so the server learns about them; otherwise they
+        // would make every payload look structural.
+        var prunedLocalIds = new List<Guid>();
+        FlattenNoteIdsSkippingLocalOnly(localNotes, incomingIdSet, prunedLocalIds);
+        QueueLocalOnlyNotesAsAdds(localNotes, incomingIdSet, null);
+
+        if (prunedLocalIds.SequenceEqual(incomingIds))
         {
             ApplyDataOnlyMerge(localNotes, incomingNotes, focusedVm?.EffectiveNote);
             return;
         }
 
-        // Structure changed: full reload. Protect the edited note from regressing and re-focus it.
+        // Structure changed: full reload. Protect the edited note from regressing and restore both
+        // focus/caret and the scroll position afterwards.
+        var scrollOffset = this.GetLogicalDescendants().OfType<ScrollViewer>().FirstOrDefault()?.Offset;
         if (focusedVm != null)
         {
             lastEditedNoteId = focusedVm.EffectiveNote.Id;
@@ -137,16 +155,44 @@ public partial class MainView : UserControl
         }
         ApplyReceivedPayload(incomingNotes);
         if (focusedVm != null && focusedTextBox != null)
-            RestoreFocusedNote(focusedVm.EffectiveNote.Id, focusedTextBox.CaretIndex);
+            RestoreFocusedNote(focusedVm.EffectiveNote.Id, focusedTextBox.CaretIndex, scrollOffset);
     }
 
-    static bool SameStructure(List<Note> a, List<Note> b)
+    static void FlattenNoteIdsSkippingLocalOnly(List<Note> notes, HashSet<Guid> serverIds, List<Guid> ids)
     {
-        var idsA = new List<Guid>();
-        var idsB = new List<Guid>();
-        FlattenNoteIds(a, idsA);
-        FlattenNoteIds(b, idsB);
-        return idsA.SequenceEqual(idsB);
+        foreach (var note in notes)
+        {
+            if (!serverIds.Contains(note.Id))
+                continue; // local-only subtree - not part of the server structure
+            ids.Add(note.Id);
+            FlattenNoteIdsSkippingLocalOnly(note.SubNotes, serverIds, ids);
+        }
+    }
+
+    // Queues Add changes for local-only notes (at most once per note per session) so they stop
+    // being local-only. Children of such a note are created by the same Add on the server side.
+    void QueueLocalOnlyNotesAsAdds(List<Note> notes, HashSet<Guid> serverIds, Note? parent)
+    {
+        for (int i = 0; i < notes.Count; i++)
+        {
+            var note = notes[i];
+            if (!serverIds.Contains(note.Id))
+            {
+                if (parent != null && localOnlyAddAttempts.Add(note.Id))
+                {
+                    Config.Data.AddNoteChange(new NoteChange()
+                    {
+                        Type = NoteChangeType.Add,
+                        NoteId = note.Id,
+                        Data = note.Data,
+                        ParentId = parent.Id,
+                        ChildInsertionIndex = i
+                    });
+                }
+                continue;
+            }
+            QueueLocalOnlyNotesAsAdds(note.SubNotes, serverIds, note);
+        }
     }
 
     static void FlattenNoteIds(List<Note> notes, List<Guid> ids)
@@ -158,31 +204,41 @@ public partial class MainView : UserControl
         }
     }
 
-    // Merges changed note data into the live tree without rebuilding any row. The note currently
-    // being edited keeps its local content (a strictly newer revision from elsewhere will win on a
-    // later reload). Returns whether anything changed.
-    static bool MergeDataInPlace(List<Note> local, List<Note> incoming, Note? editingNote)
+    // Merges changed note data into the live tree without rebuilding any row. Matched by note id
+    // (local-only notes would misalign index pairing). The note currently being edited keeps its
+    // local content (a strictly newer revision from elsewhere will win on a later reload).
+    static bool MergeDataInPlace(List<Note> incoming, Dictionary<Guid, Note> localById, Note? editingNote)
     {
         bool changed = false;
-        for (int i = 0; i < Math.Min(local.Count, incoming.Count); i++)
+        foreach (var incomingNote in incoming)
         {
-            var localNote = local[i];
-            var incomingNote = incoming[i];
-            if (localNote.Id != incomingNote.Id)
-                continue; // shapes were checked; this is only a safety net
+            if (!localById.TryGetValue(incomingNote.Id, out var localNote))
+                continue; // server-side addition: not handled by the data-only merge
             if (!ReferenceEquals(localNote, editingNote) && incomingNote.Data.Rev > localNote.Data.Rev)
             {
                 localNote.Data = CloneNoteData(incomingNote.Data);
                 changed = true;
             }
-            changed |= MergeDataInPlace(localNote.SubNotes, incomingNote.SubNotes, editingNote);
+            changed |= MergeDataInPlace(incomingNote.SubNotes, localById, editingNote);
         }
         return changed;
     }
 
+    static void IndexNotesById(List<Note> notes, Dictionary<Guid, Note> byId)
+    {
+        foreach (var note in notes)
+        {
+            byId[note.Id] = note;
+            IndexNotesById(note.SubNotes, byId);
+        }
+    }
+
     void ApplyDataOnlyMerge(List<Note> localNotes, List<Note> incomingNotes, Note? editingNote)
     {
-        bool changed = MergeDataInPlace(localNotes, incomingNotes, editingNote);
+        var localById = new Dictionary<Guid, Note>();
+        IndexNotesById(localNotes, localById);
+
+        bool changed = MergeDataInPlace(incomingNotes, localById, editingNote);
         if (!changed)
             return;
 
@@ -197,21 +253,39 @@ public partial class MainView : UserControl
         SaveConfig(false);
     }
 
-    void RestoreFocusedNote(Guid noteId, int caretIndex)
+    // Re-focuses the note's row after a full reload (with a couple of retries, since the row is
+    // realized on the next layout pass) and restores the scroll position.
+    void RestoreFocusedNote(Guid noteId, int caretIndex, Avalonia.Vector? scrollOffset)
     {
-        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        int attempts = 0;
+
+        void TryRestore()
         {
+            var scrollViewer = this.GetLogicalDescendants().OfType<ScrollViewer>().FirstOrDefault();
             var textBox = this.GetLogicalDescendants().OfType<TextBox>()
                 .FirstOrDefault(tb => tb.DataContext is FlattenedNoteViewModel fnvm &&
                     (fnvm.EffectiveNote.Id == noteId || fnvm.FlattenedNote.OriginalNote.Id == noteId));
+
+            if (textBox == null && attempts++ < 3)
+            {
+                Avalonia.Threading.Dispatcher.UIThread.Post(TryRestore, Avalonia.Threading.DispatcherPriority.Loaded);
+                return;
+            }
+
+            if (scrollOffset is { } offset && scrollViewer != null)
+                scrollViewer.Offset = offset;
+
             if (textBox == null)
                 return;
+
             textBox.Focusable = true;
             textBox.Focus();
             if (caretIndex >= 0)
                 textBox.CaretIndex = Math.Min(caretIndex, textBox.Text?.Length ?? 0);
             // On mobile the GotFocus handler re-freezes the editing height (E3).
-        });
+        }
+
+        Avalonia.Threading.Dispatcher.UIThread.Post(TryRestore, Avalonia.Threading.DispatcherPriority.Loaded);
     }    public List<OpenUrlActionOnSystem> OpenUrlActionsOnSystem { get; private set; } = [
         new(OperatingSystem.IsWindows(), (url) =>
             Process.Start(new ProcessStartInfo
