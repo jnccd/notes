@@ -154,6 +154,7 @@
                                     <Border Grid.Column="0" Width="{Binding Depth, Converter={StaticResource AddMultiplyConverter}, ConverterParameter='-1,20'}" />
 
                                     <Button
+                                        Name="DragHandle"
                                         Grid.Column="1"
                                         Height="23"
                                         MinHeight="0"

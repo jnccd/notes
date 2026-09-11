@@ -431,9 +431,6 @@ public partial class MainView : UserControl
     {
         try
         {
-            if (viewModel != null)
-                viewModel.AddDebugText($"LoginButton_PointerPressed");
-            var parent = (sender as Button)?.Parent;
             var server = viewModel?.LoginServerUri;
             var username = viewModel?.LoginServerUsername;
             var password = viewModel?.LoginPassword;

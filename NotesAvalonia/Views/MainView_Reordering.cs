@@ -1,14 +1,13 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Presenters;
 using Avalonia.Input;
-using Avalonia.LogicalTree;
-using Avalonia.Threading;
+using Avalonia.Input.GestureRecognizers;
+using Avalonia.Interactivity;
+using Avalonia.VisualTree;
 using Notes.Interface.DTO;
 using NotesAvalonia.Configuration;
 using NotesAvalonia.ViewModels;
@@ -21,139 +20,280 @@ public static class DragDropFormats
         DataFormat.CreateInProcessFormat<FlattenedNoteViewModel>("FlattenedNoteRef");
 }
 
-class CustomDragData : IDataTransfer
-{
-    public static string Format = "FlattenedNoteRef";
-    public FlattenedNoteViewModel DraggedNote { get; set; }
-
-    public IReadOnlyList<DataFormat> Formats => [DataFormat.CreateStringApplicationFormat(CustomDragData.Format)];
-
-    public IReadOnlyList<IDataTransferItem> Items => throw new NotImplementedException();
-
-    public CustomDragData(FlattenedNoteViewModel DraggedNote)
-    {
-        this.DraggedNote = DraggedNote;
-    }
-
-    public IEnumerable<string> GetDataFormats() => [CustomDragData.Format];
-
-    public bool Contains(string dataFormat) => dataFormat == CustomDragData.Format;
-
-    public object? Get(string dataFormat) => DraggedNote;
-
-    public void Dispose()
-    {
-        throw new NotImplementedException();
-    }
-}
-
+// Reordering notes by dragging the handle on the left of a row.
+//
+// Desktop uses the platform drag & drop: the handle's pointer move starts a drag, and the row under the
+// pointer is a drop target (see DragButton_PointerMoved / NoteContainer_OnDrop).
+//
+// Android has neither a drag source nor a working DragDrop.DoDragDropAsync (it never completes there),
+// so mobile drags are tracked by the view itself:
+//
+//   * a press on the handle arms the drag (see OnDragReordering_PointerPressed). This has to happen on
+//     the view and not through an attribute on the handle: Button marks the press handled in its own
+//     class handler, so a XAML handler on that same element never runs;
+//   * while armed, the view owns the touch - it tracks the pointer and swallows the moves, and the
+//     list's scroll gesture recognizers are put aside for the duration (see SuspendListScrollGestures).
+//     Without that the recognizer claims any movement along the scroll axis, which both ends the drag
+//     early and scrolls the list out from under it;
+//   * the drag ends on pointer release, or - since Android can cancel a touch instead of releasing it -
+//     on a lost pointer capture or on the next press.
 public partial class MainView : UserControl
 {
+    const string DragHandleName = "DragHandle";
+
+    // Backstop for a scroll that was already running when the drag started: suspending the recognizers
+    // stops new scroll gestures, but not an inertia animation that is already in flight.
     bool disableScrolling = false;
     double lockedY = 0;
-    FlattenedNoteViewModel? MobileDraggedFlattenedNote = null;
 
+    FlattenedNoteViewModel? mobileDraggedNote = null;
+    Button? mobileDragHandle;
+    Point mobileDragLastPos;
+    readonly List<(InputElement Host, ScrollGestureRecognizer Recognizer)> suspendedScrollGestures = new();
+
+    bool dragInProgress = false;
+
+    void InitDragReordering()
+    {
+        this.AddHandler(InputElement.PointerPressedEvent, OnDragReordering_PointerPressed, RoutingStrategies.Tunnel);
+        this.AddHandler(InputElement.PointerMovedEvent, OnDragReordering_PointerMoved, RoutingStrategies.Tunnel);
+    }
+
+    // Arms a mobile drag as soon as the handle is touched. The desktop drag still starts from the
+    // handle's pointer move (DragButton_PointerMoved).
+    private void OnDragReordering_PointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        // Any press means the previous gesture is over, even if it never reported a release.
+        FinishStaleMobileDrag();
+
+        if (Globals.IsDesktop || !e.Properties.IsLeftButtonPressed)
+            return;
+
+        var dragHandle = FindDragHandleButton(e.Source);
+        if (dragHandle == null || !TryGetNoteOfDragHandle(dragHandle, out var draggedViewModel))
+            return;
+
+        mobileDraggedNote = draggedViewModel;
+        mobileDragHandle = dragHandle;
+        mobileDragLastPos = e.GetPosition(this);
+        disableScrolling = true;
+        lockedY = scrollViewer?.Offset.Y ?? 0;
+
+        SuspendListScrollGestures();
+
+        // PointerCaptureLost is a direct event, so it has to be observed on the element holding the
+        // capture rather than on the view.
+        dragHandle.AddHandler(InputElement.PointerCaptureLostEvent, OnDragHandleCaptureLost);
+    }
+
+    static Button? FindDragHandleButton(object? source) =>
+        source is Visual visual
+            ? visual.GetSelfAndVisualAncestors().OfType<Button>().FirstOrDefault(b => b.Name == DragHandleName)
+            : null;
+
+    static bool TryGetNoteOfDragHandle(Button dragHandle, out FlattenedNoteViewModel? draggedViewModel)
+    {
+        draggedViewModel = (dragHandle.Parent?.Parent as ContentPresenter)?.Content as FlattenedNoteViewModel;
+        return draggedViewModel != null;
+    }
+
+    // While a drag is armed the pointer belongs to it: the position is tracked here (the events are
+    // swallowed in the tunnel phase, so the handle itself never sees them) and the movement is marked
+    // handled so nothing else acts on it.
+    private void OnDragReordering_PointerMoved(object? sender, PointerEventArgs e)
+    {
+        if (mobileDraggedNote == null)
+            return;
+
+        mobileDragLastPos = e.GetPosition(this);
+        e.Handled = true;
+    }
+
+    // Android can cancel a touch instead of releasing it, so a lost capture ends the drag too.
+    private void OnDragHandleCaptureLost(object? sender, PointerCaptureLostEventArgs e)
+    {
+        if (mobileDraggedNote == null)
+            return;
+
+        FinishMobileDrag(mobileDragLastPos);
+    }
+
+    // A press while a drag is still armed means the previous gesture ended without a release or a
+    // capture loss: drop where the finger last was instead of leaving the drag (and the list's scroll
+    // gestures) in limbo.
+    void FinishStaleMobileDrag()
+    {
+        if (mobileDraggedNote == null)
+            return;
+
+        FinishMobileDrag(mobileDragLastPos);
+    }
+
+    private void Handle_Reordering_On_MainView_PointerReleased(object? sender, PointerReleasedEventArgs e)
+    {
+        dragInProgress = false;
+
+        if (Globals.IsDesktop || mobileDraggedNote == null)
+            return;
+
+        // Not marked handled: the handle still needs the release to clear its pressed state. The drag
+        // state is cleared here, so the second (bubble) pass of this handler is a no-op.
+        FinishMobileDrag(e.GetPosition(this));
+    }
+
+    // Drops the dragged note onto whatever row sits under `pos` and clears the drag state. Every way a
+    // mobile drag can end funnels through here.
+    void FinishMobileDrag(Point pos)
+    {
+        var draggedNote = mobileDraggedNote;
+        mobileDraggedNote = null;
+        disableScrolling = false;
+        UnhookDragHandleCapture();
+        RestoreListScrollGestures();
+        if (draggedNote == null)
+            return;
+
+        var draggedToNote = NoteUnder(pos);
+
+        // Dropping a note onto its own row is a no-op; without this a plain tap on the handle would
+        // enqueue a pointless delete+add pair.
+        if (draggedToNote == null || draggedToNote.EffectiveNote.Id == draggedNote.EffectiveNote.Id)
+            return;
+
+        MoveNoteFromTo(draggedNote, draggedToNote);
+    }
+
+    // The note row under a point, or null when the pointer is somewhere else (e.g. the empty space
+    // below the last row). Every element inside a row inherits that row's view model - including
+    // template internals such as the drag handle's presenter or the expand button's - so reading the
+    // first one found is enough, and is independent of which part of the row was hit.
+    FlattenedNoteViewModel? NoteUnder(Point pos) =>
+        this.GetInputElementsAt(pos, false)
+            .OfType<StyledElement>()
+            .Select(element => element.DataContext)
+            .OfType<FlattenedNoteViewModel>()
+            .FirstOrDefault();
+
+    void UnhookDragHandleCapture()
+    {
+        if (mobileDragHandle == null)
+            return;
+
+        mobileDragHandle.RemoveHandler(InputElement.PointerCaptureLostEvent, OnDragHandleCaptureLost);
+        mobileDragHandle = null;
+    }
+
+    // Takes the notes list's scroll gesture recognizers out of play for the duration of a drag.
+    //
+    // They are not on the ScrollViewer itself but on the ScrollContentPresenter in its template, and a
+    // recognizer only claims movement along its own axis - which is why a vertical drag used to lose
+    // the touch (and scroll the list) while a horizontal one kept it.
+    void SuspendListScrollGestures()
+    {
+        foreach (var host in ScrollGestureHosts())
+        {
+            foreach (var recognizer in host.GestureRecognizers.OfType<ScrollGestureRecognizer>().ToList())
+            {
+                host.GestureRecognizers.Remove(recognizer);
+                suspendedScrollGestures.Add((host, recognizer));
+            }
+        }
+    }
+
+    IEnumerable<InputElement> ScrollGestureHosts()
+    {
+        if (scrollViewer == null)
+            yield break;
+
+        yield return scrollViewer;
+
+        foreach (var presenter in scrollViewer.GetVisualDescendants().OfType<ScrollContentPresenter>())
+            yield return presenter;
+    }
+
+    void RestoreListScrollGestures()
+    {
+        foreach (var (host, recognizer) in suspendedScrollGestures)
+        {
+            if (!host.GestureRecognizers.Contains(recognizer))
+                host.GestureRecognizers.Add(recognizer);
+        }
+
+        suspendedScrollGestures.Clear();
+    }
+
+    // Desktop: starts a platform drag when the handle is dragged. Mobile never comes here.
     private async void DragButton_PointerMoved(object? sender, PointerEventArgs e)
     {
-        if (e.Properties.IsLeftButtonPressed && sender is Button senderButton)
+        if (!Globals.IsDesktop || dragInProgress || mobileDraggedNote != null)
+            return; // never start a second drag
+
+        if (!e.Properties.IsLeftButtonPressed || sender is not Button dragHandle)
+            return;
+
+        if (!TryGetNoteOfDragHandle(dragHandle, out var draggedViewModel))
+            return;
+
+        var dataTransfer = new DataTransfer();
+        dataTransfer.Add(DataTransferItem.Create(DragDropFormats.FlattenedNoteRef, draggedViewModel));
+
+        dragInProgress = true;
+        try
         {
-            var model = DataContext as MainViewModel;
-            Debug.WriteLine($"DragButton_PointerMoved owo! LeftButtonPressed={e.Properties.IsLeftButtonPressed}, Pressure={e.Properties.Pressure}");
-
-            if (senderButton.Parent?.Parent is ContentPresenter contentPresenter)
-            {
-                if (contentPresenter.Content is FlattenedNoteViewModel draggedViewModel)
-                {
-                    if (model != null)
-                        model.AddDebugText($"Drag Start {draggedViewModel}");
-
-                    var dataTransfer = new DataTransfer();
-                    dataTransfer.Add(DataTransferItem.Create(DragDropFormats.FlattenedNoteRef, draggedViewModel));
-
-                    var result = await DragDrop.DoDragDropAsync(new PointerPressedEventArgs(sender, e.Pointer, this, new Point(), (ulong)DateTime.Now.ToBinary(), new PointerPointProperties(), KeyModifiers.None), dataTransfer, DragDropEffects.Move);
-                    Debug.WriteLine($"DragButton_DragDrop.DoDragDrop done! Result={result}");
-
-                    if (!Globals.IsDesktop)
-                    {
-                        MobileDraggedFlattenedNote = draggedViewModel;
-                        disableScrolling = true;
-                        lockedY = scrollViewer?.Offset.Y ?? 0;
-                    }
-                }
-            }
+            await DragDrop.DoDragDropAsync(
+                new PointerPressedEventArgs(sender, e.Pointer, this, new Point(), (ulong)DateTime.Now.ToBinary(), new PointerPointProperties(), KeyModifiers.None),
+                dataTransfer,
+                DragDropEffects.Move);
+        }
+        finally
+        {
+            dragInProgress = false;
         }
     }
 
     private void NoteContainer_OnDragOver(object? sender, DragEventArgs e)
     {
-        var model = DataContext as MainViewModel;
-        if (model != null)
-            model.AddDebugText($"NoteContainer_OnDragOver: {e}");
-
-        Debug.WriteLine($"NoteContainer_OnDragOver: {e}");
         e.DragEffects = DragDropEffects.Move;
         e.Handled = true;
     }
 
     private void NoteContainer_OnDrop(object? sender, DragEventArgs e)
     {
-        var model = DataContext as MainViewModel;
-        if (model != null)
-            model.AddDebugText($"NoteContainer_OnDrop: {e}");
+        if (!e.DataTransfer.Contains(DragDropFormats.FlattenedNoteRef))
+            return;
 
-        if (e.DataTransfer.Contains(DragDropFormats.FlattenedNoteRef))
-        {
-            FlattenedNoteViewModel? draggedFlattenedNote = e.DataTransfer.TryGetValue(DragDropFormats.FlattenedNoteRef);
-            Debug.WriteLine($"NoteContainer_OnDrop: {draggedFlattenedNote?.FlattenedNote.OriginalNote.Data.DecodedText}");
+        var draggedFlattenedNote = e.DataTransfer.TryGetValue(DragDropFormats.FlattenedNoteRef);
+        if (draggedFlattenedNote == null)
+            return;
 
-            if (draggedFlattenedNote != null)
-            {
-                var flattenedNotes = model!.FlattenedNoteVMs;
+        var draggedToFlattenedNote = (sender as Grid)?.DataContext as FlattenedNoteViewModel;
+        if (draggedToFlattenedNote == null)
+            return;
 
-                var presenterElem = sender as Grid;
-                var draggedToFlattenedNote = presenterElem?.DataContext as FlattenedNoteViewModel;
-
-                if (draggedToFlattenedNote != null)
-                {
-                    // Ctrl + drop creates a symlink to the dragged note before the drop target
-                    // instead of moving it (plain drag & drop needs no modifier keys).
-                    bool createLink = (e.KeyModifiers & KeyModifiers.Control) != 0;
-                    if (createLink)
-                        model.CreateLinkTo(draggedFlattenedNote.EffectiveNote, draggedToFlattenedNote, asChild: false, insertBefore: true);
-                    else
-                        MoveNoteFromTo(draggedFlattenedNote, draggedToFlattenedNote);
-                }
-            }
-        }
+        // Ctrl + drop creates a symlink to the dragged note before the drop target instead of moving
+        // it (plain drag & drop needs no modifier keys).
+        if ((e.KeyModifiers & KeyModifiers.Control) != 0)
+            viewModel?.CreateLinkTo(draggedFlattenedNote.EffectiveNote, draggedToFlattenedNote, asChild: false, insertBefore: true);
+        else
+            MoveNoteFromTo(draggedFlattenedNote, draggedToFlattenedNote);
     }
 
+    // Moves the dragged note in the payload tree - the flattened list is rebuilt from it - and queues
+    // the matching server changes.
     void MoveNoteFromTo(FlattenedNoteViewModel draggedFlattenedNote, FlattenedNoteViewModel draggedToFlattenedNote)
     {
-        var model = DataContext as MainViewModel;
-        var flattenedNotes = model!.FlattenedNoteVMs;
-
         var ogDraggedNote = draggedFlattenedNote.FlattenedNote.OriginalNote;
         var ogDraggedNoteParent = draggedFlattenedNote.FlattenedNote.Parent!.OriginalNote;
-        var ogDraggedToNote = draggedToFlattenedNote!.FlattenedNote.OriginalNote;
+        var ogDraggedToNote = draggedToFlattenedNote.FlattenedNote.OriginalNote;
         var ogDraggedToNoteParent = draggedToFlattenedNote.FlattenedNote.Parent!.OriginalNote;
         var ogDraggedToNoteParentIndex = ogDraggedToNoteParent.SubNotes.IndexOf(ogDraggedToNote);
-        var draggedToNoteFlattenedIndex = draggedToFlattenedNote == null ? -1 : flattenedNotes.IndexOf(draggedToFlattenedNote);
 
         if (ogDraggedNote.RecursiveSubNotes().Any(n => n.Note == ogDraggedToNote))
-            return; // Can't move a note into one of its own subnotes
+            return; // a note cannot be moved into one of its own subnotes
 
-        Debug.WriteLine($"NoteContainer_OnDrop reorder! ogDraggedNote{ogDraggedNote} ogDraggedNoteParent{ogDraggedNoteParent} ogDraggedToNote{ogDraggedToNote} ogDraggedToNote{ogDraggedToNote} ogDraggedToNoteParent{ogDraggedToNoteParent} ogDraggedToNoteParentIndex{ogDraggedToNoteParentIndex} draggedToNoteFlattenedIndex{draggedToNoteFlattenedIndex}");
-
-        // Removal
-        flattenedNotes.Remove(draggedFlattenedNote);
         ogDraggedNoteParent.SubNotes.Remove(ogDraggedNote);
-
-        // Add
-        flattenedNotes.Insert(draggedToNoteFlattenedIndex, draggedFlattenedNote);
         ogDraggedToNoteParent.SubNotes.Insert(ogDraggedToNoteParentIndex, ogDraggedNote);
-
-        // Reflatten
-        model.ReFlatten();
+        viewModel?.ReFlatten();
 
         // TODO: This should probably be atomic
         Config.Data.AddNoteChange(new NoteChange()
@@ -170,47 +310,5 @@ public partial class MainView : UserControl
             ParentId = ogDraggedToNoteParent.Id,
             ChildInsertionIndex = ogDraggedToNoteParentIndex,
         });
-    }
-
-    private void Handle_Reordering_On_MainView_PointerReleased(object? sender, PointerReleasedEventArgs e)
-    {
-        var model = DataContext as MainViewModel;
-        disableScrolling = false;
-
-        if (!Globals.IsDesktop && MobileDraggedFlattenedNote != null)
-        {
-            var pos = e.GetPosition(this);
-            var elems = this.GetInputElementsAt(pos, false);
-            if (model != null)
-                model.AddDebugText($"Main_Reordering 0 {elems.Select(e => e.GetType().Name).Aggregate((x, y) => x + " " + y) ?? "null"}");
-            var elem = elems.Where(x => x.GetType() != typeof(ScrollViewer)).First() as StyledElement;
-            Debug.WriteLine($"Main_Reordering 1 {elem?.ToString() ?? "null"}");
-            if (model != null)
-                model.AddDebugText($"Main_Reordering 1 {elem?.ToString() ?? "null"}");
-            if (elem == null)
-                return;
-            while (elem != null && (elem is not ContentPresenter || (elem is ContentPresenter presenterCandidate && presenterCandidate.DataContext?.GetType() != typeof(FlattenedNoteViewModel))))
-            {
-                if (elem is ContentPresenter presenterCandidatee)
-                {
-                    Debug.WriteLine(presenterCandidatee.DataContext?.GetType());
-                    Debug.WriteLine(presenterCandidatee.DataContext?.GetType() == typeof(FlattenedNoteViewModel));
-                }
-                Debug.WriteLine($"Main_Reordering 2 {elem} {elem?.GetType()}");
-                // if (model != null)
-                //     model.AddDebugText($"Main_Reordering 2 {elem} {elem?.GetType()}");
-
-                elem = elem?.Parent;
-            }
-            var presenterElem = elem as ContentPresenter;
-            var draggedToFlattenedNote = presenterElem?.Content as FlattenedNoteViewModel;
-
-            if (draggedToFlattenedNote != null)
-            {
-                if (model != null)
-                    model.AddDebugText($"MobileDraggedFlattenedNote {MobileDraggedFlattenedNote.Text} draggedToFlattenedNote {draggedToFlattenedNote.Text}");
-                MoveNoteFromTo(MobileDraggedFlattenedNote, draggedToFlattenedNote);
-            }
-        }
     }
 }

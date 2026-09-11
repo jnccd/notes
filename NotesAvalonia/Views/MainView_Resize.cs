@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
@@ -28,9 +27,7 @@ public partial class MainView : UserControl
     {
         if (!Globals.IsDesktop || !e.Properties.IsLeftButtonPressed)
             return;
-        //Debug.WriteLine($"WindowBorder_PointerPressed {e.GetPosition(this)} {e.Source} {e.Pointer.Type} {e.Properties.IsLeftButtonPressed}");
 
-        //Debug.WriteLine($"{this.Parent?.GetType()}");
         var window = (Parent as Window)!;
 
         dragPointerSauce = e.GetPosition(window);
@@ -56,8 +53,6 @@ public partial class MainView : UserControl
 
     private void WindowBorder_PointerReleased(object? sender, PointerReleasedEventArgs e)
     {
-        //Debug.WriteLine($"WindowBorder_PointerReleased {e.GetPosition(this)} {e.Source} {e.Pointer.Type} {e.Properties.IsLeftButtonPressed}");
-
         isChangingSizeOrPos = false;
     }
 
@@ -74,7 +69,6 @@ public partial class MainView : UserControl
         var newPos = e.GetPosition(window) + window.Position.ToPoint(1);
         var deltaX = dragGlobalPointerSauce.X - newPos.X;
         var deltaY = dragGlobalPointerSauce.Y - newPos.Y;
-        //Debug.WriteLine($"Border_PointerMoved? {dragWindowPosSauce} / {dragGlobalPointerSauce} / {newPos} / {deltaX} / {deltaY} / {dragType} / {window.RenderScaling}");
 
         double width = window.Width, height = window.Height;
 

@@ -85,40 +85,37 @@ public partial class MainView : UserControl
         );
 
         InitTextboxFocusFix();
+        InitDragReordering();
 
-        // Mobile: keep the view locked while a note row is dragged (row reorder) so the list
-        // cannot scroll out from under the drag.
+        // Mobile: the notes list, used by the drag reordering to pin its scroll offset.
+        //
+        // It has to be found by name: every TextBox carries its own PART_ScrollViewer and those are
+        // logical descendants too (template internals are parented to their control), so "the first
+        // logical ScrollViewer" is one of the login editors rather than the list.
         if (!Globals.IsDesktop)
         {
-            scrollViewer = this.GetLogicalDescendants()
-                .OfType<ScrollViewer>()
-                .First();
+            scrollViewer = this.FindControl<ScrollViewer>("RootScrollViewer")
+                ?? this.GetLogicalDescendants().OfType<ScrollViewer>().FirstOrDefault();
 
-            scrollViewer.PropertyChanged += (s, e) =>
+            if (scrollViewer != null)
             {
-                if (e.Property == ScrollViewer.OffsetProperty && disableScrolling)
-                    scrollViewer.Offset = new Avalonia.Vector(0, lockedY);
-            };
+                scrollViewer.PropertyChanged += (s, e) =>
+                {
+                    if (e.Property == ScrollViewer.OffsetProperty && disableScrolling)
+                        scrollViewer.Offset = new Avalonia.Vector(0, lockedY);
+                };
+            }
         }
     }
 
     private void MainView_PointerReleased(object? sender, PointerReleasedEventArgs e)
     {
-        var model = DataContext as MainViewModel;
-        if (model != null)
-            model.AddDebugText($"MainView_PointerReleased: LeftButtonPressed={e.Properties.IsLeftButtonPressed}, Pressure={e.Properties.Pressure} {e.GetPosition(sender as ItemsControl)}");
-
         Handle_Reordering_On_MainView_PointerReleased(sender, e);
     }
 
     private void MainView_PointerPressed(object? sender, PointerPressedEventArgs e)
     {
         NotifyPointerPressed();
-
-        var model = DataContext as MainViewModel;
-        if (model != null)
-            model.AddDebugText($"MainView_PointerPressed: LeftButtonPressed={e.Properties.IsLeftButtonPressed}, Pressure={e.Properties.Pressure} {e.GetPosition(sender as ItemsControl)}");
-        Debug.WriteLine($"MainView_PointerPressed: LeftButtonPressed={e.Properties.IsLeftButtonPressed}, Pressure={e.Properties.Pressure} {e.GetPosition(sender as ItemsControl)}");
 
         foreach (var fnvm in viewModel?.FlattenedNoteVMs ?? [])
         {

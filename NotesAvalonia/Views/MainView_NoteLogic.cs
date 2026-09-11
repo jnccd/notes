@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Avalonia;
@@ -22,8 +21,6 @@ public partial class MainView : UserControl
 {
     private void MainView_KeyDown(object? sender, KeyEventArgs e)
     {
-        Debug.WriteLine($"MainView_KeyDown: {e.Key} {e.KeyModifiers} {e.Handled}");
-
         // Remove empty note on backspace
         if (e.Key == Key.Back) // Textboxes dont seem to catch this
         {
