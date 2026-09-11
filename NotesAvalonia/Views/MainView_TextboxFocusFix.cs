@@ -6,6 +6,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.LogicalTree;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using NotesAvalonia.ViewModels;
 
 namespace NotesAvalonia.Views;
@@ -51,6 +52,12 @@ public partial class MainView
         this.AddHandler(InputElement.LostFocusEvent, OnNoteLostFocus, RoutingStrategies.Bubble);
         this.AddHandler(InputElement.GotFocusEvent, OnNoteGotFocus, RoutingStrategies.Bubble);
 
+        // Letting go of the caret: pressing anything that is not an editable note, and the window
+        // losing activation (desktop: clicking another app; mobile: sending the app to the background).
+        this.AddHandler(InputElement.PointerPressedEvent, OnDefocusPointerPressed, RoutingStrategies.Tunnel);
+        if (window != null)
+            window.Deactivated += OnWindowDeactivated;
+
         if (!Globals.IsDesktop)
             return;
 
@@ -77,6 +84,43 @@ public partial class MainView
 
     // Called on every pointer press on the view (see MainView_PointerPressed).
     void NotifyPointerPressed() => lastPointerPressedAt = DateTime.Now;
+
+    // Defocusing is not something Avalonia does on its own: a press on the background, the window
+    // border or a finished note leaves the focused TextBox focused, and so does clicking away from the
+    // window entirely.
+    //
+    // This runs in the tunnel phase, before the pressed element handles the press, so the focus is
+    // cleared before anything downstream can act on it.
+    void OnDefocusPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (IsPressInsideTextBox(e.Source))
+            return; // the press itself moves the caret, or starts editing another note
+
+        DefocusFocusedTextBox();
+    }
+
+    // The session is ended even if nothing is focused by the time this runs: the platform may drop the
+    // focus first, and the watchdog would otherwise re-focus the note on the next layout pass.
+    void OnWindowDeactivated(object? sender, EventArgs e)
+    {
+        EndEditingSession();
+        DefocusFocusedTextBox();
+    }
+
+    static bool IsPressInsideTextBox(object? source) =>
+        source is Visual visual && visual.GetSelfAndVisualAncestors().OfType<TextBox>().Any();
+
+    // The editing session is ended first: the desktop watchdog exists to survive a relayout dropping
+    // focus, and would otherwise just focus the note again on the next layout pass.
+    void DefocusFocusedTextBox()
+    {
+        var focusManager = TopLevel.GetTopLevel(this)?.FocusManager;
+        if (focusManager?.GetFocusedElement() is not TextBox)
+            return;
+
+        EndEditingSession();
+        focusManager.Focus(null, NavigationMethod.Unspecified, KeyModifiers.None);
+    }
 
     void OnNoteGotFocus(object? sender, RoutedEventArgs e)
     {
@@ -128,11 +172,11 @@ public partial class MainView
         if (!Globals.IsDesktop)
             return;
 
-        // Desktop: distinguish a deliberate blur (clicked elsewhere / another field focused) from a
+        // Desktop: distinguish a deliberate defocus (clicked elsewhere / another field focused) from a
         // relayout-driven focus drop; only the latter is re-asserted by the watchdog.
-        bool deliberateBlur = DateTime.Now - lastPointerPressedAt < TimeSpan.FromMilliseconds(400)
+        bool deliberateDefocus = DateTime.Now - lastPointerPressedAt < TimeSpan.FromMilliseconds(400)
             || this.GetLogicalDescendants().OfType<TextBox>().Any(t => t.IsFocused);
-        if (deliberateBlur)
+        if (deliberateDefocus)
         {
             EndEditingSession();
             return;
