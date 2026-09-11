@@ -1,4 +1,4 @@
-﻿using log4net;
+using log4net;
 using log4net.Config;
 using log4net.Repository.Hierarchy;
 using System;
@@ -18,10 +18,19 @@ namespace Notes.Interface
     /// </summary>
     public static class Logger
     {
+        /// <summary>
+        /// Folder this app keeps its files in: the config, its backup and the log file.
+        /// </summary>
+        /// <remarks>
+        /// GetFolderPath(LocalApplicationData) already names the data folder itself, so it must not be
+        /// passed through Path.GetDirectoryName - that strips its last segment (~/.local/share would
+        /// become ~/.local). AppContext.BaseDirectory is the executable's folder, which is also what
+        /// Assembly.Location resolves to outside of single-file/AOT publishing, where it is empty.
+        /// </remarks>
         public static readonly string PersonalPath =
-            OperatingSystem.IsWindows() ? Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location) + Path.DirectorySeparatorChar :
+            OperatingSystem.IsWindows() ? AppContext.BaseDirectory :
             OperatingSystem.IsAndroid() ? Path.GetDirectoryName(Environment.GetFolderPath(Environment.SpecialFolder.Personal)) + Path.DirectorySeparatorChar + "NotesAvalonia" + Path.DirectorySeparatorChar :
-            Path.GetDirectoryName(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)) + Path.DirectorySeparatorChar + "NotesAvalonia" + Path.DirectorySeparatorChar;
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + Path.DirectorySeparatorChar + "NotesAvalonia" + Path.DirectorySeparatorChar;
         static readonly string logFilePath = PersonalPath + "log.txt";
 
         // One line static constructor
