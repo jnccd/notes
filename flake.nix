@@ -19,8 +19,19 @@
       let
         pkgs = import nixpkgs { inherit system; };
         workloadsHashX86_64Linux = "sha256-AcfemNC9S9Lk9AeW+EokaKYJpf3aDGywMTsi821Mo9M=";
+        packages = import ./nix/packages.nix {
+          inherit pkgs;
+          lib = nixpkgs.lib;
+        };
       in
       {
+        # `nix build` -> the desktop app; the server is `.#server`.
+        # Both are self-contained, so neither needs a matching .NET on the host.
+        packages = {
+          default = packages.desktop;
+          inherit (packages) desktop server;
+        };
+
         devShells = rec {
           # Deployment
           service =
