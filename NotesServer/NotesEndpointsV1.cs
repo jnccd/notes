@@ -267,6 +267,13 @@ public static class NotesEndpointsV1
                             continue;
                         }
                         break;
+                    default:
+                        // A change type this server does not know: a newer client, or a queued change
+                        // that got corrupted locally. It can never be applied, so it is reported as a
+                        // 400 (which the client drops from its queue) instead of answering success for
+                        // a change that was not applied.
+                        results[i] = new HttpResult(StatusCodes.Status400BadRequest, $"{i}: Invalid Payload: unknown change type {(int)noteChange.Type} ({noteChange.Type})");
+                        continue;
                 }
 
                 results[i] = new HttpResult(StatusCodes.Status200OK);

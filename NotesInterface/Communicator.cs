@@ -203,6 +203,32 @@ public class Communicator : IDisposable
             int[]? perChangeStatuses = TryParseBatchStatuses(content, toSend.Count);
             if (perChangeStatuses == null)
             {
+                // A bare 400 means the server rejected the request itself and never looked at the
+                // individual changes - the same request can never succeed, so keeping it queued would
+                // retry it forever. The changes are dropped (loudly, this is not a silent loss):
+                // 401/403 are deliberately not treated this way, they start working again after a
+                // login, and 5xx/timeouts/408/429 are retried as before.
+                if (response.StatusCode == HttpStatusCode.BadRequest)
+                {
+                    Logger.WriteLine($"Server rejected the whole batch ({response.StatusCode}) without a per-change result; dropping {toSend.Count} change(s) that can never be applied: {content}");
+                    foreach (var change in toSend)
+                    {
+                        Logger.WriteLine($"  dropped {change.Type} of note {change.NoteId} (parent {change.ParentId}, index {change.ChildInsertionIndex})");
+                        try { noteChanges.Remove(change); }
+                        catch (Exception e) { Logger.WriteLine($"Could not remove unprocessable change from queue: {e}", LogLevel.Error); }
+                    }
+
+                    lastSendFailureAt = DateTime.MinValue; // nothing left to retry
+                    string rejectText = $"{response.StatusCode}: {content}";
+                    if (rejectText != lastReportedSendError)
+                    {
+                        lastReportedSendError = rejectText;
+                        try { onPayloadRequestError?.Invoke(new Exception(rejectText)); }
+                        catch (Exception e) { Logger.WriteLine($"Error on onPayloadRequestError: {e}"); }
+                    }
+                    return;
+                }
+
                 // No usable per-change results (timeout, server error, auth failure,
                 // non-JSON body...): keep the whole batch queued for a later retry.
                 lastSendFailureAt = DateTime.Now;
