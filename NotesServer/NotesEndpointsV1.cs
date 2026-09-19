@@ -55,16 +55,32 @@ public static class NotesEndpointsV1
     /// Keeps a note that is being deleted, together with its subtree, as trash - one row per note -
     /// and removes it from the active tree. Returns how many notes were kept.
     ///
-    /// The trash is owned by <paramref name="userId"/>, which always comes from the authenticated user:
+    /// The trash is owned by the user passed in, which always comes from the authenticated user:
     /// nothing about the ownership can be influenced by the request, so a deleted note can only ever be
     /// read back by the user it belonged to.
     /// </summary>
-    public static int TrashDeletedNote(NotesDbContext notesDbContext, NotePosition notePosition, string userId)
+    public static int TrashDeletedNote(NotesDbContext notesDbContext, User user, NotePosition notePosition)
     {
-        var trash = DeletedNote.FromDeletedSubtree(notePosition.Note, userId, notePosition.Parent?.Id);
+        var trash = DeletedNote.FromDeletedSubtree(notePosition.Note, user.UserId, notePosition.Parent?.Id);
         notesDbContext.DeletedNotes.AddRange(trash);
-        notePosition.Note.DeleteFrom(notePosition.Parent);
+        RemoveNoteFromPayload(user.NotesPayload!, notePosition);
         return trash.Count;
+    }
+
+    /// <summary>
+    /// Takes a note out of the active payload.
+    ///
+    /// A note at the top level of the payload has no parent, and <see cref="Note.DeleteFrom"/> does
+    /// nothing when it is given none - so it has to be removed from the payload's own note list.
+    /// Without that the payload is saved with the deleted note still in it, the next fetch brings it
+    /// back, and every retry writes another set of trash rows.
+    /// </summary>
+    public static void RemoveNoteFromPayload(Payload payload, NotePosition notePosition)
+    {
+        if (notePosition.Parent == null)
+            payload.Notes.Remove(notePosition.Note);
+        else
+            notePosition.Note.DeleteFrom(notePosition.Parent);
     }
 
     public static void RegisterNotesEndpoints(this IEndpointRouteBuilder routes, IServiceProvider services)
@@ -177,7 +193,7 @@ public static class NotesEndpointsV1
                         }
                         try
                         {
-                            int trashed = TrashDeletedNote(notesDbContext, notePosition, u!.UserId);
+                            int trashed = TrashDeletedNote(notesDbContext, u!, notePosition);
                             Logger.WriteLine($"{i}: kept {trashed} note(s) as trash for deleted note {noteChange.NoteId}");
                         }
                         catch (Exception e)
