@@ -632,7 +632,8 @@ public partial class MainViewModel : ViewModelBase
     /// at the top level of the payload. The virtual root is a local display construct the server has no
     /// equivalent for (it is recreated on every start), so it must never be sent as a ParentId.
     /// </summary>
-    public Guid? ServerParentIdOf(Note? parent) => LocalNoteSync.ServerParentIdOf(parent, VirtualRoot);
+    public Guid? ServerParentIdOf(Note? parent) =>
+        parent == null || ReferenceEquals(parent, VirtualRoot) ? null : parent.Id;
 
     // Focuses the TextBox of the row displaying `note` that belongs to the SAME flattened instance
     // as the row the user acted on (anchorChain = ids of that row's flattened ancestor chain,

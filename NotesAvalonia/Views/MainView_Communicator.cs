@@ -132,15 +132,33 @@ public partial class MainView : UserControl
         FlattenNoteIds(incomingNotes, incomingIds);
         var incomingIdSet = incomingIds.ToHashSet();
 
-        // Local-only notes (absent from every server payload) are ignored by the structure
-        // comparison and queued as Add changes so the server learns about them; otherwise they
-        // would make every payload look structural.
+        // Notes the server does not have are only uploaded while they are still being created, i.e.
+        // while an Add for them is queued. Anything else that is missing from the payload was deleted on
+        // the server and is dropped locally instead - uploading it would undo that deletion, which is
+        // how a deleted note used to come back and need deleting twice. Notes already on the server are
+        // never touched.
+        var plan = LocalNoteSync.PlanLocalOnlyNotes(localNotes, incomingIdSet, PendingAddIds(), localOnlyAddAttempts);
+        foreach (var change in plan.Adds)
+            Config.Data.AddNoteChange(change);
+
+        bool droppedDeletedNotes = false;
+        lock (Config.Data)
+            droppedDeletedNotes = LocalNoteSync.RemoveNotes(localNotes, plan.RemovedOnServer);
+
+        // Local-only notes are ignored by the structure comparison (otherwise they would make every
+        // payload look structural).
         var prunedLocalIds = new List<Guid>();
         FlattenNoteIdsSkippingLocalOnly(localNotes, incomingIdSet, prunedLocalIds);
-        QueueLocalOnlyNotesAsAdds(localNotes, incomingIdSet);
 
         if (prunedLocalIds.SequenceEqual(incomingIds))
         {
+            if (droppedDeletedNotes)
+            {
+                // Notes vanished from the tree but the payload still matches: refresh the rows and
+                // persist the pruned payload (ApplyDataOnlyMerge does not rebuild anything).
+                SaveConfig(false);
+                viewModel?.ReFlatten();
+            }
             ApplyDataOnlyMerge(localNotes, incomingNotes, focusedVm?.EffectiveNote);
             return;
         }
@@ -169,23 +187,20 @@ public partial class MainView : UserControl
         }
     }
 
-    // Queues Add changes for local-only notes (at most once per note) so they stop being local-only.
-    // Every note of a local-only subtree gets its own change, in pre-order, including notes at the top
-    // level: an Add inserts a single note on the server and a local tree has no server-side parent to
-    // hang off. Notes that already have an Add queued (or were tried earlier) are not queued again.
-    void QueueLocalOnlyNotesAsAdds(List<Note> notes, HashSet<Guid> serverIds)
+    // Notes whose creation is still queued: a change of their own is on its way to the server, so they
+    // (and anything below them) are not missing because the server removed them.
+    HashSet<Guid> PendingAddIds()
     {
+        var ids = new HashSet<Guid>();
         lock (Config.Data)
         {
             foreach (var pending in Config.Data.CurrentUsersUnsyncedChanges ?? [])
             {
                 if (pending.Type == NoteChangeType.Add)
-                    localOnlyAddAttempts.Add(pending.NoteId);
+                    ids.Add(pending.NoteId);
             }
         }
-
-        foreach (var change in LocalNoteSync.BuildLocalOnlyAdds(notes, serverIds, localOnlyAddAttempts))
-            Config.Data.AddNoteChange(change);
+        return ids;
     }
 
     static void FlattenNoteIds(List<Note> notes, List<Guid> ids)
@@ -526,9 +541,22 @@ public partial class MainView : UserControl
                 // No notes yet - either not logged in yet (fresh config, no user payload) or the
                 // current user has no notes on the server. Seed the UI with one empty note so it
                 // is immediately usable; once a payload arrives it replaces this seed.
-                notes = [Note.EmptyNote()];
+                //
+                // The seed is created locally like any other note, so it is queued as an Add: a note
+                // that the server does not have and that nothing local is creating is treated as one the
+                // server removed, and would be dropped instead of uploaded.
+                var seedNote = Note.EmptyNote();
+                notes = [seedNote];
                 if (currentPayload != null)
                     currentPayload.Notes = notes;
+                Config.Data.AddNoteChange(new NoteChange()
+                {
+                    Type = NoteChangeType.Add,
+                    NoteId = seedNote.Id,
+                    Data = seedNote.Data,
+                    ParentId = null,
+                    ChildInsertionIndex = 0,
+                });
             }
             viewModel.LoadNew(notes);
         }
