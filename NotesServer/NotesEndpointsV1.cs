@@ -16,6 +16,42 @@ public static class NotesEndpointsV1
     static HttpClient httpClient = new();
 
     /// <summary>
+    /// Adds a note to the user's payload. A change without a ParentId lands at the top level of the
+    /// payload: the virtual root a client displays notes under is not a server-side note, so top level
+    /// notes are expressed as "no parent". Returns the rejection to report, or null when it was added.
+    /// </summary>
+    public static (int Status, string Message)? TryAddNote(User user, NoteChange noteChange, List<NotePosition> allNotes)
+    {
+        if (allNotes.Any(x => x.Note.Id == noteChange.NoteId))
+            return (StatusCodes.Status400BadRequest, $"Invalid Payload: Id {noteChange.NoteId} already exists in the notes structure");
+
+        if (noteChange.ParentId == null)
+        {
+            var topLevelNotes = user.NotesPayload!.Notes;
+            int topLevelIndex = noteChange.ChildInsertionIndex ?? topLevelNotes.Count;
+            if (topLevelIndex < 0 || topLevelIndex > topLevelNotes.Count)
+                return (StatusCodes.Status400BadRequest, $"Invalid Payload: ChildInsertionIndex {topLevelIndex} is out of bounds for the top level with {topLevelNotes.Count} notes");
+
+            topLevelNotes.Insert(topLevelIndex, new Note { Id = noteChange.NoteId, Data = noteChange.Data! });
+            return null;
+        }
+
+        var noteParentPosition = allNotes.FirstOrDefault(x => x.Note.Id == noteChange.ParentId);
+        if (noteParentPosition == null)
+            return (StatusCodes.Status404NotFound, $"Parent note {noteChange.ParentId} not found!");
+
+        if (noteChange.ChildInsertionIndex < 0 || noteChange.ChildInsertionIndex > noteParentPosition.Note.SubNotes.Count)
+            return (StatusCodes.Status400BadRequest, $"Invalid Payload: ChildInsertionIndex {noteChange.ChildInsertionIndex} is out of bounds for parent note {noteChange.ParentId} with {noteParentPosition.Note.SubNotes.Count} subnotes");
+
+        noteParentPosition.Note.SubNotes.Insert(noteChange.ChildInsertionIndex ?? noteParentPosition.Note.SubNotes.Count, new Note
+        {
+            Id = noteChange.NoteId,
+            Data = noteChange.Data!,
+        });
+        return null;
+    }
+
+    /// <summary>
     /// Keeps a note that is being deleted, together with its subtree, as trash - one row per note -
     /// and removes it from the active tree. Returns how many notes were kept.
     ///
@@ -89,39 +125,14 @@ public static class NotesEndpointsV1
                 switch (noteChange.Type)
                 {
                     case NoteChangeType.Add:
-                        if (noteChange.Data == null || noteChange.ParentId == null)
+                        if (noteChange.Data == null)
                         {
-                            results[i] = new HttpResult(StatusCodes.Status400BadRequest, $"{i}: Invalid Payload: Add requires Data and ParentId");
+                            results[i] = new HttpResult(StatusCodes.Status400BadRequest, $"{i}: Invalid Payload: Add requires Data");
                             continue;
                         }
-                        if (noteParentPosition == null)
+                        if (TryAddNote(u!, noteChange, allNotes) is { } rejected)
                         {
-                            results[i] = new HttpResult(StatusCodes.Status404NotFound, $"{i}: Parent note {noteChange.ParentId} not found!");
-                            continue;
-                        }
-                        if (noteChange.ChildInsertionIndex < 0 || noteChange.ChildInsertionIndex > noteParentPosition.Note.SubNotes.Count)
-                        {
-                            results[i] = new HttpResult(StatusCodes.Status400BadRequest, $"{i}: Invalid Payload: ChildInsertionIndex {noteChange.ChildInsertionIndex} is out of bounds for parent note {noteChange.ParentId} with {noteParentPosition.Note.SubNotes.Count} subnotes");
-                            continue;
-                        }
-                        if (allNotes.Any(x => x.Note.Id == noteChange.NoteId))
-                        {
-                            results[i] = new HttpResult(StatusCodes.Status400BadRequest, $"{i}: Invalid Payload: Id {noteChange.NoteId} already exists in the notes structure");
-                            continue;
-                        }
-                        try
-                        {
-                            noteParentPosition.Note.SubNotes.Insert(noteChange.ChildInsertionIndex ?? noteParentPosition.Note.SubNotes.Count, new Note
-                            {
-                                Id = noteChange.NoteId,
-                                Data = noteChange.Data
-                            });
-                        }
-                        catch (Exception e)
-                        {
-                            string message = $"{i}: Error adding note {noteChange.NoteId} to parent {noteChange.ParentId}: {e.Message}";
-                            Logger.WriteLine(message);
-                            results[i] = new HttpResult(StatusCodes.Status400BadRequest, message);
+                            results[i] = new HttpResult(rejected.Status, $"{i}: {rejected.Message}");
                             continue;
                         }
                         break;

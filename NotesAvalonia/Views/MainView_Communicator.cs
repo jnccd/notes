@@ -137,7 +137,7 @@ public partial class MainView : UserControl
         // would make every payload look structural.
         var prunedLocalIds = new List<Guid>();
         FlattenNoteIdsSkippingLocalOnly(localNotes, incomingIdSet, prunedLocalIds);
-        QueueLocalOnlyNotesAsAdds(localNotes, incomingIdSet, null);
+        QueueLocalOnlyNotesAsAdds(localNotes, incomingIdSet);
 
         if (prunedLocalIds.SequenceEqual(incomingIds))
         {
@@ -169,30 +169,23 @@ public partial class MainView : UserControl
         }
     }
 
-    // Queues Add changes for local-only notes (at most once per note per session) so they stop
-    // being local-only. Children of such a note are created by the same Add on the server side.
-    void QueueLocalOnlyNotesAsAdds(List<Note> notes, HashSet<Guid> serverIds, Note? parent)
+    // Queues Add changes for local-only notes (at most once per note) so they stop being local-only.
+    // Every note of a local-only subtree gets its own change, in pre-order, including notes at the top
+    // level: an Add inserts a single note on the server and a local tree has no server-side parent to
+    // hang off. Notes that already have an Add queued (or were tried earlier) are not queued again.
+    void QueueLocalOnlyNotesAsAdds(List<Note> notes, HashSet<Guid> serverIds)
     {
-        for (int i = 0; i < notes.Count; i++)
+        lock (Config.Data)
         {
-            var note = notes[i];
-            if (!serverIds.Contains(note.Id))
+            foreach (var pending in Config.Data.CurrentUsersUnsyncedChanges ?? [])
             {
-                if (parent != null && localOnlyAddAttempts.Add(note.Id))
-                {
-                    Config.Data.AddNoteChange(new NoteChange()
-                    {
-                        Type = NoteChangeType.Add,
-                        NoteId = note.Id,
-                        Data = note.Data,
-                        ParentId = parent.Id,
-                        ChildInsertionIndex = i
-                    });
-                }
-                continue;
+                if (pending.Type == NoteChangeType.Add)
+                    localOnlyAddAttempts.Add(pending.NoteId);
             }
-            QueueLocalOnlyNotesAsAdds(note.SubNotes, serverIds, note);
         }
+
+        foreach (var change in LocalNoteSync.BuildLocalOnlyAdds(notes, serverIds, localOnlyAddAttempts))
+            Config.Data.AddNoteChange(change);
     }
 
     static void FlattenNoteIds(List<Note> notes, List<Guid> ids)

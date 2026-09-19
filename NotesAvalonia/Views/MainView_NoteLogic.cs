@@ -129,7 +129,7 @@ public partial class MainView : UserControl
                 Type = NoteChangeType.Add,
                 NoteId = newNote.Id,
                 Data = newNote.Data,
-                ParentId = ogParent.Id,
+                ParentId = viewModel.ServerParentIdOf(ogParent),
                 ChildInsertionIndex = insertionIndex,
             });
 

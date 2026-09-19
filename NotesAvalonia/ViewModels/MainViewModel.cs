@@ -612,20 +612,27 @@ public partial class MainViewModel : ViewModelBase
     }
 
     // Pre-order so each note's Add change comes after its parent's (parents must exist first).
-    static void EnqueueSubtreeAdds(Note note, Note parent, int childIndex)
+    void EnqueueSubtreeAdds(Note note, Note parent, int childIndex)
     {
         Config.Data.AddNoteChange(new NoteChange()
         {
             Type = NoteChangeType.Add,
             NoteId = note.Id,
             Data = note.Data,
-            ParentId = parent.Id,
+            ParentId = ServerParentIdOf(parent),
             ChildInsertionIndex = childIndex,
         });
 
         for (int i = 0; i < note.SubNotes.Count; i++)
             EnqueueSubtreeAdds(note.SubNotes[i], note, i);
     }
+
+    /// <summary>
+    /// The parent id a sync change should carry for <paramref name="parent"/>: null when the note sits
+    /// at the top level of the payload. The virtual root is a local display construct the server has no
+    /// equivalent for (it is recreated on every start), so it must never be sent as a ParentId.
+    /// </summary>
+    public Guid? ServerParentIdOf(Note? parent) => LocalNoteSync.ServerParentIdOf(parent, VirtualRoot);
 
     // Focuses the TextBox of the row displaying `note` that belongs to the SAME flattened instance
     // as the row the user acted on (anchorChain = ids of that row's flattened ancestor chain,
@@ -790,7 +797,7 @@ public partial class MainViewModel : ViewModelBase
                 Type = NoteChangeType.Add,
                 NoteId = link.Id,
                 Data = link.Data,
-                ParentId = parent.Id,
+                ParentId = ServerParentIdOf(parent),
                 ChildInsertionIndex = index,
             });
 

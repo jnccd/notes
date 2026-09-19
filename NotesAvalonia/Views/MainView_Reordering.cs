@@ -307,7 +307,7 @@ public partial class MainView : UserControl
             Type = NoteChangeType.Add,
             NoteId = ogDraggedNote.Id,
             Data = ogDraggedNote.Data,
-            ParentId = ogDraggedToNoteParent.Id,
+            ParentId = viewModel!.ServerParentIdOf(ogDraggedToNoteParent),
             ChildInsertionIndex = ogDraggedToNoteParentIndex,
         });
     }
