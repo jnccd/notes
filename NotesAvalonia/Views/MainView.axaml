@@ -110,12 +110,18 @@
                                         Name="UsernameTextBox"
                                         Text="{Binding LoginServerUsername}"
                                         PlaceholderText="Username" />
+                                    <!--  Stops the on-screen keyboard from predicting and learning the
+                                          password: on Android these become TYPE_TEXT_VARIATION_PASSWORD
+                                          plus TYPE_TEXT_FLAG_NO_SUGGESTIONS. Do not add
+                                          ContentType="Password" - that skips the flag branch.  -->
                                     <TextBox
                                         Name="PasswordTextBox"
                                         KeyDown="PasswordTextBox_KeyDown"
                                         PasswordChar="•"
                                         Text="{Binding LoginPassword}"
-                                        PlaceholderText="Password" />
+                                        PlaceholderText="Password"
+                                        TextInputOptions.IsSensitive="True"
+                                        TextInputOptions.ShowSuggestions="False" />
 
                                     <StackPanel Orientation="Horizontal" Spacing="5">
                                         <Button
