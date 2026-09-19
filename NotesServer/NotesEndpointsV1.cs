@@ -15,6 +15,22 @@ public static class NotesEndpointsV1
     const string ROUTE_VERSION_PREFIX = "/v1";
     static HttpClient httpClient = new();
 
+    /// <summary>
+    /// Keeps a note that is being deleted, together with its subtree, as trash - one row per note -
+    /// and removes it from the active tree. Returns how many notes were kept.
+    ///
+    /// The trash is owned by <paramref name="userId"/>, which always comes from the authenticated user:
+    /// nothing about the ownership can be influenced by the request, so a deleted note can only ever be
+    /// read back by the user it belonged to.
+    /// </summary>
+    public static int TrashDeletedNote(NotesDbContext notesDbContext, NotePosition notePosition, string userId)
+    {
+        var trash = DeletedNote.FromDeletedSubtree(notePosition.Note, userId, notePosition.Parent?.Id);
+        notesDbContext.DeletedNotes.AddRange(trash);
+        notePosition.Note.DeleteFrom(notePosition.Parent);
+        return trash.Count;
+    }
+
     public static void RegisterNotesEndpoints(this IEndpointRouteBuilder routes, IServiceProvider services)
     {
         var version1Api = routes.MapGroup(ROUTE_VERSION_PREFIX);
@@ -140,16 +156,18 @@ public static class NotesEndpointsV1
                             results[i] = new HttpResult(StatusCodes.Status409Conflict, $"{i}: Delete conflict for note {noteChange.NoteId}: server revision {notePosition.Note.Data.Rev} != base revision {noteChange.BaseRev.Value}");
                             continue;
                         }
+                        if (notePosition == null)
+                        {
+                            // Nothing to delete and nothing to keep: the note is not (or no longer) on
+                            // the server - a note created locally whose Add never went through, for
+                            // instance. Logged because the client only ever sees a plain success.
+                            Logger.WriteLine($"{i}: delete for note {noteChange.NoteId} matched nothing on the server - nothing kept as trash");
+                            break;
+                        }
                         try
                         {
-                            if (notePosition != null)
-                            {
-                                // Keep the removed note and its subtree - one trash row per note -
-                                // instead of dropping them. Owned by the authenticated user, never by
-                                // anything that came in with the request.
-                                notesDbContext.DeletedNotes.AddRange(DeletedNote.FromDeletedSubtree(notePosition.Note, u!.UserId, notePosition.Parent?.Id));
-                                notePosition.Note.DeleteFrom(notePosition.Parent);
-                            }
+                            int trashed = TrashDeletedNote(notesDbContext, notePosition, u!.UserId);
+                            Logger.WriteLine($"{i}: kept {trashed} note(s) as trash for deleted note {noteChange.NoteId}");
                         }
                         catch (Exception e)
                         {
