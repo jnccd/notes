@@ -142,7 +142,14 @@ public static class NotesEndpointsV1
                         }
                         try
                         {
-                            notePosition?.Note.DeleteFrom(notePosition.Parent);
+                            if (notePosition != null)
+                            {
+                                // Keep the removed note and its subtree - one trash row per note -
+                                // instead of dropping them. Owned by the authenticated user, never by
+                                // anything that came in with the request.
+                                notesDbContext.DeletedNotes.AddRange(DeletedNote.FromDeletedSubtree(notePosition.Note, u!.UserId, notePosition.Parent?.Id));
+                                notePosition.Note.DeleteFrom(notePosition.Parent);
+                            }
                         }
                         catch (Exception e)
                         {

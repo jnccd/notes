@@ -12,6 +12,8 @@ namespace Notes.Interface;
 [JsonSerializable(typeof(Payload))]
 [JsonSerializable(typeof(NoteChange))]
 [JsonSerializable(typeof(List<NoteChange>))]
+[JsonSerializable(typeof(NoteData))]
+[JsonSerializable(typeof(List<Note>))]
 [JsonSerializable(typeof(EzAuthAddress))]
 public partial class NoteJsonContext : JsonSerializerContext
 {
