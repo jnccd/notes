@@ -25,30 +25,80 @@ public static class NotesEndpointsV1
         if (allNotes.Any(x => x.Note.Id == noteChange.NoteId))
             return (StatusCodes.Status400BadRequest, $"Invalid Payload: Id {noteChange.NoteId} already exists in the notes structure");
 
-        if (noteChange.ParentId == null)
-        {
-            var topLevelNotes = user.NotesPayload!.Notes;
-            int topLevelIndex = noteChange.ChildInsertionIndex ?? topLevelNotes.Count;
-            if (topLevelIndex < 0 || topLevelIndex > topLevelNotes.Count)
-                return (StatusCodes.Status400BadRequest, $"Invalid Payload: ChildInsertionIndex {topLevelIndex} is out of bounds for the top level with {topLevelNotes.Count} notes");
+        var placement = ResolveInsertPosition(user.NotesPayload!, allNotes, noteChange.ParentId, noteChange.ChildInsertionIndex);
+        if (placement.Rejected is { } rejected)
+            return rejected;
 
-            topLevelNotes.Insert(topLevelIndex, new Note { Id = noteChange.NoteId, Data = noteChange.Data! });
-            return null;
+        placement.SubNotes!.Insert(placement.Index, new Note { Id = noteChange.NoteId, Data = noteChange.Data! });
+        return null;
+    }
+
+    /// <summary>
+    /// Moves a note - with its subtree - to the place the change names: the note is detached from its
+    /// current parent (its subnotes come along) and inserted at the new parent and index.
+    ///
+    /// The destination is validated before anything is detached, so a rejected move leaves the note
+    /// exactly where it was instead of dropping it out of the payload. Returns the rejection to
+    /// report, or null when the note was moved.
+    /// </summary>
+    public static (int Status, string Message)? TryMoveNote(User user, NoteChange noteChange, NotePosition notePosition, List<NotePosition> allNotes)
+    {
+        var note = notePosition.Note;
+
+        // Moving a note into itself (or into its own subtree) would detach the subtree containing the
+        // insertion point and turn the payload into a cycle.
+        if (ContainsNoteId(note, noteChange.ParentId))
+            return (StatusCodes.Status400BadRequest, $"Invalid Payload: cannot move note {note.Id} into its own subtree");
+
+        var placement = ResolveInsertPosition(user.NotesPayload!, allNotes, noteChange.ParentId, noteChange.ChildInsertionIndex);
+        if (placement.Rejected is { } rejected)
+            return rejected;
+
+        RemoveNoteFromPayload(user.NotesPayload!, notePosition);
+        placement.SubNotes!.Insert(placement.Index, note);
+        return null;
+    }
+
+    static bool ContainsNoteId(Note note, Guid? id)
+    {
+        if (id == null)
+            return false;
+        if (note.Id == id.Value)
+            return true;
+        foreach (var subNote in note.SubNotes)
+        {
+            if (ContainsNoteId(subNote, id))
+                return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Finds the subnote list a change inserts into - the payload's own note list for a top level
+    /// note - and validates the insertion index. Nothing is modified, so the result can be checked
+    /// before a note is detached from where it currently is.
+    /// </summary>
+    static (List<Note>? SubNotes, int Index, (int Status, string Message)? Rejected) ResolveInsertPosition(
+        Payload payload, List<NotePosition> allNotes, Guid? parentId, int? childInsertionIndex)
+    {
+        if (parentId == null)
+        {
+            int topLevelIndex = childInsertionIndex ?? payload.Notes.Count;
+            if (topLevelIndex < 0 || topLevelIndex > payload.Notes.Count)
+                return (null, 0, (StatusCodes.Status400BadRequest, $"Invalid Payload: ChildInsertionIndex {topLevelIndex} is out of bounds for the top level with {payload.Notes.Count} notes"));
+
+            return (payload.Notes, topLevelIndex, null);
         }
 
-        var noteParentPosition = allNotes.FirstOrDefault(x => x.Note.Id == noteChange.ParentId);
+        var noteParentPosition = allNotes.FirstOrDefault(x => x.Note.Id == parentId);
         if (noteParentPosition == null)
-            return (StatusCodes.Status404NotFound, $"Parent note {noteChange.ParentId} not found!");
+            return (null, 0, (StatusCodes.Status404NotFound, $"Parent note {parentId} not found!"));
 
-        if (noteChange.ChildInsertionIndex < 0 || noteChange.ChildInsertionIndex > noteParentPosition.Note.SubNotes.Count)
-            return (StatusCodes.Status400BadRequest, $"Invalid Payload: ChildInsertionIndex {noteChange.ChildInsertionIndex} is out of bounds for parent note {noteChange.ParentId} with {noteParentPosition.Note.SubNotes.Count} subnotes");
+        int index = childInsertionIndex ?? noteParentPosition.Note.SubNotes.Count;
+        if (index < 0 || index > noteParentPosition.Note.SubNotes.Count)
+            return (null, 0, (StatusCodes.Status400BadRequest, $"Invalid Payload: ChildInsertionIndex {index} is out of bounds for parent note {parentId} with {noteParentPosition.Note.SubNotes.Count} subnotes"));
 
-        noteParentPosition.Note.SubNotes.Insert(noteChange.ChildInsertionIndex ?? noteParentPosition.Note.SubNotes.Count, new Note
-        {
-            Id = noteChange.NoteId,
-            Data = noteChange.Data!,
-        });
-        return null;
+        return (noteParentPosition.Note.SubNotes, index, null);
     }
 
     /// <summary>
@@ -136,7 +186,6 @@ public static class NotesEndpointsV1
                 NoteChange noteChange = noteChanges[i];
                 var allNotes = u!.NotesPayload!.GetAllNotes();
                 var notePosition = allNotes.FirstOrDefault(x => x.Note.Id == noteChange.NoteId);
-                var noteParentPosition = allNotes.FirstOrDefault(x => x.Note.Id == noteChange.ParentId);
 
                 switch (noteChange.Type)
                 {
@@ -172,6 +221,20 @@ public static class NotesEndpointsV1
                             continue; // leave server state and SaveTime untouched
                         }
                         notePosition.Note.Data = noteChange.Data;
+                        break;
+                    case NoteChangeType.Move:
+                        if (notePosition == null)
+                        {
+                            // Not (or no longer) on the server: the queued Add that creates it uses the
+                            // parent the client has now, so there is nothing to move.
+                            Logger.WriteLine($"{i}: move for note {noteChange.NoteId} matched nothing on the server");
+                            break;
+                        }
+                        if (TryMoveNote(u!, noteChange, notePosition, allNotes) is { } moveRejected)
+                        {
+                            results[i] = new HttpResult(moveRejected.Status, $"{i}: {moveRejected.Message}");
+                            continue;
+                        }
                         break;
                     case NoteChangeType.Delete:
                         // Optimistic concurrency on deletes too (when the client sent the deleted

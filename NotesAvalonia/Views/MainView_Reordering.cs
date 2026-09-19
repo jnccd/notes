@@ -295,18 +295,12 @@ public partial class MainView : UserControl
         ogDraggedToNoteParent.SubNotes.Insert(ogDraggedToNoteParentIndex, ogDraggedNote);
         viewModel?.ReFlatten();
 
-        // TODO: This should probably be atomic
+        // One Move change instead of delete + add: a delete removes the whole subtree (and keeps it
+        // as trash), so re-adding only the dragged note itself would leave its subnotes deleted.
         Config.Data.AddNoteChange(new NoteChange()
         {
-            Type = NoteChangeType.Delete,
+            Type = NoteChangeType.Move,
             NoteId = ogDraggedNote.Id,
-            Data = ogDraggedNote.Data,
-        });
-        Config.Data.AddNoteChange(new NoteChange()
-        {
-            Type = NoteChangeType.Add,
-            NoteId = ogDraggedNote.Id,
-            Data = ogDraggedNote.Data,
             ParentId = viewModel!.ServerParentIdOf(ogDraggedToNoteParent),
             ChildInsertionIndex = ogDraggedToNoteParentIndex,
         });
