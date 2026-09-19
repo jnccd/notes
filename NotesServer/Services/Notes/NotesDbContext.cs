@@ -59,10 +59,12 @@ public class NotesDbContext : DbContext
                 .HasForeignKey(e => e.ParentDeletedNoteId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            // A deletion is identified by its own row: the one with no ParentDeletedNoteId, whose
+            // descendants are the notes that were removed with it.
             deletedNote.HasIndex(e => e.UserId);
-            deletedNote.HasIndex(e => e.DeletionId);
             deletedNote.HasIndex(e => e.NoteId);
             deletedNote.HasIndex(e => e.ParentDeletedNoteId);
+            deletedNote.HasIndex(e => new { e.UserId, e.ParentDeletedNoteId });
 
             // The note's data is jsonb: same storage as inside the active payload, and no migration
             // whenever NoteData gains a field.

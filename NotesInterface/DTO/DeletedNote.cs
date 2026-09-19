@@ -10,20 +10,16 @@ namespace Notes.Interface.DTO;
 ///
 /// One row per deleted note. The subtree a deletion removes is kept as rows linked through
 /// <see cref="ParentDeletedNoteId"/> - a table with a foreign key to itself - so every deleted note is
-/// its own row, owned by the user it belonged to. Trash is not reachable by the client yet; it only has
-/// to be retained, and to never be readable across users (see NotesServer's NotesDbContext).
+/// its own row, owned by the user it belonged to. The row whose <see cref="ParentDeletedNoteId"/> is
+/// null is the note that was actually deleted, which makes it the identifier of that deletion: its
+/// descendants are the rows reachable from it. Trash is not reachable by the client yet; it only has to
+/// be retained, and to never be readable across users (see NotesServer's NotesDbContext).
 /// </summary>
 public class DeletedNote
 {
     /// <summary>Identifier of this trash entry.</summary>
     [Key]
     public Guid Id { get; set; } = Guid.NewGuid();
-
-    /// <summary>
-    /// The deletion this note was part of. Every note removed by one delete change shares it, so a
-    /// whole deletion can still be found (and later restored or purged) as a unit.
-    /// </summary>
-    public Guid DeletionId { get; set; }
 
     /// <summary>Id the note had in the active tree, so a trash entry stays traceable to it.</summary>
     public Guid NoteId { get; set; }
@@ -43,7 +39,10 @@ public class DeletedNote
     /// <summary>Id of the note's parent in the live tree at the time of deletion, when it had one.</summary>
     public Guid? OriginalParentId { get; set; }
 
-    /// <summary>When the note was deleted, in UTC.</summary>
+    /// <summary>
+    /// When the note was deleted, in UTC. One deletion stamps every row it creates with the same
+    /// value, so the rows of a deletion agree with each other.
+    /// </summary>
     public DateTime DeletedAt { get; set; } = DateTime.UtcNow;
 
     // The note's own data, stored as jsonb: it matches how note data is stored inside the active
@@ -60,30 +59,30 @@ public class DeletedNote
     /// <summary>
     /// Snapshots a note and the subtree that is removed with it, as one row per note owned by
     /// <paramref name="userId"/>. Data is serialized here, so the entries keep every note exactly as it
-    /// was at deletion time.
+    /// was at deletion time, and every row of the deletion carries the same deletion time.
     /// </summary>
     public static List<DeletedNote> FromDeletedSubtree(Note note, string userId, Guid? originalParentId)
     {
-        var deletionId = Guid.NewGuid();
+        var deletedAt = DateTime.UtcNow;
         var deletedNotes = new List<DeletedNote>();
-        AddNoteAndSubNotes(deletedNotes, note, userId, deletionId, originalParentId, parentDeletedNoteId: null);
+        AddNoteAndSubNotes(deletedNotes, note, userId, deletedAt, originalParentId, parentDeletedNoteId: null);
         return deletedNotes;
     }
 
-    static void AddNoteAndSubNotes(List<DeletedNote> deletedNotes, Note note, string userId, Guid deletionId, Guid? originalParentId, Guid? parentDeletedNoteId)
+    static void AddNoteAndSubNotes(List<DeletedNote> deletedNotes, Note note, string userId, DateTime deletedAt, Guid? originalParentId, Guid? parentDeletedNoteId)
     {
         var deletedNote = new DeletedNote
         {
-            DeletionId = deletionId,
             NoteId = note.Id,
             UserId = userId,
             ParentDeletedNoteId = parentDeletedNoteId,
             OriginalParentId = originalParentId,
+            DeletedAt = deletedAt,
             Data = note.Data,
         };
         deletedNotes.Add(deletedNote);
 
         foreach (var subNote in note.SubNotes)
-            AddNoteAndSubNotes(deletedNotes, subNote, userId, deletionId, note.Id, deletedNote.Id);
+            AddNoteAndSubNotes(deletedNotes, subNote, userId, deletedAt, note.Id, deletedNote.Id);
     }
 }
