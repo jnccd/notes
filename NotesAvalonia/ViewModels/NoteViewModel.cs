@@ -1,3 +1,4 @@
+using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using Avalonia;
@@ -205,6 +206,72 @@ public partial class FlattenedNoteViewModel : ViewModelBase
             var created = EffectiveNote.Data.Created;
             return $"Created: {(created.HasValue ? created.Value.ToString("yyyy-MM-dd HH:mm") : "—")}";
         }
+    }
+
+    // --- Due timeframe ---
+
+    /// <summary>The timeframe this note is due in; either end may be unset. Setting one queues an
+    /// Update change like the other note flags, so it reaches the server with the note's data.</summary>
+    public DateTimeOffset? DueFrom
+    {
+        get { return EffectiveNote.Data.DueFrom; }
+        set
+        {
+            EffectiveNote.Data.DueFrom = value;
+            QueueNoteUpdate();
+        }
+    }
+
+    public DateTimeOffset? DueTo
+    {
+        get { return EffectiveNote.Data.DueTo; }
+        set
+        {
+            EffectiveNote.Data.DueTo = value;
+            QueueNoteUpdate();
+        }
+    }
+
+    public bool HasDueTimeframe => DueTimeframe.Has(EffectiveNote.Data.DueFrom, EffectiveNote.Data.DueTo);
+
+    /// <summary>True while the current time is inside the note's timeframe - the row shows its alarm
+    /// then. Re-evaluated by the view model's timer (see <see cref="RefreshDueState"/>).</summary>
+    public bool IsDueNow => DueTimeframe.IsDue(EffectiveNote.Data.DueFrom, EffectiveNote.Data.DueTo, DateTimeOffset.Now);
+
+    public string DueInfo => $"Due: {DueTimeframe.Describe(EffectiveNote.Data.DueFrom, EffectiveNote.Data.DueTo)}";
+
+    bool lastDueState;
+
+    /// <summary>Re-reads the due state and tells the UI when it changed. Called from the timer, so it
+    /// stays quiet (and the rows stay unrendered) while nothing changes.</summary>
+    public void RefreshDueState()
+    {
+        bool due = IsDueNow;
+        if (due == lastDueState)
+            return;
+
+        lastDueState = due;
+        OnPropertyChanged(nameof(IsDueNow));
+    }
+
+    // Queues the note's data (including the timeframe) as an Update and refreshes the bindings that
+    // depend on it, on every row showing this note.
+    void QueueNoteUpdate()
+    {
+        if (mainView != null)
+            Config.Data.AddNoteChange(new NoteChange()
+            {
+                Type = NoteChangeType.Update,
+                NoteId = EffectiveNote.Id,
+                Data = EffectiveNote.Data
+            });
+
+        OnPropertyChanged(nameof(DueFrom));
+        OnPropertyChanged(nameof(DueTo));
+        OnPropertyChanged(nameof(HasDueTimeframe));
+        OnPropertyChanged(nameof(IsDueNow));
+        OnPropertyChanged(nameof(DueInfo));
+        NotifySharedContentRows();
     }
 
     private bool _hidden;

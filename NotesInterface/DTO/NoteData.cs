@@ -38,6 +38,14 @@ public class NoteData
     public bool Hidden { get; set; } = false;
     public NotePriority Prio { get; set; } = NotePriority.Medium;
 
+    /// <summary>
+    /// Optional timeframe the note is due in (see <see cref="DueTimeframe"/>). Both ends are optional:
+    /// a timeframe with only one end is open on the other side, and no timeframe at all means the note
+    /// is never "due". Old payloads/clients simply ignore the fields.
+    /// </summary>
+    public DateTimeOffset? DueFrom { get; set; }
+    public DateTimeOffset? DueTo { get; set; }
+
 
     /// <summary>
     /// Optimistic-concurrency revision. Bumped by the editing client each time a change for this

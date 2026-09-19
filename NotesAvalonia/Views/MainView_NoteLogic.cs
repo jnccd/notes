@@ -194,6 +194,23 @@ public partial class MainView : UserControl
         }
     }
 
+    /// <summary>Opens the due timeframe editor for the clicked note and applies the result. Setting
+    /// either end queues the note's data as an Update like any other edit.</summary>
+    private void SetDueTimeframe_Click(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not MenuItem { DataContext: FlattenedNoteViewModel nvm })
+            return;
+
+        var data = nvm.EffectiveNote.Data;
+        popupManager?.ShowDueTimeframe("Due Timeframe", data.DueFrom, data.DueTo, (from, to) =>
+        {
+            // The two setters queue the same note data, which the change queue coalesces into one
+            // update carrying both ends.
+            nvm.DueFrom = from;
+            nvm.DueTo = to;
+        });
+    }
+
     private void AddSubtreeFromString_Click(object? sender, RoutedEventArgs e)
     {
         if (sender is not MenuItem { DataContext: FlattenedNoteViewModel nvm })

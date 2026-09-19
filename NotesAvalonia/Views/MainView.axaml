@@ -23,6 +23,26 @@
         <converters:TextBoxDoneOpacityConverter x:Key="TextBoxDoneOpacityConverter" />
     </UserControl.Resources>
 
+    <UserControl.Styles>
+        <!-- "Ringing" alarm for a note whose due timeframe contains the current time: a quick wobble
+             that repeats while it is visible. -->
+        <Style Selector="Border.DueBadge">
+            <Style.Animations>
+                <Animation Duration="0:0:0.9" IterationCount="INFINITE" PlaybackDirection="Alternate">
+                    <KeyFrame Cue="0%">
+                        <Setter Property="RotateTransform.Angle" Value="-14" />
+                    </KeyFrame>
+                    <KeyFrame Cue="50%">
+                        <Setter Property="RotateTransform.Angle" Value="0" />
+                    </KeyFrame>
+                    <KeyFrame Cue="100%">
+                        <Setter Property="RotateTransform.Angle" Value="14" />
+                    </KeyFrame>
+                </Animation>
+            </Style.Animations>
+        </Style>
+    </UserControl.Styles>
+
     <Design.DataContext>
         <!--
         This only sets the DataContext for the previewer in an IDE,
@@ -146,7 +166,7 @@
                             <DataTemplate DataType="vm:FlattenedNoteViewModel">
                                 <Grid
                                     Name="NoteContainer"
-                                    ColumnDefinitions="Auto, 24, 24, 24, *, 36"
+                                    ColumnDefinitions="Auto, 24, 24, 24, *, Auto, 36"
                                     DragDrop.AllowDrop="True"
                                     DragDrop.DragOver="NoteContainer_OnDragOver"
                                     DragDrop.Drop="NoteContainer_OnDrop">
@@ -296,8 +316,37 @@
                                         </Rectangle>
                                     </Grid>
 
-                                    <Button
+                                    <!-- Due alarm: visible while the current time is inside the note's
+                                    due timeframe, between the note (text) and the menu button. The
+                                    symbol is a placeholder - swap it for a proper asset when there is
+                                    one (the wobble animation lives in Border.DueBadge above). -->
+                                    <Border
                                         Grid.Column="5"
+                                        Classes="DueBadge"
+                                        Width="18"
+                                        Height="18"
+                                        Margin="0,1,6,0"
+                                        HorizontalAlignment="Right"
+                                        VerticalAlignment="Top"
+                                        Background="#D93025"
+                                        CornerRadius="9"
+                                        IsHitTestVisible="False"
+                                        IsVisible="{Binding IsDueNow}"
+                                        RenderTransformOrigin="50%,50%">
+                                        <Border.RenderTransform>
+                                            <RotateTransform />
+                                        </Border.RenderTransform>
+                                        <TextBlock
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            FontSize="12"
+                                            FontWeight="Bold"
+                                            Foreground="White"
+                                            Text="!" />
+                                    </Border>
+
+                                    <Button
+                                        Grid.Column="6"
                                         Height="25"
                                         MinHeight="0"
                                         Margin="0,0,12,0"
@@ -316,7 +365,13 @@
                                                     <MenuItem
                                                         IsEnabled="False"
                                                         Header="{Binding CreatedInfo}" />
+                                                    <MenuItem
+                                                        IsEnabled="False"
+                                                        Header="{Binding DueInfo}" />
                                                 </MenuItem>
+                                                <MenuItem
+                                                    Click="SetDueTimeframe_Click"
+                                                    Header="Due Timeframe…" />
                                                 <MenuItem
                                                     Command="{Binding #Root.((vm:MainViewModel)DataContext).AddChildNoteCommand}"
                                                     CommandParameter="{Binding .}"

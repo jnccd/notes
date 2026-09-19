@@ -26,8 +26,18 @@ public partial class MainViewModel : ViewModelBase
 
     public MainViewModel()
     {
-
+        // Whether a note is "due now" depends on the clock, so the rows have to be re-checked as time
+        // passes. A slow tick is enough (the alarm only has to appear within seconds of the timeframe
+        // starting), and RefreshDueState only notifies the rows whose state actually changed.
+        dueStateTimer.Tick += (_, _) =>
+        {
+            foreach (var row in FlattenedNoteVMs)
+                row.RefreshDueState();
+        };
+        dueStateTimer.Start();
     }
+
+    readonly DispatcherTimer dueStateTimer = new() { Interval = TimeSpan.FromSeconds(20) };
 
     public void LoadNew(List<Note> notes)
     {
