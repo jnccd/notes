@@ -38,7 +38,7 @@ public partial class NoteViewModel : ViewModelBase
         set
         {
             SetProperty(ref _done, value);
-            BaseNote.Data.Done = value;
+            BaseNote.Data.SetState(value, BaseNote.Data.Canceled);
         }
     }
 
@@ -129,7 +129,9 @@ public partial class FlattenedNoteViewModel : ViewModelBase
         get { return EffectiveNote.Data.Done; }
         set
         {
-            EffectiveNote.Data.Done = value;
+            // SetState stamps StateLastChanged when the state really changes (and leaves it alone for
+            // a write that changes nothing).
+            EffectiveNote.Data.SetState(value, EffectiveNote.Data.Canceled);
             if (mainView != null)
                 Config.Data.AddNoteChange(new NoteChange()
                 {
@@ -150,7 +152,7 @@ public partial class FlattenedNoteViewModel : ViewModelBase
         get { return EffectiveNote.Data.Canceled; }
         set
         {
-            EffectiveNote.Data.Canceled = value;
+            EffectiveNote.Data.SetState(EffectiveNote.Data.Done, value);
             if (mainView != null)
                 Config.Data.AddNoteChange(new NoteChange()
                 {

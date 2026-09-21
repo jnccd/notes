@@ -13,6 +13,15 @@ public class NoteData
     /// </summary>
     public bool Canceled { get; set; } = false;
     /// <summary>
+    /// When the note's state (Done/Canceled, see <see cref="SetState"/>) last changed: it was closed,
+    /// reopened or switched between done and canceled. Null when the state never changed since this
+    /// field existed, and for notes whose state was last changed before it existed - the state itself
+    /// is known in both cases, only its change time is not. Stamped where the edit happens (so it
+    /// works offline too) and travels inside the note's Data snapshot like every other field. Old
+    /// payloads/clients simply ignore the field.
+    /// </summary>
+    public DateTimeOffset? StateLastChanged { get; set; }
+    /// <summary>
     /// When the note was created. Null for notes created before this field existed; they are
     /// backfilled with the local "now" once when loaded (and synced via an update change).
     /// </summary>
@@ -55,4 +64,24 @@ public class NoteData
     /// future JS-based client: values above 2^53 lose integer precision in JSON.
     /// </summary>
     public ulong Rev { get; set; } = 0;
+
+    /// <summary>
+    /// Applies the note's Done/Canceled state in one step and stamps <see cref="StateLastChanged"/>
+    /// when either flag actually changes.
+    ///
+    /// This is the only way the state is changed from an edit: writing <see cref="Done"/> or
+    /// <see cref="Canceled"/> directly would change the state without saying when, and re-applying
+    /// the state a note already has is a no-op here (a payload merged over the note must not fake a
+    /// state change). Deserialization assigns the properties directly, which is exactly what keeps a
+    /// stored <see cref="StateLastChanged"/> from being overwritten while a payload is read.
+    /// </summary>
+    public void SetState(bool done, bool canceled)
+    {
+        if (Done == done && Canceled == canceled)
+            return;
+
+        Done = done;
+        Canceled = canceled;
+        StateLastChanged = DateTimeOffset.Now;
+    }
 }

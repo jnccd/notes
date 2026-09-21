@@ -191,7 +191,9 @@ public class Note
                 for (int j = 0; j < noteText.Length; j += 2)
                     sb.Append(noteText[j]);
                 noteText = sb.ToString();
-                note.Data.Done = true;
+                // The parsed note starts out done, so its state is set - and stamped - now (same
+                // moment EmptyNote stamped Created above).
+                note.Data.SetState(done: true, canceled: false);
             }
             note.Data.DecodedText = noteText;
 

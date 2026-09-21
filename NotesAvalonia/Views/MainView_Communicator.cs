@@ -42,6 +42,8 @@ public partial class MainView : UserControl
     {
         Done = data.Done,
         Canceled = data.Canceled,
+        // Done/Canceled are copied as-is (the same state must never look like a state change).
+        StateLastChanged = data.StateLastChanged,
         Text = data.Text,
         Expanded = data.Expanded,
         Hidden = data.Hidden,
