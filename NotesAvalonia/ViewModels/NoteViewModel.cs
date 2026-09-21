@@ -210,6 +210,19 @@ public partial class FlattenedNoteViewModel : ViewModelBase
         }
     }
 
+    // Info-menu display: when the note's state (Done/Canceled, see NoteData.SetState) last changed.
+    // "—" while the state never changed since that field existed, and for notes whose state was last
+    // changed before it did: unlike Created, this is never backfilled - the change time of an old note
+    // is simply unknown, and guessing "now" would be a wrong answer instead of a missing one.
+    public string StateChangedInfo
+    {
+        get
+        {
+            var changed = EffectiveNote.Data.StateLastChanged;
+            return $"State changed: {(changed.HasValue ? changed.Value.ToString("yyyy-MM-dd HH:mm") : "—")}";
+        }
+    }
+
     // --- Due timeframe ---
 
     /// <summary>The timeframe this note is due in; either end may be unset. Setting one queues an

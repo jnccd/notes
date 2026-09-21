@@ -220,7 +220,10 @@ public static class NotesEndpointsV1
                             results[i] = new HttpResult(StatusCodes.Status409Conflict, $"{i}: Update conflict for note {noteChange.NoteId}: server revision {notePosition.Note.Data.Rev} != base revision {noteChange.BaseRev.Value}");
                             continue; // leave server state and SaveTime untouched
                         }
-                        notePosition.Note.Data = noteChange.Data;
+                        // Apply the snapshot through NoteDataMerge: an older client that does not know
+                        // Created/StateLastChanged sends no value for them, and that must not erase the
+                        // stored timestamps (a user-editable field like DueFrom stays clearable).
+                        notePosition.Note.Data = NoteDataMerge.Apply(noteChange.Data, notePosition.Note.Data);
                         break;
                     case NoteChangeType.Move:
                         if (notePosition == null)

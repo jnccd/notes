@@ -38,11 +38,14 @@ public partial class MainView : UserControl
     Guid? lastEditedNoteId;
     NoteData? lastEditedNoteData;
 
+    // Every field of NoteData has to be listed here: data-only merges replace a local note's Data with
+    // this copy, so a field missing from the list is silently lost whenever the server sends newer
+    // data for that note (that is how DueFrom/DueTo used to disappear). The Done/Canceled flags must
+    // stay copies - the same state must never look like a state change.
     static NoteData CloneNoteData(NoteData data) => new()
     {
         Done = data.Done,
         Canceled = data.Canceled,
-        // Done/Canceled are copied as-is (the same state must never look like a state change).
         StateLastChanged = data.StateLastChanged,
         Text = data.Text,
         Expanded = data.Expanded,
@@ -50,6 +53,8 @@ public partial class MainView : UserControl
         Prio = data.Prio,
         Created = data.Created,
         LinkTargetId = data.LinkTargetId,
+        DueFrom = data.DueFrom,
+        DueTo = data.DueTo,
         Rev = data.Rev
     };
 

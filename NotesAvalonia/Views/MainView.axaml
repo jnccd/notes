@@ -373,6 +373,9 @@
                                                         Header="{Binding CreatedInfo}" />
                                                     <MenuItem
                                                         IsEnabled="False"
+                                                        Header="{Binding StateChangedInfo}" />
+                                                    <MenuItem
+                                                        IsEnabled="False"
                                                         Header="{Binding DueInfo}" />
                                                 </MenuItem>
                                                 <MenuItem
