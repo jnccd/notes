@@ -25,7 +25,7 @@
 
     <UserControl.Styles>
         <!-- "Ringing" alarm for a note whose due timeframe contains the current time: a quick wobble
-             that repeats while it is visible. -->
+        that repeats while it is visible. -->
         <Style Selector="Border.DueBadge">
             <Style.Animations>
                 <Animation Duration="0:0:0.9" IterationCount="INFINITE" PlaybackDirection="Alternate">
@@ -111,9 +111,9 @@
                                         Text="{Binding LoginServerUsername}"
                                         PlaceholderText="Username" />
                                     <!--  Stops the on-screen keyboard from predicting and learning the
-                                          password: on Android these become TYPE_TEXT_VARIATION_PASSWORD
-                                          plus TYPE_TEXT_FLAG_NO_SUGGESTIONS. Do not add
-                                          ContentType="Password" - that skips the flag branch.  -->
+                                    password: on Android these become TYPE_TEXT_VARIATION_PASSWORD
+                                    plus TYPE_TEXT_FLAG_NO_SUGGESTIONS. Do not add
+                                    ContentType="Password" - that skips the flag branch.  -->
                                     <TextBox
                                         Name="PasswordTextBox"
                                         KeyDown="PasswordTextBox_KeyDown"
@@ -386,6 +386,25 @@
                                                     CommandParameter="{Binding .}"
                                                     Header="Add Child Note" />
                                                 <MenuItem
+                                                    Command="{Binding #Root.((vm:MainViewModel)DataContext).ToggleNoteCanceledCommand}"
+                                                    CommandParameter="{Binding .}"
+                                                    Header="Toggle Canceled" />
+                                                <Separator />
+                                                <MenuItem
+                                                    Command="{Binding #Root.((vm:MainViewModel)DataContext).ToggleNoteHiddenCommand}"
+                                                    CommandParameter="{Binding .}"
+                                                    Header="Toggle Hidden" />
+                                                <MenuItem
+                                                    Command="{Binding #Root.((vm:MainViewModel)DataContext).ToggleNoteSubtreeHiddenCommand}"
+                                                    CommandParameter="{Binding .}"
+                                                    Header="Toggle Subtree Hidden" />
+                                                <Separator />
+                                                <MenuItem
+                                                    Command="{Binding #Root.((vm:MainViewModel)DataContext).FocusNoteCommand}"
+                                                    CommandParameter="{Binding .}"
+                                                    Header="Focus Note" />
+                                                <Separator />
+                                                <MenuItem
                                                     Command="{Binding #Root.((vm:MainViewModel)DataContext).ExportItemToClipboardCommand}"
                                                     CommandParameter="{Binding .}"
                                                     Header="Export to Clipboard" />
@@ -405,24 +424,6 @@
                                                     Command="{Binding #Root.((vm:MainViewModel)DataContext).PasteLinkAsSiblingCommand}"
                                                     CommandParameter="{Binding .}"
                                                     Header="Paste Link as Sibling" />
-                                                <Separator />
-                                                <MenuItem
-                                                    Command="{Binding #Root.((vm:MainViewModel)DataContext).FocusNoteCommand}"
-                                                    CommandParameter="{Binding .}"
-                                                    Header="Focus Note" />
-                                                <Separator />
-                                                <MenuItem
-                                                    Command="{Binding #Root.((vm:MainViewModel)DataContext).ToggleNoteHiddenCommand}"
-                                                    CommandParameter="{Binding .}"
-                                                    Header="Toggle Hidden" />
-                                                <MenuItem
-                                                    Command="{Binding #Root.((vm:MainViewModel)DataContext).ToggleNoteSubtreeHiddenCommand}"
-                                                    CommandParameter="{Binding .}"
-                                                    Header="Toggle Subtree Hidden" />
-                                                <MenuItem
-                                                    Command="{Binding #Root.((vm:MainViewModel)DataContext).ToggleNoteCanceledCommand}"
-                                                    CommandParameter="{Binding .}"
-                                                    Header="Toggle Canceled" />
                                                 <Separator />
                                                 <MenuItem
                                                     Command="{Binding #Root.((vm:MainViewModel)DataContext).RemoveDoneSubnotesCommand}"
