@@ -38,7 +38,21 @@ namespace NotesAvalonia.Android
                 return null;
             }
 
-            var lines = virtualRootNote.SubtreeToStyledString(id => FindInRoot(virtualRootNote, id))
+            // The note passed in is only the root the formatter starts from, and
+            // SubtreeToStyledString does not descend into a collapsed note. A root built by the
+            // widget worker (a bare `new Note() { SubNotes = ... }`) has Expanded == false, so the
+            // formatter emitted its own single line, everything below was filtered out and every
+            // worker run produced no text at all. Force the traversal here instead of depending on
+            // the caller having set Expanded (the root's own line is dropped below anyway), on a
+            // copy so a live tree is never modified.
+            var root = new Note
+            {
+                Id = virtualRootNote.Id,
+                Data = { Expanded = true },
+                SubNotes = virtualRootNote.SubNotes,
+            };
+
+            var lines = root.SubtreeToStyledString(id => FindInRoot(root, id))
                 .Split('\n')
                 .Skip(1)                    // first line is the (virtual) root note itself
                 .Where(l => !string.IsNullOrWhiteSpace(l))

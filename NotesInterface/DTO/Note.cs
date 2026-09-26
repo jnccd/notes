@@ -127,8 +127,12 @@ public class Note
 
     static string Indent(int depth) => depth <= 0 ? "" : string.Concat(Enumerable.Repeat("  ", depth));
 
+    // string.Concat instead of Aggregate: the seedless Aggregate overload throws
+    // "Sequence contains no elements" for an empty text, and a done/canceled note whose text is
+    // empty is perfectly normal (an empty note that was checked off) - that exception aborted the
+    // whole widget text build for every note set containing one.
     static string Strike(string text) =>
-        text.Select(c => c + "" + StrikeMarker).Aggregate((a, b) => a + b);
+        string.Concat(text.Select(c => c + "" + StrikeMarker));
 
     const char StrikeMarker = (char)822;
 
