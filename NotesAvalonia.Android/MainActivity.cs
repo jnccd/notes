@@ -62,14 +62,16 @@ public class MainActivity : AvaloniaMainActivity
             var widgetText = WidgetDataRepository.BuildWidgetText(app.MainViewModel.VirtualRoot);
             if (widgetText == null)
             {
-                // Nothing to show yet; keep whatever the widget currently displays. Logged so the
+                // Nothing to show yet (typical right after startup, before the view is loaded and
+                // the config is read); keep whatever the widget currently displays. Logged so the
                 // app log tells this apart from a worker that could not fetch anything at all.
-                Notes.Interface.Logger.WriteLine(DateTime.Now + $": [Widget] in-app update had no displayable notes ({app.MainViewModel.VirtualRoot.SubNotes?.Count ?? 0} top level) - keeping the displayed text");
+                WidgetDataRepository.Log($"in-app update had no displayable notes ({app.MainViewModel.VirtualRoot.SubNotes?.Count ?? 0} top level) - keeping the displayed text");
                 return;
             }
 
             WidgetDataRepository.SaveData(this, widgetText);
             WidgetDataRepository.RequestUpdate(this);
+            WidgetDataRepository.Log($"in-app update from {app.MainViewModel.VirtualRoot.SubNotes?.Count ?? 0} top level note(s), {widgetText.Length} chars");
         }
         catch (Exception ex)
         {

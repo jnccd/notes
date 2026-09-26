@@ -27,13 +27,21 @@ namespace NotesAvalonia.Android
         /// file) and to logcat, so everything this worker decides can be seen either way:
         /// `adb logcat -s NotesWidget` on the phone, or the log file when the app is not running.
         /// </summary>
-        static void Log(string message)
-        {
-            try { Notes.Interface.Logger.WriteLine($"{DateTime.Now}: [Widget] {message}"); } catch { }
-            try { global::Android.Util.Log.Info(LogTag, message); } catch { }
-        }
+        static void Log(string message) => WidgetDataRepository.Log(message);
 
-        const string LogTag = "NotesWidget";
+        /// <summary>
+        /// Whether a failure message says the widget's own login session is gone for good.
+        ///
+        /// Keycloak answers a refresh with `invalid_grant` (e.g. "Session doesn't have required
+        /// client") once the session behind the stored refresh token is gone - idle/max lifetime
+        /// reached, client changed, session revoked. No amount of retrying brings it back (the
+        /// password is deliberately not stored), so this has to be told apart from a normal
+        /// network/HTTP failure.
+        /// </summary>
+        static bool IsDeadSession(string? message) =>
+            message != null &&
+            (message.Contains("invalid_grant", StringComparison.OrdinalIgnoreCase) ||
+             message.Contains("required client", StringComparison.OrdinalIgnoreCase));
 
         public override Result DoWork()
         {
@@ -50,6 +58,11 @@ namespace NotesAvalonia.Android
                     return Result.InvokeSuccess();
                 }
 
+                // ReqPayload() does not throw on a failed request: it reports the error through this
+                // callback and answers null. Without collecting it here the worker could not tell a
+                // dead session from a plain network failure (which is exactly why the
+                // invalid_grant handling below used to be unreachable dead code).
+                Exception? fetchError = null;
                 var communicator = new Communicator(
                     Config.Data.ServerUri!,
                     Config.Data.AuthBackendRefreshTokenForAndroidWidget, newAuthBackendRefreshToken =>
@@ -57,7 +70,8 @@ namespace NotesAvalonia.Android
                         Config.Data.AuthBackendRefreshTokenForAndroidWidget = newAuthBackendRefreshToken;
                         try { Config.Save(); } catch { }
                     },
-                    (CommsState state) => { }
+                    stateChanged: (CommsState state) => { },
+                    onPayloadRequestError: e => fetchError = e
                 );
 
                 Payload? payload;
@@ -71,14 +85,26 @@ namespace NotesAvalonia.Android
                     communicator.Dispose();
                 }
 
-                // ReqPayload() answers null for every kind of failure (offline, HTTP error, dead
-                // session, unparsable body) and this worker passes no onPayloadRequestError, so a
-                // failed fetch used to look exactly like "the account has nothing to show" and the
-                // run still reported success: no retry, no trace, widget silently kept its old text.
-                // A null payload is the failure it is, so report it and let WorkManager retry.
+                // A null payload means the fetch failed (offline, HTTP error, dead session,
+                // unparsable body) - the account having no notes arrives as a non-null payload with
+                // an empty note list. It used to look like "nothing to show" and the run still
+                // reported success: no retry, no trace, widget silently kept its old text.
                 if (payload == null)
                 {
-                    Log($"could not fetch a payload ({receivedText.Length} chars received) - keeping the displayed text");
+                    if (IsDeadSession(fetchError?.Message))
+                    {
+                        Log($"widget session is dead ({fetchError!.Message}) - log in again in the app to provision a new one");
+                        try
+                        {
+                            Config.Data.AuthBackendRefreshTokenForAndroidWidget = "";
+                            Config.Save();
+                        }
+                        catch { }
+                        return Result.InvokeSuccess();
+                    }
+
+                    string reason = fetchError?.Message ?? $"{receivedText.Length} chars received, no payload";
+                    Log($"could not fetch a payload ({reason}) - keeping the displayed text, retrying later");
                     return Result.InvokeFailure();
                 }
 
@@ -108,9 +134,7 @@ namespace NotesAvalonia.Android
                 // A dead/expired widget session can never recover on its own (the password is not
                 // stored), so drop the stale token: later runs will short-circuit instead of
                 // failing against the auth server on every period until the user logs in again.
-                var message = ex.Message ?? "";
-                if (message.Contains("invalid_grant", StringComparison.OrdinalIgnoreCase) ||
-                    message.Contains("required client", StringComparison.OrdinalIgnoreCase))
+                if (IsDeadSession(ex.Message))
                 {
                     Log("widget session is dead (invalid_grant) - log in again in the app to provision a new one");
                     try

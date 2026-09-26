@@ -13,6 +13,20 @@ namespace NotesAvalonia.Android
         private const string PREFS_NAME = "MyWidgetPrefs";
         private const string KEY_DATA = "WidgetData";
 
+        /// <summary>logcat tag every widget decision is written under (`adb logcat -s NotesWidget`).</summary>
+        public const string LogTag = "NotesWidget";
+
+        /// <summary>
+        /// Writes one line to the app's log file (the "Show Logs" popup in the app reads the same
+        /// file) and to logcat, so both widget update paths - the periodic worker and the activity
+        /// itself - can be followed either way.
+        /// </summary>
+        public static void Log(string message)
+        {
+            try { Notes.Interface.Logger.WriteLine($"{DateTime.Now}: [Widget] {message}"); } catch { }
+            try { global::Android.Util.Log.Info(LogTag, message); } catch { }
+        }
+
         /// <summary>
         /// Builds the multi-line text the widget displays from a note tree (reusing the shared
         /// <see cref="Note.SubtreeToStyledString"/> formatting and stripping the virtual root line
