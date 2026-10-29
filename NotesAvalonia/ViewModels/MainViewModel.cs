@@ -408,14 +408,24 @@ public partial class MainViewModel : ViewModelBase
         return true;                            // link-to-link cycle - dangling
     }
 
+    /// <summary>
+    /// Builds the text "Export to Clipboard" puts on the clipboard: the row's whole subtree, every
+    /// descendant included. Symlink-aware: links are shown with their target's content/children. The
+    /// ▼/▶ marker still records each note's expansion state, but a collapsed note no longer hides its
+    /// subtree from the export. Public so the export -> "Add Subtree from String" round trip can be
+    /// exercised without a real clipboard.
+    /// </summary>
+    public string BuildExportText(FlattenedNoteViewModel flattenedNoteVM) =>
+        flattenedNoteVM.FlattenedNote.OriginalNote
+            .SubtreeToStyledString(id => FindNote(id), includeCollapsedChildren: true);
+
     [RelayCommand]
     public void ExportItemToClipboard(FlattenedNoteViewModel flattenedNoteVM)
     {
         var topLevel = TopLevel.GetTopLevel(mainView);
         if (topLevel != null)
         {
-            // Symlink-aware export: links are shown with their target's content/children.
-            var exportText = flattenedNoteVM.FlattenedNote.OriginalNote.SubtreeToStyledString(id => FindNote(id));
+            var exportText = BuildExportText(flattenedNoteVM);
             var dataTransfer = new DataTransfer();
             dataTransfer.Add(DataTransferItem.Create(DataFormat.Text, exportText));
             topLevel.Clipboard?.SetDataAsync(dataTransfer);
@@ -592,33 +602,34 @@ public partial class MainViewModel : ViewModelBase
         FocusFlattenedRow(newNote, anchorChain, anchorIndex);
     }
 
-    /// <summary>Inserts a parsed subtree (see Note.TryParseStyledSubtree) as a sibling right after
+    /// <summary>Inserts a parsed subtree (see Note.TryParseStyledSubtree) as the last child of
     /// <paramref name="item"/>, queues the Add changes in pre-order and focuses the new root.</summary>
     public void AddSubtreeFromString(FlattenedNoteViewModel item, Note parsedRoot)
     {
-        var ogNote = item.FlattenedNote.OriginalNote;
-        var ogParent = item.FlattenedNote.Parent?.OriginalNote;
-        if (ogParent == null)
-            return; // the focused root note has no parent to insert after
+        // Children of a symlink are added to the canonical target note - the same note AddChildNote
+        // and the visible child rows of that link belong to.
+        var parent = item.EffectiveNote;
 
-        var insertionIndex = ogParent.SubNotes.IndexOf(ogNote) + 1;
-        ogParent.SubNotes.Insert(insertionIndex, parsedRoot);
+        // Remember where the action happened: after ReFlatten the same canonical subtree may be
+        // rendered in several rows at once (symlink mirrors), and focus must land on the copy in
+        // this instance rather than on another copy of the new subtree.
+        int anchorIndex = FlattenedNoteVMs.IndexOf(item);
+        var anchorChain = FlattenedChainIds(item.FlattenedNote);
+
+        // Children are only visible on an open row, so open the called note first - this also queues
+        // the note's Update, and without it the new child would not show up at all.
+        if (!item.Expanded)
+            item.Expanded = true;
+
+        // Append the parsed subtree as the last child.
+        var insertionIndex = parent.SubNotes.Count;
+        parent.SubNotes.Add(parsedRoot);
 
         if (mainView != null)
-            EnqueueSubtreeAdds(parsedRoot, ogParent, insertionIndex);
+            EnqueueSubtreeAdds(parsedRoot, parent, insertionIndex);
 
         ReFlatten();
-
-        // Focus the new subtree's root TextBox
-        Dispatcher.UIThread.Post(() =>
-        {
-            var newTextbox = mainView?.GetLogicalDescendants()
-                .OfType<TextBox>()
-                .FirstOrDefault(ic => (ic.DataContext as FlattenedNoteViewModel)?.FlattenedNote.OriginalNote == parsedRoot);
-            if (newTextbox != null)
-                newTextbox.Focusable = true;
-            newTextbox?.Focus();
-        });
+        FocusFlattenedRow(parsedRoot, anchorChain, anchorIndex);
     }
 
     // Pre-order so each note's Add change comes after its parent's (parents must exist first).

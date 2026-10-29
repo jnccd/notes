@@ -43,19 +43,26 @@ public class Note
 
     /// <summary>
     /// Serializes this subtree to the plain-text format (indentation + ▼/▶ + optional strike).
-    /// When <paramref name="derefResolver"/> is provided, symlink notes show the content (and, when
-    /// the link is expanded, the children) of their resolved target instead of their own empty
-    /// data. Without a resolver the behavior is unchanged (links serialize as their own data).
+    /// When <paramref name="derefResolver"/> is provided, symlink notes show the content (and the
+    /// children - always with <paramref name="includeCollapsedChildren"/>, otherwise only when the
+    /// link is expanded) of their resolved target instead of their own empty data. Without a
+    /// resolver the behavior is unchanged (links serialize as their own data).
     /// </summary>
-    public string SubtreeToStyledString(Func<Guid, Note?>? derefResolver = null)
+    /// <param name="derefResolver">Resolves a symlink's target note, or null to serialize links as
+    /// their own data.</param>
+    /// <param name="includeCollapsedChildren">When true, the children of collapsed notes/links are
+    /// serialized too, so the whole subtree is exported instead of only its expanded part. The
+    /// ▼/▶ marker still reflects each note's own expansion state, so the text stays round-trippable
+    /// through <see cref="TryParseStyledSubtree"/>.</param>
+    public string SubtreeToStyledString(Func<Guid, Note?>? derefResolver = null, bool includeCollapsedChildren = false)
     {
         var lines = new List<string>();
         var path = new HashSet<Guid>();
-        AppendStyledLines(this, 0, derefResolver, lines, path);
+        AppendStyledLines(this, 0, derefResolver, includeCollapsedChildren, lines, path);
         return lines.Count == 0 ? "" : string.Join("\n", lines);
     }
 
-    static void AppendStyledLines(Note node, int depth, Func<Guid, Note?>? derefResolver, List<string> lines, HashSet<Guid> path)
+    static void AppendStyledLines(Note node, int depth, Func<Guid, Note?>? derefResolver, bool includeCollapsedChildren, List<string> lines, HashSet<Guid> path)
     {
         if (!path.Add(node.Id))
             return; // cycle guard (should not happen for a plain tree)
@@ -74,7 +81,7 @@ public class Note
                     text = target.Data.DecodedText ?? "";
                     strike = target.Data.Done || target.Data.Canceled;
                     expanded = node.Data.Expanded;               // per-link expansion
-                    children = expanded ? target.SubNotes : []; // children come from the target
+                    children = (expanded || includeCollapsedChildren) ? target.SubNotes : []; // children come from the target
                 }
                 else
                 {
@@ -89,14 +96,14 @@ public class Note
                 text = node.Data.DecodedText ?? "";
                 strike = node.Data.Done || node.Data.Canceled;
                 expanded = node.Data.Expanded;
-                children = expanded ? node.SubNotes : [];
+                children = (expanded || includeCollapsedChildren) ? node.SubNotes : [];
             }
 
             var noteText = strike ? Strike(text) : text;
             lines.Add(Indent(depth) + (expanded ? "▼" : "▶") + noteText);
 
             foreach (var child in children)
-                AppendStyledLines(child, depth + 1, derefResolver, lines, path);
+                AppendStyledLines(child, depth + 1, derefResolver, includeCollapsedChildren, lines, path);
         }
         finally
         {
