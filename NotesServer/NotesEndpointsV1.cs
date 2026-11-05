@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using EzAuth;
 using EzAuth.Interfaces;
 using Microsoft.AspNetCore.Mvc;
@@ -136,6 +136,11 @@ public static class NotesEndpointsV1
     public static void RegisterNotesEndpoints(this IEndpointRouteBuilder routes, IServiceProvider services)
     {
         var version1Api = routes.MapGroup(ROUTE_VERSION_PREFIX);
+
+        version1Api.MapMethods($"/", [HttpMethods.Head], (IOptions<AuthOptions> authOptions) =>
+        {
+            return Results.Ok();
+        });
 
         version1Api.MapGet("/authBackend", (
            IOptions<AuthOptions> authOptions) =>
